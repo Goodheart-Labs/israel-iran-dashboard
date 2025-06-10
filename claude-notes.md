@@ -50,7 +50,15 @@ US Democratic Health Dashboard - A dashboard tracking prediction markets and for
 2. Polymarket GraphQL query format incorrect
 3. Adjacent API endpoint was wrong in initial implementation
 
+### Recent Updates
+- ✅ Implemented fantasy-based light and dark themes using daisyUI
+- Themes automatically switch based on user system preference
+- Custom color scheme with vibrant purple/magenta primaries
+
 ### Key Functions
 - `quickFetch` in Convex dashboard to fetch all predictions
 - `debugCategoryCounts` to see data breakdown
 - Admin interface to curate which predictions show on dashboard
+
+### Latest Commits
+- d37c360: theme: implement fantasy-based light and dark themes with daisyUI
