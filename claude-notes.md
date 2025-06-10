@@ -23,9 +23,20 @@ US Democratic Health Dashboard - A dashboard tracking prediction markets and for
 - Ready to document in CLAUDE.md and plan implementation
 
 ### Commits Made
-- (none yet - will track here)
+- fc29987: init: document US democratic health dashboard requirements
+
+### Progress Update
+- ✅ Created Convex schema for predictions with 7 categories
+- ✅ Built dashboard UI with category cards and overall health score
+- ✅ Implemented API fetching actions for Manifold, Metaculus, and Polymarket
+- ✅ Added automatic categorization based on keywords
+- ✅ Backend compiling successfully
+
+### Ready to Test
+- Dashboard shows empty state (no predictions yet)
+- Can run `fetchAllPredictions` action to populate with real data
+- APIs implemented: Manifold Markets, Metaculus, Polymarket (GraphQL)
 
 ### Next Steps
-- Update CLAUDE.md with project details and remove template instruction
-- Plan MVP implementation
-- Design data model for predictions/markets
+- Test API fetching in Convex dashboard
+- Populate dashboard with real prediction data
