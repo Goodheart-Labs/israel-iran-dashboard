@@ -1,9 +1,43 @@
 @import "tailwindcss";
 @plugin "@tailwindcss/typography";
-@plugin "daisyui" {
-  themes:
-    light --default,
-    dark --prefersdark;
+@plugin "daisyui";
+
+@plugin "daisyui/theme" {
+  name: "fantasy";
+  default: true;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-primary: oklch(0.7451 0.1921 334.19);
+  --color-secondary: oklch(0.6569 0.196 302.5);
+  --color-accent: oklch(0.7451 0.1921 334.19);
+  --color-neutral: oklch(0.2392 0.0157 237.69);
+  --color-base-100: oklch(1 0 0);
+  --color-base-200: oklch(0.9608 0 0);
+  --color-base-300: oklch(0.9216 0 0);
+  --color-base-content: oklch(0.1804 0.0065 237.69);
+  --color-info: oklch(0.7206 0.191 231.6);
+  --color-success: oklch(0.7451 0.1921 145.77);
+  --color-warning: oklch(0.8471 0.199 83.87);
+  --color-error: oklch(0.7176 0.221 22.18);
+}
+
+@plugin "daisyui/theme" {
+  name: "fantasy-dark";
+  default: false;
+  prefersdark: true;
+  color-scheme: "dark";
+  --color-primary: oklch(0.8235 0.1921 334.19);
+  --color-secondary: oklch(0.7353 0.196 302.5);
+  --color-accent: oklch(0.8235 0.1921 334.19);
+  --color-neutral: oklch(0.7608 0.0157 237.69);
+  --color-base-100: oklch(0.1804 0.0065 237.69);
+  --color-base-200: oklch(0.1412 0.0065 237.69);
+  --color-base-300: oklch(0.1020 0.0065 237.69);
+  --color-base-content: oklch(0.9608 0 0);
+  --color-info: oklch(0.7990 0.191 231.6);
+  --color-success: oklch(0.8235 0.1921 145.77);
+  --color-warning: oklch(0.9255 0.199 83.87);
+  --color-error: oklch(0.7960 0.221 22.18);
 }
 
 /* Custom font family is preserved */

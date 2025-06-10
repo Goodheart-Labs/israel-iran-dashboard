@@ -31,12 +31,26 @@ US Democratic Health Dashboard - A dashboard tracking prediction markets and for
 - ✅ Implemented API fetching actions for Manifold, Metaculus, and Polymarket
 - ✅ Added automatic categorization based on keywords
 - ✅ Backend compiling successfully
+- ✅ Successfully fetched 92 predictions from Manifold Markets
+- ✅ Added admin interface (/admin route) for curating predictions
 
-### Ready to Test
-- Dashboard shows empty state (no predictions yet)
-- Can run `fetchAllPredictions` action to populate with real data
-- APIs implemented: Manifold Markets, Metaculus, Polymarket (GraphQL)
+### Current State (commit 6ff64a1)
+- Dashboard shows predictions from Manifold Markets
+- Admin interface available at /admin for approving/rejecting predictions
+- Adjacent API integration ready (need to test with API key: 38314d45-7899-4f51-a860-f6b898707a70)
 
-### Next Steps
-- Test API fetching in Convex dashboard
-- Populate dashboard with real prediction data
+### API Status
+- ✅ Manifold: 230 fetched, 92 saved successfully
+- ❌ Metaculus: 50 fetched, 0 saved (categorization too strict)
+- ❌ Polymarket: GraphQL syntax error
+- ❌ Adjacent: Wrong endpoint (should be https://api.data.adj.news/api/markets)
+
+### Known Issues to Fix
+1. Metaculus categorization needs broader keyword matching
+2. Polymarket GraphQL query format incorrect
+3. Adjacent API endpoint was wrong in initial implementation
+
+### Key Functions
+- `quickFetch` in Convex dashboard to fetch all predictions
+- `debugCategoryCounts` to see data breakdown
+- Admin interface to curate which predictions show on dashboard
