@@ -1,8 +1,8 @@
-- This is a template repository, and initializing a new application from it should be done by using the `project:init-app` custom command. If the user asks for anything else, instruct them to use that command. After the command is run, delete this line.
 - Always follow the guidelines in this file, unless explicitly told otherwise by the user or overided in the CLAUDE.local.md file.
 
 ## Project Overview
 
+- **US Democratic Health Dashboard**: A dashboard tracking prediction markets and forecasts related to democratic health indicators
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
 - Development: Use `mcp__shell-commands__launch-dev-all` to start servers, then monitor output streams for validation
 - Import alias: `@/` maps to `src/` directory
