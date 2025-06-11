@@ -6,8 +6,8 @@ import { useState } from "react";
 import { Check, X, Eye, EyeOff, ExternalLink } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 
-const pendingReviewQueryOptions = convexQuery(api.predictions.getPendingReview, {});
-const allForReviewQueryOptions = convexQuery(api.predictions.getAllForReview, {});
+const pendingReviewQueryOptions = convexQuery(api.predictions.getPendingPredictions, {});
+const allForReviewQueryOptions = convexQuery(api.predictions.getAllPredictionsForAdmin, {});
 
 export const Route = createFileRoute("/admin")({
   loader: async ({ context: { queryClient } }) => {
@@ -47,6 +47,7 @@ function AdminPage() {
   const approvePrediction = useMutation(api.predictions.approvePrediction);
   const rejectPrediction = useMutation(api.predictions.rejectPrediction);
   const bulkApprove = useMutation(api.predictions.bulkApprovePredictions);
+  const fixInvalidProbabilities = useMutation(api.predictions.fixInvalidProbabilities);
   
   const currentPredictions = selectedTab === "pending" ? pendingPredictions : allPredictions;
   
@@ -67,14 +68,31 @@ function AdminPage() {
     }
   };
 
+  const handleFixProbabilities = async () => {
+    const result = await fixInvalidProbabilities({});
+    alert(`Fixed ${result.fixed} predictions with invalid probabilities`);
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold mb-4">Admin: Manage Predictions</h1>
-        <p className="opacity-80">
-          Review and approve predictions for display on the dashboard. 
-          Only approved predictions will appear to users.
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold mb-4">Admin: Manage Predictions</h1>
+            <p className="opacity-80">
+              Review and approve predictions for display on the dashboard. 
+              Only approved predictions will appear to users.
+            </p>
+          </div>
+          <div>
+            <button 
+              className="btn btn-warning btn-sm"
+              onClick={handleFixProbabilities}
+            >
+              Fix Invalid Probabilities
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* Stats */}

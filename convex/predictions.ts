@@ -3,18 +3,19 @@ import { query, mutation, action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { predictionCategories, predictionSources } from "./schema";
 
-// Get all active predictions
+// Get all active predictions (approved only)
 export const getActive = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db
       .query("predictions")
       .withIndex("by_active", (q) => q.eq("isActive", true))
+      .filter(q => q.eq(q.field("isApproved"), true))
       .collect();
   },
 });
 
-// Get predictions by category
+// Get predictions by category (approved only)
 export const getByCategory = query({
   args: { 
     category: v.union(...predictionCategories.map(c => v.literal(c)))
@@ -25,17 +26,19 @@ export const getByCategory = query({
       .withIndex("by_category_active", (q) => 
         q.eq("category", args.category).eq("isActive", true)
       )
+      .filter(q => q.eq(q.field("isApproved"), true))
       .collect();
   },
 });
 
-// Get predictions grouped by category
+// Get predictions grouped by category (approved only)
 export const getGroupedByCategory = query({
   args: {},
   handler: async (ctx) => {
     const predictions = await ctx.db
       .query("predictions")
       .withIndex("by_active", (q) => q.eq("isActive", true))
+      .filter(q => q.eq(q.field("isApproved"), true))
       .collect();
     
     const grouped = predictionCategories.reduce((acc, category) => {
@@ -68,12 +71,13 @@ export const getCategoryTimeSeries = query({
     const days = args.days || 30;
     const cutoffTime = Date.now() - (days * 24 * 60 * 60 * 1000);
     
-    // Get all active predictions in this category
+    // Get all active predictions in this category (approved only)
     const predictions = await ctx.db
       .query("predictions")
       .withIndex("by_category_active", (q) => 
         q.eq("category", args.category).eq("isActive", true)
       )
+      .filter(q => q.eq(q.field("isApproved"), true))
       .collect();
     
     // Get historical data for all predictions in category
@@ -101,6 +105,7 @@ export const getDemocraticHealthScore = query({
     const predictions = await ctx.db
       .query("predictions")
       .withIndex("by_active", (q) => q.eq("isActive", true))
+      .filter(q => q.eq(q.field("isApproved"), true))
       .collect();
     
     // Category weights (similar to H5N1's weighted approach)
@@ -236,11 +241,13 @@ export const upsert = mutation({
       }
       return existing._id;
     } else {
-      // Create new prediction
+      // Create new prediction (pending approval by default)
       const predictionId = await ctx.db.insert("predictions", {
         ...args,
         lastUpdated: now,
         isActive: true,
+        isApproved: false, // Require admin approval for new predictions
+        isRejected: false,
       });
       
       // Store initial historical data point
@@ -580,6 +587,135 @@ export const fetchAllPredictions = action({
     };
     
     return summary;
+  },
+});
+
+// Admin: Approve a prediction
+export const approvePrediction = mutation({
+  args: { 
+    id: v.id("predictions"),
+  },
+  handler: async (ctx, args) => {
+    // TODO: Add admin auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    
+    await ctx.db.patch(args.id, {
+      isApproved: true,
+      isRejected: false,
+    });
+  },
+});
+
+// Admin: Reject a prediction
+export const rejectPrediction = mutation({
+  args: { 
+    id: v.id("predictions"),
+  },
+  handler: async (ctx, args) => {
+    // TODO: Add admin auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    
+    await ctx.db.patch(args.id, {
+      isApproved: false,
+      isRejected: true,
+    });
+  },
+});
+
+// Admin: Get pending predictions for review
+export const getPendingPredictions = query({
+  args: {},
+  handler: async (ctx) => {
+    // TODO: Add admin auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    
+    return await ctx.db
+      .query("predictions")
+      .filter(q => 
+        q.and(
+          q.eq(q.field("isActive"), true),
+          q.or(
+            q.eq(q.field("isApproved"), undefined),
+            q.eq(q.field("isApproved"), false)
+          ),
+          q.neq(q.field("isRejected"), true)
+        )
+      )
+      .collect();
+  },
+});
+
+// Admin: Get all predictions for management
+export const getAllPredictionsForAdmin = query({
+  args: {},
+  handler: async (ctx) => {
+    // TODO: Add admin auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    
+    return await ctx.db
+      .query("predictions")
+      .collect();
+  },
+});
+
+// Admin: Bulk approve predictions
+export const bulkApprovePredictions = mutation({
+  args: { 
+    ids: v.array(v.id("predictions")),
+  },
+  handler: async (ctx, args) => {
+    // TODO: Add admin auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    
+    for (const id of args.ids) {
+      await ctx.db.patch(id, {
+        isApproved: true,
+        isRejected: false,
+      });
+    }
+  },
+});
+
+// Admin: Fix invalid prediction probabilities
+export const fixInvalidProbabilities = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // TODO: Add admin auth check
+    const identity = await ctx.auth.getUserIdentity();
+    if (!identity) {
+      throw new Error("Not authenticated");
+    }
+    
+    const allPredictions = await ctx.db.query("predictions").collect();
+    let fixed = 0;
+    
+    for (const prediction of allPredictions) {
+      if (prediction.probability > 100) {
+        // Convert probability to percentage if it's > 100 (likely stored as basis points)
+        const newProbability = Math.min(100, Math.round(prediction.probability / 100));
+        await ctx.db.patch(prediction._id, {
+          probability: newProbability,
+        });
+        fixed++;
+      }
+    }
+    
+    return { fixed };
   },
 });
 
