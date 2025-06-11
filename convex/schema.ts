@@ -17,6 +17,7 @@ export const predictionSources = [
   "polymarket",
   "predictit",
   "manifold",
+  "adjacent",
   "other"
 ] as const;
 
@@ -48,16 +49,37 @@ export default defineSchema({
       v.literal("polymarket"),
       v.literal("predictit"),
       v.literal("manifold"),
+      v.literal("adjacent"),
       v.literal("other")
     ),
     sourceUrl: v.optional(v.string()),
     lastUpdated: v.number(), // Unix timestamp
     resolveDate: v.optional(v.number()), // When the prediction resolves
     isActive: v.boolean(),
+    isApproved: v.optional(v.boolean()), // Admin approval
+    isRejected: v.optional(v.boolean()), // Admin rejection
   })
     .index("by_category", ["category"])
     .index("by_source", ["source"])
     .index("by_active", ["isActive"])
     .index("by_category_active", ["category", "isActive"])
     .index("by_source_url", ["sourceUrl"]),
+    
+  predictionHistory: defineTable({
+    predictionId: v.id("predictions"),
+    probability: v.number(),
+    timestamp: v.number(),
+    source: v.union(
+      v.literal("metaculus"),
+      v.literal("kalshi"),
+      v.literal("polymarket"),
+      v.literal("predictit"),
+      v.literal("manifold"),
+      v.literal("adjacent"),
+      v.literal("other")
+    ),
+  })
+    .index("by_prediction", ["predictionId"])
+    .index("by_prediction_time", ["predictionId", "timestamp"])
+    .index("by_timestamp", ["timestamp"]),
 });

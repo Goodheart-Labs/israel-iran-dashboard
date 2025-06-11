@@ -47,6 +47,110 @@ export const getGroupedByCategory = query({
   },
 });
 
+// Get historical data for a prediction
+export const getHistory = query({
+  args: { predictionId: v.id("predictions") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("predictionHistory")
+      .withIndex("by_prediction_time", (q) => q.eq("predictionId", args.predictionId))
+      .collect();
+  },
+});
+
+// Get time series data for category aggregation (H5N1 style)
+export const getCategoryTimeSeries = query({
+  args: { 
+    category: v.union(...predictionCategories.map(c => v.literal(c))),
+    days: v.optional(v.number()) // Default to 30 days
+  },
+  handler: async (ctx, args) => {
+    const days = args.days || 30;
+    const cutoffTime = Date.now() - (days * 24 * 60 * 60 * 1000);
+    
+    // Get all active predictions in this category
+    const predictions = await ctx.db
+      .query("predictions")
+      .withIndex("by_category_active", (q) => 
+        q.eq("category", args.category).eq("isActive", true)
+      )
+      .collect();
+    
+    // Get historical data for all predictions in category
+    const allHistory = [];
+    for (const prediction of predictions) {
+      const history = await ctx.db
+        .query("predictionHistory")
+        .withIndex("by_prediction_time", (q) => q.eq("predictionId", prediction._id))
+        .filter(q => q.gte(q.field("timestamp"), cutoffTime))
+        .collect();
+      allHistory.push(...history.map(h => ({ ...h, title: prediction.title })));
+    }
+    
+    // Sort by timestamp
+    allHistory.sort((a, b) => a.timestamp - b.timestamp);
+    
+    return allHistory;
+  },
+});
+
+// Calculate weighted democratic health score (following H5N1 pattern)
+export const getDemocraticHealthScore = query({
+  args: {},
+  handler: async (ctx) => {
+    const predictions = await ctx.db
+      .query("predictions")
+      .withIndex("by_active", (q) => q.eq("isActive", true))
+      .collect();
+    
+    // Category weights (similar to H5N1's weighted approach)
+    const categoryWeights = {
+      elections: 0.25,        // Core democratic process
+      democratic_norms: 0.20, // Institutional health
+      voting_rights: 0.15,    // Access to democracy
+      civil_liberties: 0.15,  // Individual freedoms
+      press_freedom: 0.10,    // Information environment
+      stability: 0.10,        // Overall indicators
+      riots: 0.05,           // Violence (inverted - lower is better)
+    };
+    
+    // Calculate weighted scores by category
+    const categoryScores: Record<string, { score: number; count: number; weight: number }> = {};
+    let totalWeight = 0;
+    let weightedSum = 0;
+    
+    for (const [category, weight] of Object.entries(categoryWeights)) {
+      const categoryPredictions = predictions.filter(p => p.category === category);
+      if (categoryPredictions.length > 0) {
+        let categoryScore = categoryPredictions.reduce((sum, p) => sum + p.probability, 0) / categoryPredictions.length;
+        
+        // Invert riots score (civil unrest is bad for democracy)
+        if (category === 'riots') {
+          categoryScore = 100 - categoryScore;
+        }
+        
+        categoryScores[category] = {
+          score: Math.round(categoryScore),
+          count: categoryPredictions.length,
+          weight
+        };
+        
+        weightedSum += categoryScore * weight;
+        totalWeight += weight;
+      }
+    }
+    
+    const overallScore = totalWeight > 0 ? Math.round(weightedSum / totalWeight) : 0;
+    
+    return {
+      overallScore,
+      categoryScores,
+      totalPredictions: predictions.length,
+      lastUpdated: Math.max(...predictions.map(p => p.lastUpdated), 0)
+    };
+  },
+});
+
 // Add a new prediction (admin only in future)
 export const create = mutation({
   args: {
@@ -98,6 +202,8 @@ export const upsert = mutation({
     resolveDate: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
+    const now = Date.now();
+    
     // Check if prediction already exists
     const existing = await ctx.db
       .query("predictions")
@@ -106,24 +212,46 @@ export const upsert = mutation({
       .first();
     
     if (existing) {
-      // Update existing prediction
-      await ctx.db.patch(existing._id, {
-        previousProbability: existing.probability,
-        probability: args.probability,
-        lastUpdated: Date.now(),
-        title: args.title,
-        description: args.description,
-        category: args.category,
-        resolveDate: args.resolveDate,
-      });
+      // Only update if probability has changed significantly (avoid noise)
+      const probabilityDiff = Math.abs(existing.probability - args.probability);
+      if (probabilityDiff >= 1) { // 1% threshold
+        // Store historical data point
+        await ctx.db.insert("predictionHistory", {
+          predictionId: existing._id,
+          probability: args.probability,
+          timestamp: now,
+          source: args.source,
+        });
+        
+        // Update existing prediction
+        await ctx.db.patch(existing._id, {
+          previousProbability: existing.probability,
+          probability: args.probability,
+          lastUpdated: now,
+          title: args.title,
+          description: args.description,
+          category: args.category,
+          resolveDate: args.resolveDate,
+        });
+      }
       return existing._id;
     } else {
       // Create new prediction
-      return await ctx.db.insert("predictions", {
+      const predictionId = await ctx.db.insert("predictions", {
         ...args,
-        lastUpdated: Date.now(),
+        lastUpdated: now,
         isActive: true,
       });
+      
+      // Store initial historical data point
+      await ctx.db.insert("predictionHistory", {
+        predictionId,
+        probability: args.probability,
+        timestamp: now,
+        source: args.source,
+      });
+      
+      return predictionId;
     }
   },
 });
@@ -335,6 +463,97 @@ export const fetchPolymarketMarkets = action({
   },
 });
 
+// Fetch markets based on news events and trends
+export const fetchNewsBasedMarkets = action({
+  args: {},
+  handler: async (ctx) => {
+    "use node";
+    
+    const newsKeywords = [
+      "election fraud",
+      "voting rights legislation", 
+      "press freedom restrictions",
+      "civil liberties surveillance",
+      "political violence",
+      "democratic institutions crisis",
+      "electoral integrity",
+      "media censorship",
+      "peaceful transfer power",
+      "constitutional crisis"
+    ];
+    
+    const allMarkets = [];
+    let savedFromNews = 0;
+    
+    // Check each prediction market for topics related to current news trends
+    for (const keyword of newsKeywords) {
+      try {
+        // Search Manifold for news-related markets
+        const manifoldResponse = await fetch(
+          `https://api.manifold.markets/v0/search-markets?term=${encodeURIComponent(keyword)}&limit=20&sort=newest`
+        );
+        const manifoldMarkets = await manifoldResponse.json();
+        
+        for (const market of manifoldMarkets) {
+          const category = categorizePrediction(market.question, market.description || "");
+          if (category && market.probability !== undefined) {
+            try {
+              await ctx.runMutation(api.predictions.upsert, {
+                category,
+                title: market.question,
+                description: market.description?.slice(0, 500),
+                probability: Math.round(market.probability * 100),
+                source: "manifold",
+                sourceUrl: market.url,
+                resolveDate: market.closeTime,
+              });
+              savedFromNews++;
+            } catch (error) {
+              console.error("Error saving news-based Manifold market:", error);
+            }
+          }
+        }
+        
+        // Search Metaculus for news-related questions
+        const metaculusResponse = await fetch(
+          `https://www.metaculus.com/api2/questions/?search=${encodeURIComponent(keyword)}&status=open&limit=20&order_by=-publish_time`
+        );
+        const metaculusData = await metaculusResponse.json();
+        
+        if (metaculusData.results) {
+          for (const question of metaculusData.results) {
+            const category = categorizePrediction(question.title, "");
+            if (category && question.community_prediction?.full?.q2 !== undefined) {
+              try {
+                await ctx.runMutation(api.predictions.upsert, {
+                  category,
+                  title: question.title,
+                  description: question.description?.slice(0, 500),
+                  probability: Math.round(question.community_prediction.full.q2 * 100),
+                  source: "metaculus",
+                  sourceUrl: `https://www.metaculus.com/questions/${question.id}`,
+                  resolveDate: question.resolve_time ? new Date(question.resolve_time).getTime() : undefined,
+                });
+                savedFromNews++;
+              } catch (error) {
+                console.error("Error saving news-based Metaculus question:", error);
+              }
+            }
+          }
+        }
+        
+        // Small delay to be respectful to APIs
+        await new Promise(resolve => setTimeout(resolve, 100));
+        
+      } catch (error) {
+        console.error(`Error fetching news-based markets for "${keyword}":`, error);
+      }
+    }
+    
+    return { savedFromNews, keywords: newsKeywords.length };
+  },
+});
+
 // Master fetch function to get data from all sources
 export const fetchAllPredictions = action({
   args: {},
@@ -342,6 +561,7 @@ export const fetchAllPredictions = action({
     manifold: { fetched: number; saved: number; error?: any };
     metaculus: { fetched: number; saved: number; error?: any };
     polymarket: { fetched: number; saved: number; error?: any };
+    newsBased: { savedFromNews: number; keywords: number; error?: any };
   }> => {
     "use node";
     
@@ -349,12 +569,14 @@ export const fetchAllPredictions = action({
       ctx.runAction(api.predictions.fetchManifoldMarkets, {}),
       ctx.runAction(api.predictions.fetchMetaculusQuestions, {}),
       ctx.runAction(api.predictions.fetchPolymarketMarkets, {}),
+      ctx.runAction(api.predictions.fetchNewsBasedMarkets, {}),
     ]);
     
     const summary = {
       manifold: results[0].status === "fulfilled" ? results[0].value : { fetched: 0, saved: 0, error: results[0].reason },
       metaculus: results[1].status === "fulfilled" ? results[1].value : { fetched: 0, saved: 0, error: results[1].reason },
       polymarket: results[2].status === "fulfilled" ? results[2].value : { fetched: 0, saved: 0, error: results[2].reason },
+      newsBased: results[3].status === "fulfilled" ? results[3].value : { savedFromNews: 0, keywords: 0, error: results[3].reason },
     };
     
     return summary;

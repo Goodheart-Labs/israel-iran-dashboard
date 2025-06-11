@@ -5,10 +5,15 @@ import { TrendingUp, TrendingDown, Minus, AlertTriangle, Shield, Vote, Radio, Us
 import { api } from "../../convex/_generated/api";
 
 const predictionsQueryOptions = convexQuery(api.predictions.getGroupedByCategory, {});
+const healthScoreQueryOptions = convexQuery(api.predictions.getDemocraticHealthScore, {});
 
 export const Route = createFileRoute("/")({
-  loader: async ({ context: { queryClient } }) =>
-    await queryClient.ensureQueryData(predictionsQueryOptions),
+  loader: async ({ context: { queryClient } }) => {
+    await Promise.all([
+      queryClient.ensureQueryData(predictionsQueryOptions),
+      queryClient.ensureQueryData(healthScoreQueryOptions),
+    ]);
+  },
   component: HomePage,
 });
 
@@ -59,12 +64,7 @@ const categoryConfig = {
 
 function HomePage() {
   const { data: predictionsByCategory } = useSuspenseQuery(predictionsQueryOptions);
-
-  // Calculate overall health score (average of all predictions)
-  const allPredictions = Object.values(predictionsByCategory).flat();
-  const overallScore = allPredictions.length > 0
-    ? Math.round(allPredictions.reduce((sum, p) => sum + p.probability, 0) / allPredictions.length)
-    : 0;
+  const { data: healthScore } = useSuspenseQuery(healthScoreQueryOptions);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -79,10 +79,13 @@ function HomePage() {
       <div className="not-prose mb-8">
         <div className="card bg-base-200 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center text-2xl">Overall Democratic Health Score</h2>
+            <h2 className="card-title justify-center text-2xl">Democratic Health Score</h2>
             <div className="stat">
-              <div className="stat-value text-6xl">{overallScore}%</div>
-              <div className="stat-desc">Average across all active predictions</div>
+              <div className="stat-value text-6xl">{healthScore.overallScore}%</div>
+              <div className="stat-desc">Weighted score across {healthScore.totalPredictions} active predictions</div>
+            </div>
+            <div className="text-xs opacity-50 mt-2">
+              Last updated: {new Date(healthScore.lastUpdated).toLocaleString()}
             </div>
           </div>
         </div>
@@ -95,10 +98,9 @@ function HomePage() {
           const predictions = predictionsByCategory[category] || [];
           const Icon = config.icon;
           
-          // Calculate category average
-          const categoryAvg = predictions.length > 0
-            ? Math.round(predictions.reduce((sum, p) => sum + p.probability, 0) / predictions.length)
-            : null;
+          // Use weighted category score from health score calculation
+          const categoryScore = healthScore.categoryScores[category];
+          const categoryAvg = categoryScore?.score || null;
 
           return (
             <div key={category} className={`card bg-base-100 shadow-xl border-t-4 border-${config.color}`}>
@@ -109,10 +111,20 @@ function HomePage() {
                     {config.label}
                   </h2>
                   {categoryAvg !== null && (
-                    <div className={`badge badge-${config.color} badge-lg`}>{categoryAvg}%</div>
+                    <div className="flex items-center gap-2">
+                      <div className={`badge badge-${config.color} badge-lg`}>{categoryAvg}%</div>
+                      {categoryScore && (
+                        <div className="badge badge-outline badge-sm">
+                          {Math.round(categoryScore.weight * 100)}% weight
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
-                <p className="text-sm opacity-70 mb-4">{config.description}</p>
+                <p className="text-sm opacity-70 mb-4">
+                  {config.description}
+                  {categoryScore && ` • ${categoryScore.count} predictions`}
+                </p>
                 
                 {predictions.length === 0 ? (
                   <p className="text-sm opacity-50">No active predictions</p>
