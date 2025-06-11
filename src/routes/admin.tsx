@@ -175,10 +175,10 @@ function AdminPage() {
                     <div className="flex items-center gap-2">
                       <span className="text-xl font-bold">{prediction.probability}%</span>
                       {prediction.isApproved === true && (
-                        <Eye className="w-4 h-4 text-success" title="Approved" />
+                        <Eye className="w-4 h-4 text-success" />
                       )}
                       {prediction.isApproved === false && (
-                        <EyeOff className="w-4 h-4 text-error" title="Rejected" />
+                        <EyeOff className="w-4 h-4 text-error" />
                       )}
                     </div>
                   </div>

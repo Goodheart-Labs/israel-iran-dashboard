@@ -1,7 +1,7 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { TrendingUp, TrendingDown, Minus, AlertTriangle, Shield, Vote, Radio, Users, Scale, FileText } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, Shield, Vote, Radio, Users, Scale, FileText } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 
 const predictionsQueryOptions = convexQuery(api.predictions.getGroupedByCategory, {});

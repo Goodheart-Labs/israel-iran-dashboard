@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "mcp__playwright__browser_close",
-      "mcp__shell-commands__launch-dev-frontend"
+      "mcp__shell-commands__launch-dev-frontend",
+      "Bash(pnpm build:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
