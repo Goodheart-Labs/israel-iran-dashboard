@@ -15,7 +15,6 @@ import type {
 } from "convex/server";
 import type * as predictions from "../predictions.js";
 import type * as seed from "../seed.js";
-import type * as users from "../users.js";
 
 /**
  * A utility for referencing Convex functions in your app's API.
@@ -28,7 +27,6 @@ import type * as users from "../users.js";
 declare const fullApi: ApiFromModules<{
   predictions: typeof predictions;
   seed: typeof seed;
-  users: typeof users;
 }>;
 export declare const api: FilterApi<
   typeof fullApi,

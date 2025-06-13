@@ -11,7 +11,8 @@
       "Bash(pnpx convex run:*)",
       "WebFetch(domain:github.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(node:*)"
+      "Bash(node:*)",
+      "Bash(find:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

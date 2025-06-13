@@ -1,9 +1,11 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { TrendingUp, TrendingDown, AlertTriangle, Shield, Bomb, RadioTower, Users, Swords, FileText, Atom, DollarSign } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from "../../convex/_generated/api";
+import { useAction } from "convex/react";
+import { useEffect, useState } from "react";
 
 const featuredPredictionsQueryOptions = convexQuery(api.predictions.getFeaturedPredictions, {});
 const riskScoreQueryOptions = convexQuery(api.predictions.getGeopoliticalRiskScore, {});
@@ -21,6 +23,45 @@ export const Route = createFileRoute("/")({
 function HomePage() {
   const { data: featuredPredictions } = useSuspenseQuery(featuredPredictionsQueryOptions);
   const { data: riskScore } = useSuspenseQuery(riskScoreQueryOptions);
+  const getPolymarketHistoricalData = useAction(api.predictions.getPolymarketHistoricalData);
+  const [historicalData, setHistoricalData] = useState<Record<string, any[]>>({});
+  const [loadingHistorical, setLoadingHistorical] = useState(true);
+
+  // Extract slug from sourceUrl
+  const getSlugFromUrl = (sourceUrl: string) => {
+    const match = sourceUrl.match(/polymarket\.com\/event\/([^/]+)/);
+    return match ? match[1] : null;
+  };
+
+  // Fetch historical data for all Polymarket markets on load (H5N1 approach)
+  useEffect(() => {
+    const fetchAllHistoricalData = async () => {
+      const dataMap: Record<string, any[]> = {};
+      
+      for (const prediction of featuredPredictions) {
+        const slug = getSlugFromUrl(prediction.sourceUrl || "");
+        
+        if (slug && prediction.source === "polymarket") {
+          try {
+            const data = await getPolymarketHistoricalData({ slug });
+            dataMap[prediction._id] = data;
+          } catch (error) {
+            console.error(`Error fetching historical data for ${slug}:`, error);
+            dataMap[prediction._id] = [];
+          }
+        } else {
+          dataMap[prediction._id] = [];
+        }
+      }
+      
+      setHistoricalData(dataMap);
+      setLoadingHistorical(false);
+    };
+
+    if (featuredPredictions?.length > 0) {
+      void fetchAllHistoricalData();
+    }
+  }, [featuredPredictions, getPolymarketHistoricalData]);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -47,20 +88,35 @@ function HomePage() {
 
       {/* Featured Prediction Markets Grid */}
       <div className="not-prose grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {featuredPredictions.map((prediction) => {
-          // Generate sample historical data if none exists
-          const chartData = prediction.history && prediction.history.length > 0 
-            ? prediction.history.map(h => ({
-                date: new Date(h.timestamp).toLocaleDateString(),
-                probability: h.probability
+        {featuredPredictions
+          .sort((a, b) => {
+            // Put both markets with minimal data at the bottom
+            if (a.title.includes("US-Iran nuclear agreement")) return 1;
+            if (b.title.includes("US-Iran nuclear agreement")) return -1;
+            if (a.title.includes("1000+ deaths")) return 1;
+            if (b.title.includes("1000+ deaths")) return -1;
+            
+            // Sort by data availability - markets with historical data first
+            const aHasData = a.history && a.history.length > 0;
+            const bHasData = b.history && b.history.length > 0;
+            if (aHasData && !bHasData) return -1;
+            if (!aHasData && bHasData) return 1;
+            return 0;
+          })
+          .map((prediction) => {
+          // Use fresh historical data from H5N1 approach or stored data
+          const freshData = historicalData[prediction._id] || [];
+          const chartData = freshData.length > 0 
+            ? freshData.map(point => ({
+                date: new Date(point.date).toLocaleDateString(),
+                probability: point.probability
               }))
-            : [
-                { date: '12/1/24', probability: Math.max(5, prediction.probability - 10) },
-                { date: '12/8/24', probability: Math.max(5, prediction.probability - 5) },
-                { date: '12/15/24', probability: prediction.probability },
-                { date: '12/22/24', probability: prediction.probability },
-                { date: 'Today', probability: prediction.probability }
-              ];
+            : prediction.history && prediction.history.length > 0 
+              ? prediction.history.map(h => ({
+                  date: new Date(h.timestamp).toLocaleDateString(),
+                  probability: h.probability
+                }))
+              : [];
 
           return (
             <div key={prediction._id} className="card bg-base-100 shadow-xl">
@@ -69,38 +125,53 @@ function HomePage() {
                 
                 {/* Chart */}
                 <div className="bg-base-200 rounded-lg p-4" style={{ height: '300px' }}>
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={chartData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                      <XAxis 
-                        dataKey="date" 
-                        tick={{ fontSize: 12 }}
-                        stroke="#9CA3AF"
-                      />
-                      <YAxis 
-                        domain={[0, 100]}
-                        tick={{ fontSize: 12 }}
-                        stroke="#9CA3AF"
-                      />
-                      <Tooltip 
-                        contentStyle={{
-                          backgroundColor: '#1F2937',
-                          border: '1px solid #374151',
-                          borderRadius: '8px',
-                          color: '#F9FAFB'
-                        }}
-                        formatter={(value) => [`${value}%`, 'Probability']}
-                      />
-                      <Line 
-                        type="monotone" 
-                        dataKey="probability" 
-                        stroke="#8B5CF6" 
-                        strokeWidth={3}
-                        dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
-                        activeDot={{ r: 6, fill: '#8B5CF6' }}
-                      />
-                    </LineChart>
-                  </ResponsiveContainer>
+                  {chartData.length > 0 ? (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={chartData}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                        <XAxis 
+                          dataKey="date" 
+                          tick={{ fontSize: 12 }}
+                          stroke="#9CA3AF"
+                        />
+                        <YAxis 
+                          domain={[0, 100]}
+                          tick={{ fontSize: 12 }}
+                          stroke="#9CA3AF"
+                        />
+                        <Tooltip 
+                          contentStyle={{
+                            backgroundColor: '#1F2937',
+                            border: '1px solid #374151',
+                            borderRadius: '8px',
+                            color: '#F9FAFB'
+                          }}
+                          formatter={(value) => [`${String(value)}%`, 'Probability']}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="probability" 
+                          stroke="#8B5CF6" 
+                          strokeWidth={3}
+                          dot={{ fill: '#8B5CF6', strokeWidth: 1, r: 1 }}
+                          activeDot={{ r: 4, fill: '#8B5CF6' }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  ) : (
+                    <div className="flex items-center justify-center h-full text-center">
+                      <div>
+                        <div className="text-lg font-medium opacity-70 mb-2">
+                          {loadingHistorical ? "Loading Historical Data..." : "No Historical Data"}
+                        </div>
+                        <div className="text-sm opacity-50">
+                          {loadingHistorical 
+                            ? "Fetching fresh market data..." 
+                            : "Historical price data not available for this market"}
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 
                 {/* Current probability display */}

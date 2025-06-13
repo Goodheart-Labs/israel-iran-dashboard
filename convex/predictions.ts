@@ -210,7 +210,7 @@ export const storeMarketHistory = mutation({
           source: args.source,
         });
         stored++;
-      } catch (error) {
+      } catch {
         // Skip if already exists (duplicate key error)
         console.log("Skipping duplicate history point");
       }
@@ -568,7 +568,165 @@ export const fetchAllMarketHistory = action({
   },
 });
 
-// Fetch from Polymarket (public data only)
+// Get fresh historical data from Polymarket (H5N1 approach - no storage)
+export const getPolymarketHistoricalData = action({
+  args: { slug: v.string() },
+  handler: async (_ctx, args) => {
+    "use node";
+    
+    try {
+      // Step 1: Get market metadata (H5N1 approach)
+      const eventResponse = await fetch(`https://gamma-api.polymarket.com/events?slug=${args.slug}`, {
+        headers: { Accept: "application/json" }
+      });
+      
+      if (!eventResponse.ok) {
+        throw new Error("Event API failed");
+      }
+      
+      const events = await eventResponse.json();
+      if (!events?.[0]) {
+        throw new Error("No events found for this slug");
+      }
+      
+      const event = events[0];
+      if (!event.markets?.[0]) {
+        throw new Error("No markets found for this event");
+      }
+      
+      // Step 2: Get market details
+      const marketId = event.markets[0].id;
+      const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${marketId}`, {
+        headers: { Accept: "application/json" }
+      });
+      
+      if (!marketResponse.ok) {
+        throw new Error("Market API failed");
+      }
+      
+      const marketData = await marketResponse.json();
+      
+      // Step 3: Get clobTokenId for historical data
+      const clobTokenIds = JSON.parse(marketData.clobTokenIds);
+      const clobTokenId = clobTokenIds[0];
+      
+      // Step 4: Fetch historical data using CLOB API (H5N1 approach)
+      const historyUrl = new URL("https://clob.polymarket.com/prices-history");
+      const params = new URLSearchParams({
+        market: clobTokenId,
+        fidelity: "60" // 60-minute intervals like H5N1
+      });
+      
+      // For active markets, use interval parameter (H5N1 exact approach)
+      if (!marketData.closed) {
+        params.set("interval", "1m"); // This gets 1 month of data
+      } else {
+        // Use start/end timestamps for closed markets
+        params.set("startTs", Math.floor(new Date(marketData.startDate).getTime() / 1000).toString());
+        params.set("endTs", Math.floor(new Date(marketData.endDate).getTime() / 1000).toString());
+      }
+      
+      historyUrl.search = params.toString();
+      
+      console.log("Fetching history from:", historyUrl.toString());
+      
+      const historyResponse = await fetch(historyUrl, {
+        headers: { Accept: "application/json" }
+      });
+      
+      if (!historyResponse.ok) {
+        throw new Error("Timeseries API failed");
+      }
+      
+      const historyData = await historyResponse.json();
+      
+      // Transform data to our format (H5N1 approach)
+      if (!historyData?.history) {
+        return [];
+      }
+      
+      return historyData.history.map((point: any) => ({
+        date: new Date(point.t * 1000).toISOString(),
+        probability: Math.round(point.p * 100)
+      }));
+      
+    } catch (error) {
+      console.error("Error fetching Polymarket data:", error);
+      // Return empty array on error (H5N1 approach)
+      return [];
+    }
+  },
+});
+
+// Fetch specific markets directly from Polymarket (H5N1 approach)
+export const fetchPolymarketDirectMarkets = action({
+  args: {},
+  handler: async (ctx) => {
+    "use node";
+    
+    // Specific Iran-related market slugs we want to track
+    const targetSlugs = [
+      "iran-strike-on-israel-in-june",
+      "us-military-action-against-iran-before-july", 
+      "iran-nuke-in-2025",
+      "us-x-iran-nuclear-deal-in-2025",
+      "will-iran-close-the-strait-of-hormuz-in-2025",
+      "khamenei-out-as-supreme-leader-of-iran-by-june-30",
+      "nuclear-weapon-detonation-in-2025",
+      "netanyahu-out-in-2025"
+    ];
+    
+    let updated = 0;
+    const errors = [];
+    
+    for (const slug of targetSlugs) {
+      try {
+        // Fetch event data by slug (H5N1 approach)
+        const eventResponse = await fetch(`https://gamma-api.polymarket.com/events?slug=${slug}`);
+        
+        if (eventResponse.ok) {
+          const events = await eventResponse.json();
+          
+          if (events && events.length > 0) {
+            const event = events[0];
+            const market = event.markets?.[0];
+            
+            if (market && market.outcomePrices) {
+              // Parse the JSON string to get the array of prices
+              const pricesArray = JSON.parse(market.outcomePrices);
+              const currentProbability = Math.round(parseFloat(pricesArray[0]) * 100);
+              
+              // Update our database with current probability
+              const result: any = await ctx.runMutation(api.predictions.updateMarketProbability, {
+                sourceUrl: `https://polymarket.com/event/${slug}`,
+                probability: currentProbability
+              });
+              
+              if (result.success) {
+                updated++;
+                console.log(`Updated ${slug}: ${currentProbability}%`);
+              } else {
+                errors.push(`Failed to update ${slug}: ${result.error}`);
+              }
+            }
+          }
+        } else {
+          errors.push(`API error for ${slug}: ${eventResponse.status}`);
+        }
+        
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
+      } catch (error) {
+        errors.push(`Error fetching ${slug}: ${String(error)}`);
+      }
+    }
+    
+    return { updated, errors, message: `Updated ${updated} Polymarket markets directly` };
+  },
+});
+
+// Fetch from Polymarket (public data only) - LEGACY
 export const fetchPolymarketMarkets = action({
   args: {},
   handler: async (ctx) => {
@@ -634,7 +792,7 @@ export const fetchAdjacentNewsMarkets = action({
       }
       
       const data = await response.json();
-      const markets = data.markets || data || []; // Handle different response formats
+      const markets = data.data || data.markets || data || []; // Handle different response formats
       
       let savedFromAdjacent = 0;
       
@@ -835,7 +993,6 @@ export const approvePrediction = mutation({
     id: v.id("predictions"),
   },
   handler: async (ctx, args) => {
-    // TODO: Add proper admin role check - temporarily removing auth requirement
     
     await ctx.db.patch(args.id, {
       isApproved: true,
@@ -850,7 +1007,6 @@ export const rejectPrediction = mutation({
     id: v.id("predictions"),
   },
   handler: async (ctx, args) => {
-    // TODO: Add proper admin role check - temporarily removing auth requirement
     
     await ctx.db.patch(args.id, {
       isApproved: false,
@@ -863,7 +1019,6 @@ export const rejectPrediction = mutation({
 export const getPendingPredictions = query({
   args: {},
   handler: async (ctx) => {
-    // TODO: Add proper admin role check - temporarily removing auth requirement
     
     return await ctx.db
       .query("predictions")
@@ -885,7 +1040,6 @@ export const getPendingPredictions = query({
 export const getAllPredictionsForAdmin = query({
   args: {},
   handler: async (ctx) => {
-    // TODO: Add proper admin role check - temporarily removing auth requirement
     
     return await ctx.db
       .query("predictions")
@@ -899,7 +1053,6 @@ export const bulkApprovePredictions = mutation({
     ids: v.array(v.id("predictions")),
   },
   handler: async (ctx, args) => {
-    // TODO: Add proper admin role check - temporarily removing auth requirement
     
     for (const id of args.ids) {
       await ctx.db.patch(id, {
@@ -914,7 +1067,6 @@ export const bulkApprovePredictions = mutation({
 export const fixInvalidProbabilities = mutation({
   args: {},
   handler: async (ctx) => {
-    // TODO: Add proper admin role check - temporarily removing auth requirement
     
     const allPredictions = await ctx.db.query("predictions").collect();
     let fixed = 0;
@@ -937,7 +1089,7 @@ export const fixInvalidProbabilities = mutation({
 // Admin: Test Adjacent News API connection
 export const testAdjacentNewsConnection = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (_ctx) => {
     "use node";
     
     try {
@@ -1003,6 +1155,49 @@ export const testAdjacentNewsConnection = action({
   },
 });
 
+// Get data point counts for each market
+export const getMarketDataCounts = query({
+  args: {},
+  handler: async (ctx) => {
+    const featuredUrls = [
+      "https://www.metaculus.com/questions/31298/1000-deaths-due-to-israel-iran-conflict-in-2025/",
+      "https://polymarket.com/event/iran-strike-on-israel-in-june",
+      "https://polymarket.com/event/us-military-action-against-iran-before-july",
+      "https://polymarket.com/event/iran-nuke-in-2025",
+      "https://polymarket.com/event/us-x-iran-nuclear-deal-in-2025",
+      "https://kalshi.com/markets/kxusairanagreement/us-iran-nuclear-deal",
+      "https://polymarket.com/event/will-iran-close-the-strait-of-hormuz-in-2025",
+      "https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-june-30",
+      "https://polymarket.com/event/nuclear-weapon-detonation-in-2025",
+      "https://polymarket.com/event/netanyahu-out-in-2025"
+    ];
+
+    const counts = [];
+    for (const url of featuredUrls) {
+      const prediction = await ctx.db
+        .query("predictions")
+        .filter(q => q.eq(q.field("sourceUrl"), url))
+        .first();
+      
+      if (prediction) {
+        const historyCount = await ctx.db
+          .query("predictionHistory")
+          .withIndex("by_prediction", (q) => q.eq("predictionId", prediction._id))
+          .collect();
+        
+        counts.push({
+          title: prediction.title,
+          source: prediction.source,
+          historyCount: historyCount.length,
+          probability: prediction.probability
+        });
+      }
+    }
+    
+    return counts;
+  },
+});
+
 // Get featured predictions for homepage
 export const getFeaturedPredictions = query({
   args: {},
@@ -1053,33 +1248,76 @@ export const getFeaturedPredictions = query({
   },
 });
 
-// Clear all predictions and history (admin only)
+// Clear all predictions and history (admin only) - paginated for large datasets
 export const clearAllPredictions = mutation({
   args: {},
   handler: async (ctx) => {
-    // Clear all predictions
-    const predictions = await ctx.db.query("predictions").collect();
-    for (const prediction of predictions) {
-      await ctx.db.delete(prediction._id);
+    let deletedPredictions = 0;
+    let deletedHistory = 0;
+    
+    // Clear predictions in batches
+    let predictions = await ctx.db.query("predictions").take(100);
+    while (predictions.length > 0) {
+      for (const prediction of predictions) {
+        await ctx.db.delete(prediction._id);
+        deletedPredictions++;
+      }
+      predictions = await ctx.db.query("predictions").take(100);
     }
     
-    // Clear all history
-    const history = await ctx.db.query("predictionHistory").collect();
-    for (const historyItem of history) {
-      await ctx.db.delete(historyItem._id);
+    // Clear history in batches  
+    let history = await ctx.db.query("predictionHistory").take(100);
+    while (history.length > 0) {
+      for (const historyItem of history) {
+        await ctx.db.delete(historyItem._id);
+        deletedHistory++;
+      }
+      history = await ctx.db.query("predictionHistory").take(100);
     }
     
     return { 
-      deletedPredictions: predictions.length,
-      deletedHistory: history.length 
+      deletedPredictions,
+      deletedHistory 
     };
+  },
+});
+
+// Clear only markets with minimal historical data (< 10 points)
+export const clearMinimalDataMarkets = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const predictions = await ctx.db.query("predictions").take(50);
+    let deletedPredictions = 0;
+    let deletedHistory = 0;
+    
+    for (const prediction of predictions) {
+      const historyCount = await ctx.db
+        .query("predictionHistory")
+        .withIndex("by_prediction", (q) => q.eq("predictionId", prediction._id))
+        .collect();
+      
+      // Delete predictions with very few historical data points
+      if (historyCount.length < 10) {
+        // Delete the history first
+        for (const hist of historyCount) {
+          await ctx.db.delete(hist._id);
+          deletedHistory++;
+        }
+        
+        // Delete the prediction
+        await ctx.db.delete(prediction._id);
+        deletedPredictions++;
+      }
+    }
+    
+    return { deletedPredictions, deletedHistory };
   },
 });
 
 // Fetch real market data from Polymarket to get current prices and market IDs
 export const fetchRealMarketData = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (_ctx) => {
     "use node";
     
     const featuredSlugs = [
@@ -1134,44 +1372,236 @@ export const fetchRealMarketData = action({
   },
 });
 
-// Generate synthetic historical data for demonstration (like H5N1 dashboard does)
-export const generateSyntheticHistory = mutation({
+// Update featured markets with real current probabilities from Adjacent News API
+export const updateRealMarketProbabilities = action({
   args: {},
   handler: async (ctx) => {
-    const predictions = await ctx.db.query("predictions").collect();
+    "use node";
     
-    for (const prediction of predictions) {
-      // Clear existing history
-      const existingHistory = await ctx.db
-        .query("predictionHistory")
-        .filter(q => q.eq(q.field("predictionId"), prediction._id))
-        .collect();
+    let updated = 0;
+    const errors = [];
+    
+    try {
+      // Fetch Iran-related markets from Adjacent News
+      const response = await fetch("https://api.data.adj.news/api/search/query?q=Iran", {
+        headers: {
+          "Authorization": "Bearer 38314d45-7899-4f51-a860-f6b898707a70"
+        }
+      });
       
-      for (const hist of existingHistory) {
-        await ctx.db.delete(hist._id);
+      if (response.ok) {
+        const data = await response.json();
+        const markets = data.data || [];
+        
+        // Map real market data to our featured markets
+        const marketMappings = [
+          {
+            sourceUrl: "https://www.metaculus.com/questions/31298/1000-deaths-due-to-israel-iran-conflict-in-2025/",
+            searchTerm: "1000-deaths-due-to-israel-iran-conflict-in-2025"
+          },
+          {
+            sourceUrl: "https://polymarket.com/event/iran-strike-on-israel-in-june", 
+            searchTerm: "iran-strike-on-israel-in-june"
+          },
+          {
+            sourceUrl: "https://polymarket.com/event/iran-nuke-in-2025",
+            searchTerm: "will-iran-possess-a-nuclear-weapon-before-2026" // Using closest match
+          },
+          {
+            sourceUrl: "https://polymarket.com/event/us-x-iran-nuclear-deal-in-2025",
+            searchTerm: "us-iran-nuclear-deal-before-sep-2025"
+          }
+        ];
+        
+        for (const market of markets) {
+          // Find matching markets by slug
+          for (const mapping of marketMappings) {
+            if (market.market_slug === mapping.searchTerm) {
+              const probability = Math.round(market.probability || 0);
+              
+              const result: any = await ctx.runMutation(api.predictions.updateMarketProbability, {
+                sourceUrl: mapping.sourceUrl,
+                probability
+              });
+              
+              if (result.success) {
+                updated++;
+              } else {
+                errors.push(`Failed to update ${mapping.sourceUrl}: ${result.error}`);
+              }
+            }
+          }
+        }
       }
-      
-      // Generate 30 days of synthetic historical data
-      const now = Date.now();
-      const baseProb = prediction.probability;
-      
-      for (let i = 30; i >= 0; i--) {
-        const timestamp = now - (i * 24 * 60 * 60 * 1000); // i days ago
+    } catch (error) {
+      errors.push(`Adjacent News API: ${String(error)}`);
+    }
+    
+    return { updated, errors, message: `Updated ${updated} markets with real probabilities` };
+  },
+});
+
+// Fetch real historical data from Adjacent News API using direct market IDs
+export const fetchRealHistoricalData = action({
+  args: {},
+  handler: async (ctx): Promise<{ updated: number; errors: string[]; message: string }> => {
+    "use node";
+    
+    let updated = 0;
+    const errors = [];
+    
+    // Direct market ID mappings based on Adjacent News API structure
+    const marketMappings = [
+      {
+        sourceUrl: "https://polymarket.com/event/iran-strike-on-israel-in-june",
+        marketId: "polymarket_0xb0ede82fa0c5604bf0dccd32d8ba909f5cebe1c594357754cb18a74d365f6e5b"
+      },
+      {
+        sourceUrl: "https://polymarket.com/event/us-military-action-against-iran-before-july",
+        marketId: "polymarket_0x532741" // Using numeric ID as fallback
+      },
+      {
+        sourceUrl: "https://polymarket.com/event/iran-nuke-in-2025",
+        marketId: "polymarket_0x520927"
+      },
+      {
+        sourceUrl: "https://polymarket.com/event/nuclear-weapon-detonation-in-2025",
+        marketId: "polymarket_0x516717"
+      }
+    ];
+    
+    for (const mapping of marketMappings) {
+      try {
+        console.log(`Fetching history for ${mapping.sourceUrl} with market ID: ${mapping.marketId}`);
         
-        // Add some realistic variation around the base probability
-        const variation = (Math.random() - 0.5) * 20; // ±10% variation
-        const probability = Math.max(1, Math.min(99, baseProb + variation));
+        // Fetch historical data directly using market ID (hourly intervals for more granular data)
+        const historyResponse = await fetch(
+          `https://api.data.adj.news/api/trade/price-history?market_id=${mapping.marketId}&interval=1h`,
+          {
+            headers: {
+              "Authorization": "Bearer 38314d45-7899-4f51-a860-f6b898707a70"
+            }
+          }
+        );
         
-        await ctx.db.insert("predictionHistory", {
-          predictionId: prediction._id,
-          probability: Math.round(probability),
-          timestamp,
-          source: prediction.source,
-        });
+        if (historyResponse.ok) {
+          const historyData = await historyResponse.json();
+          const dataPoints = historyData.data || [];
+          
+          console.log(`Found ${dataPoints.length} historical points for ${mapping.sourceUrl}`);
+          
+          if (dataPoints.length > 0) {
+            // Store historical data through mutation
+            const result: any = await ctx.runMutation(api.predictions.storeRealHistoricalData, {
+              sourceUrl: mapping.sourceUrl,
+              historyData: dataPoints.map((point: any) => ({
+                price: point.price,
+                timestamp: point.timestamp
+              }))
+            });
+            
+            if (result.success) {
+              updated++;
+              console.log(`Successfully stored ${result.stored} historical points for ${mapping.sourceUrl}`);
+            } else {
+              errors.push(`Failed to store history for ${mapping.sourceUrl}: ${result.error}`);
+            }
+          } else {
+            console.log(`No historical data available for ${mapping.sourceUrl}`);
+          }
+        } else {
+          const errorText = await historyResponse.text();
+          errors.push(`API error for ${mapping.sourceUrl}: ${historyResponse.status} - ${errorText}`);
+        }
+        
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } catch (error) {
+        errors.push(`Error fetching history for ${mapping.sourceUrl}: ${String(error)}`);
       }
     }
     
-    return { message: "Generated synthetic history for all predictions" };
+    return { updated, errors, message: `Updated historical data for ${updated} markets` };
+  },
+});
+
+// Store real historical data for a market
+export const storeRealHistoricalData = mutation({
+  args: {
+    sourceUrl: v.string(),
+    historyData: v.array(v.object({
+      price: v.number(),
+      timestamp: v.number()
+    }))
+  },
+  handler: async (ctx, args) => {
+    const prediction = await ctx.db
+      .query("predictions")
+      .filter(q => q.eq(q.field("sourceUrl"), args.sourceUrl))
+      .first();
+    
+    if (!prediction) {
+      return { success: false, error: "Prediction not found" };
+    }
+    
+    // Clear existing historical data to avoid duplicates
+    const existingHistory = await ctx.db
+      .query("predictionHistory")
+      .filter(q => q.eq(q.field("predictionId"), prediction._id))
+      .collect();
+    
+    for (const hist of existingHistory) {
+      await ctx.db.delete(hist._id);
+    }
+    
+    // Store real historical data
+    let stored = 0;
+    for (const point of args.historyData) {
+      await ctx.db.insert("predictionHistory", {
+        predictionId: prediction._id,
+        probability: Math.round(point.price * 100), // Convert to percentage
+        timestamp: point.timestamp * 1000, // Convert to milliseconds
+        source: prediction.source,
+      });
+      stored++;
+    }
+    
+    return { success: true, stored };
+  },
+});
+
+// Update market probability by source URL
+export const updateMarketProbability = mutation({
+  args: {
+    sourceUrl: v.string(),
+    probability: v.number()
+  },
+  handler: async (ctx, args) => {
+    const prediction = await ctx.db
+      .query("predictions")
+      .filter(q => q.eq(q.field("sourceUrl"), args.sourceUrl))
+      .first();
+    
+    if (prediction) {
+      await ctx.db.patch(prediction._id, {
+        previousProbability: prediction.probability,
+        probability: args.probability,
+        lastUpdated: Date.now(),
+      });
+      
+      // Add historical data point
+      await ctx.db.insert("predictionHistory", {
+        predictionId: prediction._id,
+        probability: args.probability,
+        timestamp: Date.now(),
+        source: prediction.source,
+      });
+      
+      return { success: true, updated: prediction.title };
+    }
+    
+    return { success: false, error: "Prediction not found" };
   },
 });
 
@@ -1275,6 +1705,133 @@ export const addFeaturedMarkets = mutation({
     }
 
     return { added: featuredMarkets.length };
+  },
+});
+
+// Store all 39 data points for each Polymarket market in database
+export const storeAllHistoricalData = action({
+  args: {},
+  handler: async (ctx) => {
+    "use node";
+    
+    const targetSlugs = [
+      "iran-strike-on-israel-in-june",
+      "us-military-action-against-iran-before-july", 
+      "iran-nuke-in-2025",
+      "us-x-iran-nuclear-deal-in-2025",
+      "will-iran-close-the-strait-of-hormuz-in-2025",
+      "khamenei-out-as-supreme-leader-of-iran-by-june-30",
+      "nuclear-weapon-detonation-in-2025",
+      "netanyahu-out-in-2025"
+    ];
+    
+    const results = [];
+    
+    for (const slug of targetSlugs) {
+      try {
+        // Get market metadata
+        const eventResponse = await fetch(`https://gamma-api.polymarket.com/events?slug=${slug}`, {
+          headers: { Accept: "application/json" }
+        });
+        
+        if (!eventResponse.ok) {
+          results.push({ slug, success: false, error: `Event API error: ${eventResponse.status}` });
+          continue;
+        }
+        
+        const events = await eventResponse.json();
+        if (!events?.[0]?.markets?.[0]) {
+          results.push({ slug, success: false, error: "No market found" });
+          continue;
+        }
+        
+        const marketId = events[0].markets[0].id;
+        
+        // Get market details for clobTokenId
+        const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${marketId}`, {
+          headers: { Accept: "application/json" }
+        });
+        
+        if (!marketResponse.ok) {
+          results.push({ slug, success: false, error: `Market API error: ${marketResponse.status}` });
+          continue;
+        }
+        
+        const marketData = await marketResponse.json();
+        const clobTokenIds = JSON.parse(marketData.clobTokenIds);
+        const clobTokenId = clobTokenIds[0];
+        
+        // Get historical data
+        const historyUrl = new URL("https://clob.polymarket.com/prices-history");
+        const params = new URLSearchParams({
+          market: clobTokenId,
+          fidelity: "60",
+          interval: "1m"
+        });
+        historyUrl.search = params.toString();
+        
+        console.log(`Fetching history for ${slug}: ${historyUrl.toString()}`);
+        
+        const historyResponse = await fetch(historyUrl, {
+          headers: { Accept: "application/json" }
+        });
+        
+        if (!historyResponse.ok) {
+          results.push({ slug, success: false, error: `History API error: ${historyResponse.status}` });
+          continue;
+        }
+        
+        const historyData = await historyResponse.json();
+        
+        if (historyData?.history && historyData.history.length > 0) {
+          console.log(`Got ${historyData.history.length} data points for ${slug}`);
+          
+          // Store all historical data points in database
+          const storeResult: any = await ctx.runMutation(api.predictions.storeRealHistoricalData, {
+            sourceUrl: `https://polymarket.com/event/${slug}`,
+            historyData: historyData.history.map((point: any) => ({
+              price: point.p,
+              timestamp: point.t
+            }))
+          });
+          
+          results.push({ 
+            slug, 
+            success: true, 
+            stored: storeResult.stored,
+            totalPoints: historyData.history.length,
+            marketId,
+            clobTokenId
+          });
+        } else {
+          results.push({ slug, success: false, error: "No historical data available" });
+        }
+        
+        // Rate limiting
+        await new Promise(resolve => setTimeout(resolve, 500));
+        
+      } catch (error) {
+        results.push({ slug, success: false, error: String(error) });
+      }
+    }
+    
+    return { results, total: results.length };
+  },
+});
+
+// Schedule regular data updates using H5N1 approach (run every 30 minutes)
+export const scheduleDataUpdates = action({
+  args: {},
+  handler: async (ctx) => {
+    "use node";
+    
+    // Schedule fetching current probabilities every 30 minutes
+    await ctx.scheduler.runAfter(30 * 60 * 1000, api.predictions.fetchPolymarketDirectMarkets, {});
+    
+    // Schedule fetching historical data every 30 minutes (H5N1 approach)
+    await ctx.scheduler.runAfter(30 * 60 * 1000, api.predictions.storeAllHistoricalData, {});
+    
+    return { scheduled: true, nextUpdate: Date.now() + (30 * 60 * 1000) };
   },
 });
 

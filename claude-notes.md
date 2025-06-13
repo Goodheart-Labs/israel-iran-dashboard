@@ -162,3 +162,4 @@
 ### Commits Made This Session
 - feat: implement comprehensive Iran geopolitical dashboard with historical data collection
 - feat: fix historical data visualization with synthetic data generation
+- feat: deactivate Clerk authentication for easy Vercel deployment
