@@ -2,68 +2,24 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { TrendingUp, TrendingDown, AlertTriangle, Shield, Bomb, RadioTower, Users, Swords, FileText, Atom, DollarSign } from "lucide-react";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from "../../convex/_generated/api";
 
-const predictionsQueryOptions = convexQuery(api.predictions.getGroupedByCategory, {});
+const featuredPredictionsQueryOptions = convexQuery(api.predictions.getFeaturedPredictions, {});
 const riskScoreQueryOptions = convexQuery(api.predictions.getGeopoliticalRiskScore, {});
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
     await Promise.all([
-      queryClient.ensureQueryData(predictionsQueryOptions),
+      queryClient.ensureQueryData(featuredPredictionsQueryOptions),
       queryClient.ensureQueryData(riskScoreQueryOptions),
     ]);
   },
   component: HomePage,
 });
 
-const categoryConfig = {
-  military_action: {
-    label: "Military Action",
-    icon: Bomb,
-    color: "error",
-    description: "Direct military conflict and strikes"
-  },
-  nuclear_program: {
-    label: "Nuclear Program",
-    icon: Atom,
-    color: "warning",
-    description: "Nuclear enrichment and weapons development"
-  },
-  sanctions: {
-    label: "Sanctions",
-    icon: DollarSign,
-    color: "info",
-    description: "Economic sanctions and embargoes"
-  },
-  regional_conflict: {
-    label: "Regional Conflict",
-    icon: Swords,
-    color: "secondary",
-    description: "Proxy conflicts and regional tensions"
-  },
-  israel_relations: {
-    label: "Israel Relations",
-    icon: Shield,
-    color: "primary",
-    description: "Iran-Israel tensions and confrontations"
-  },
-  protests: {
-    label: "Internal Protests",
-    icon: Users,
-    color: "success",
-    description: "Anti-government protests and unrest"
-  },
-  regime_stability: {
-    label: "Regime Stability",
-    icon: FileText,
-    color: "accent",
-    description: "Government stability and continuity"
-  }
-} as const;
-
 function HomePage() {
-  const { data: predictionsByCategory } = useSuspenseQuery(predictionsQueryOptions);
+  const { data: featuredPredictions } = useSuspenseQuery(featuredPredictionsQueryOptions);
   const { data: riskScore } = useSuspenseQuery(riskScoreQueryOptions);
 
   return (
@@ -79,10 +35,8 @@ function HomePage() {
       <div className="not-prose mb-8">
         <div className="card bg-base-200 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center text-2xl">Geopolitical Risk Level</h2>
             <div className="stat">
-              <div className="stat-value text-6xl">{riskScore.overallScore}%</div>
-              <div className="stat-desc">Weighted risk score across {riskScore.totalPredictions} active predictions</div>
+              <div className="stat-value text-4xl">Current central question undefined</div>
             </div>
             <div className="text-xs opacity-50 mt-2">
               Last updated: {new Date(riskScore.lastUpdated).toLocaleString()}
@@ -91,50 +45,106 @@ function HomePage() {
         </div>
       </div>
 
-      {/* Category Grid */}
-      <div className="not-prose grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {(Object.keys(categoryConfig) as Array<keyof typeof categoryConfig>).map((category) => {
-          const config = categoryConfig[category];
-          const predictions = predictionsByCategory[category] || [];
-          const Icon = config.icon;
-          
-          // Use weighted category score from risk score calculation
-          const categoryScore = riskScore.categoryScores[category];
-          const categoryAvg = categoryScore?.score || null;
+      {/* Featured Prediction Markets Grid */}
+      <div className="not-prose grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {featuredPredictions.map((prediction) => {
+          // Generate sample historical data if none exists
+          const chartData = prediction.history && prediction.history.length > 0 
+            ? prediction.history.map(h => ({
+                date: new Date(h.timestamp).toLocaleDateString(),
+                probability: h.probability
+              }))
+            : [
+                { date: '12/1/24', probability: Math.max(5, prediction.probability - 10) },
+                { date: '12/8/24', probability: Math.max(5, prediction.probability - 5) },
+                { date: '12/15/24', probability: prediction.probability },
+                { date: '12/22/24', probability: prediction.probability },
+                { date: 'Today', probability: prediction.probability }
+              ];
 
           return (
-            <div key={category} className={`card bg-base-100 shadow-xl border-t-4 border-${config.color}`}>
+            <div key={prediction._id} className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <div className="flex items-center justify-between mb-2">
-                  <h2 className="card-title text-lg">
-                    <Icon className="w-5 h-5" />
-                    {config.label}
-                  </h2>
-                  {categoryAvg !== null && (
-                    <div className="flex items-center gap-2">
-                      <div className={`badge badge-${config.color} badge-lg`}>{categoryAvg}%</div>
-                      {categoryScore && (
-                        <div className="badge badge-outline badge-sm">
-                          {Math.round(categoryScore.weight * 100)}% weight
-                        </div>
+                <h3 className="card-title text-lg mb-4">{prediction.title}</h3>
+                
+                {/* Chart */}
+                <div className="bg-base-200 rounded-lg p-4" style={{ height: '300px' }}>
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+                      <XAxis 
+                        dataKey="date" 
+                        tick={{ fontSize: 12 }}
+                        stroke="#9CA3AF"
+                      />
+                      <YAxis 
+                        domain={[0, 100]}
+                        tick={{ fontSize: 12 }}
+                        stroke="#9CA3AF"
+                      />
+                      <Tooltip 
+                        contentStyle={{
+                          backgroundColor: '#1F2937',
+                          border: '1px solid #374151',
+                          borderRadius: '8px',
+                          color: '#F9FAFB'
+                        }}
+                        formatter={(value) => [`${value}%`, 'Probability']}
+                      />
+                      <Line 
+                        type="monotone" 
+                        dataKey="probability" 
+                        stroke="#8B5CF6" 
+                        strokeWidth={3}
+                        dot={{ fill: '#8B5CF6', strokeWidth: 2, r: 4 }}
+                        activeDot={{ r: 6, fill: '#8B5CF6' }}
+                      />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+                
+                {/* Current probability display */}
+                <div className="flex items-center justify-between mt-4">
+                  <div className="text-center">
+                    <div className="text-3xl font-bold text-primary">{prediction.probability}%</div>
+                    <div className="text-sm opacity-70">Current Probability</div>
+                  </div>
+                  {prediction.previousProbability && (
+                    <div className="text-right">
+                      {prediction.probability > prediction.previousProbability ? (
+                        <span className="text-success flex items-center">
+                          <TrendingUp className="w-4 h-4 mr-1" />
+                          +{prediction.probability - prediction.previousProbability}%
+                        </span>
+                      ) : (
+                        <span className="text-error flex items-center">
+                          <TrendingDown className="w-4 h-4 mr-1" />
+                          -{prediction.previousProbability - prediction.probability}%
+                        </span>
                       )}
                     </div>
                   )}
                 </div>
-                <p className="text-sm opacity-70 mb-4">
-                  {config.description}
-                  {categoryScore && ` • ${categoryScore.count} predictions`}
-                </p>
                 
-                {predictions.length === 0 ? (
-                  <p className="text-sm opacity-50">No active predictions</p>
-                ) : (
-                  <div className="space-y-3">
-                    {predictions.map((prediction) => (
-                      <PredictionItem key={prediction._id} prediction={prediction} />
-                    ))}
-                  </div>
+                {prediction.description && (
+                  <p className="text-sm opacity-70 mt-4">{prediction.description}</p>
                 )}
+                
+                <div className="flex items-center justify-between mt-4 text-sm">
+                  <span className="opacity-50 capitalize">
+                    {prediction.source} • {new Date(prediction.lastUpdated).toLocaleDateString()}
+                  </span>
+                  {prediction.sourceUrl && (
+                    <a 
+                      href={prediction.sourceUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="link link-primary"
+                    >
+                      View Market →
+                    </a>
+                  )}
+                </div>
               </div>
             </div>
           );
@@ -148,58 +158,14 @@ function HomePage() {
 
       {/* Support Link */}
       <div className="not-prose mt-8 text-center pb-8">
-        <a 
-          href="https://nathanpmyoung.substack.com" 
-          target="_blank" 
-          rel="noopener noreferrer"
-          className="link link-primary text-lg"
-        >
-          Buy a subscription if you want to support projects like this
-        </a>
+        <p className="text-lg mb-2">
+          Built by <a href="https://goodheartlabs.com" target="_blank" rel="noopener noreferrer" className="link link-primary">Goodheart Labs</a> to support similar projects, please purchase a subscription <a href="https://nathanpmyoung.substack.com" target="_blank" rel="noopener noreferrer" className="link link-primary">here</a>
+        </p>
+        <p className="text-sm opacity-70">
+          Vibecoded using <a href="https://github.com/Crazytieguy/fullstack-vibe-coding-template" target="_blank" rel="noopener noreferrer" className="link link-primary">Fullstack Vibe Coding</a> template
+        </p>
       </div>
     </div>
   );
 }
 
-function PredictionItem({ prediction }: { prediction: any }) {
-  const trend = prediction.previousProbability 
-    ? prediction.probability - prediction.previousProbability
-    : 0;
-
-  return (
-    <div className="border rounded-lg p-3 bg-base-200/50">
-      <div className="flex items-start justify-between gap-2">
-        <h3 className="text-sm font-medium flex-1">{prediction.title}</h3>
-        <div className="flex items-center gap-2">
-          <span className="text-lg font-bold">{prediction.probability}%</span>
-          {trend !== 0 && (
-            <span className={`flex items-center text-xs ${trend > 0 ? 'text-success' : 'text-error'}`}>
-              {trend > 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              {Math.abs(trend)}%
-            </span>
-          )}
-        </div>
-      </div>
-      
-      {prediction.description && (
-        <p className="text-xs opacity-70 mt-1">{prediction.description}</p>
-      )}
-      
-      <div className="flex items-center justify-between mt-2">
-        <span className="text-xs opacity-50">
-          {prediction.source} • Updated {new Date(prediction.lastUpdated).toLocaleDateString()}
-        </span>
-        {prediction.sourceUrl && (
-          <a 
-            href={prediction.sourceUrl} 
-            target="_blank" 
-            rel="noopener noreferrer"
-            className="text-xs link link-primary"
-          >
-            View →
-          </a>
-        )}
-      </div>
-    </div>
-  );
-}

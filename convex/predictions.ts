@@ -156,6 +156,70 @@ export const getGeopoliticalRiskScore = query({
   },
 });
 
+// Store market history data
+export const storeMarketHistory = mutation({
+  args: {
+    marketId: v.string(),
+    historyData: v.array(v.object({
+      p: v.number(), // probability
+      t: v.number()  // timestamp
+    })),
+    source: v.union(v.literal("polymarket"), v.literal("kalshi"))
+  },
+  handler: async (ctx, args) => {
+    // Find prediction by market ID in source URL - try both slug and numeric ID formats
+    let prediction = await ctx.db
+      .query("predictions")
+      .filter(q => q.eq(q.field("sourceUrl"), `https://polymarket.com/event/${args.marketId}`))
+      .first();
+    
+    // If not found by numeric ID, look up the slug mapping
+    if (!prediction) {
+      const slugMap: Record<string, string> = {
+        "551458": "iran-strike-on-israel-in-june",
+        "532741": "us-military-action-against-iran-before-july", 
+        "520927": "iran-nuke-in-2025",
+        "521878": "us-x-iran-nuclear-deal-in-2025",
+        "519695": "will-iran-close-the-strait-of-hormuz-in-2025",
+        "514497": "khamenei-out-as-supreme-leader-of-iran-by-june-30",
+        "516717": "nuclear-weapon-detonation-in-2025",
+        "516721": "netanyahu-out-in-2025"
+      };
+      
+      const slug = slugMap[args.marketId];
+      if (slug) {
+        prediction = await ctx.db
+          .query("predictions")
+          .filter(q => q.eq(q.field("sourceUrl"), `https://polymarket.com/event/${slug}`))
+          .first();
+      }
+    }
+    
+    if (!prediction) {
+      return { success: false, error: "Prediction not found", stored: 0 };
+    }
+    
+    // Store historical data points
+    let stored = 0;
+    for (const point of args.historyData) {
+      try {
+        await ctx.db.insert("predictionHistory", {
+          predictionId: prediction._id,
+          probability: Math.round(point.p * 100), // Convert to percentage
+          timestamp: point.t * 1000, // Convert to milliseconds
+          source: args.source,
+        });
+        stored++;
+      } catch (error) {
+        // Skip if already exists (duplicate key error)
+        console.log("Skipping duplicate history point");
+      }
+    }
+    
+    return { success: true, stored };
+  },
+});
+
 // Add a new prediction (admin only in future)
 export const create = mutation({
   args: {
@@ -411,6 +475,96 @@ export const fetchMetaculusQuestions = action({
     }
     
     return { fetched: uniqueQuestions.length, saved };
+  },
+});
+
+// Fetch historical data for a specific market
+export const fetchMarketHistory = action({
+  args: { 
+    marketId: v.string(),
+    source: v.union(v.literal("polymarket"), v.literal("kalshi")),
+    days: v.optional(v.number()) // Days of history to fetch, default 30
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; stored?: number; totalPoints?: number; error?: string }> => {
+    "use node";
+    
+    const days = args.days || 30;
+    const endTs = Math.floor(Date.now() / 1000);
+    const startTs = endTs - (days * 24 * 60 * 60);
+    
+    try {
+      if (args.source === "polymarket") {
+        // Polymarket historical prices API
+        const url = `https://clob.polymarket.com/prices-history?market=${args.marketId}&startTs=${startTs}&endTs=${endTs}&interval=1h`;
+        console.log(`Fetching from URL: ${url}`);
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Polymarket API error: ${response.status} - ${errorText}`);
+          return { success: false, error: `API error: ${response.status} - ${errorText}` };
+        }
+        
+        const data = await response.json();
+        
+        // Actions can't access db directly, need to use mutations
+        // Store historical data through mutation
+        const storeResult: { success: boolean; stored: number } = await ctx.runMutation(api.predictions.storeMarketHistory, {
+          marketId: args.marketId,
+          historyData: data.history || [],
+          source: args.source
+        });
+        
+        return { success: true, stored: storeResult.stored, totalPoints: data.history?.length || 0 };
+      }
+      
+      return { success: false, error: "Source not implemented yet" };
+      
+    } catch (error) {
+      console.error("Error fetching market history:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+});
+
+// Fetch historical data for all featured markets
+export const fetchAllMarketHistory = action({
+  args: {},
+  handler: async (ctx): Promise<{ results: any[]; total: number }> => {
+    "use node";
+    
+    const featuredMarkets = [
+      { id: "551458", source: "polymarket" as const }, // iran-strike-on-israel-in-june
+      { id: "532741", source: "polymarket" as const }, // us-military-action-against-iran-before-july
+      { id: "520927", source: "polymarket" as const }, // iran-nuke-in-2025
+      { id: "521878", source: "polymarket" as const }, // us-x-iran-nuclear-deal-in-2025
+      { id: "519695", source: "polymarket" as const }, // will-iran-close-the-strait-of-hormuz-in-2025
+      { id: "514497", source: "polymarket" as const }, // khamenei-out-as-supreme-leader-of-iran-by-june-30
+      { id: "516717", source: "polymarket" as const }, // nuclear-weapon-detonation-in-2025
+      { id: "516721", source: "polymarket" as const }  // netanyahu-out-in-2025
+    ];
+    
+    const results = [];
+    
+    for (const market of featuredMarkets) {
+      try {
+        const result: any = await ctx.runAction(api.predictions.fetchMarketHistory, {
+          marketId: market.id,
+          source: market.source,
+          days: 7
+        });
+        results.push({ marketId: market.id, ...result });
+        
+        // Small delay between requests to be respectful
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Error fetching history for ${market.id}:`, error);
+        results.push({ marketId: market.id, success: false, error: String(error) });
+      }
+    }
+    
+    return { results, total: results.length };
   },
 });
 
@@ -849,6 +1003,55 @@ export const testAdjacentNewsConnection = action({
   },
 });
 
+// Get featured predictions for homepage
+export const getFeaturedPredictions = query({
+  args: {},
+  handler: async (ctx) => {
+    // List of featured market URLs
+    const featuredUrls = [
+      "https://polymarket.com/event/iran-strike-on-israel-in-june",
+      "https://polymarket.com/event/us-military-action-against-iran-before-july",
+      "https://polymarket.com/event/iran-nuke-in-2025",
+      "https://polymarket.com/event/us-x-iran-nuclear-deal-in-2025",
+      "https://kalshi.com/markets/kxusairanagreement/us-iran-nuclear-deal",
+      "https://polymarket.com/event/will-iran-close-the-strait-of-hormuz-in-2025",
+      "https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-june-30",
+      "https://polymarket.com/event/nuclear-weapon-detonation-in-2025",
+      "https://polymarket.com/event/netanyahu-out-in-2025"
+    ];
+
+    const predictions = [];
+    for (const url of featuredUrls) {
+      // Try to find by exact URL or partial match
+      const prediction = await ctx.db
+        .query("predictions")
+        .filter(q => q.or(
+          q.eq(q.field("sourceUrl"), url),
+          q.eq(q.field("sourceUrl"), url.split("?")[0]) // Without query params
+        ))
+        .first();
+      
+      if (prediction) {
+        // Get historical data for the prediction
+        const history = await ctx.db
+          .query("predictionHistory")
+          .withIndex("by_prediction_time", (q) => q.eq("predictionId", prediction._id))
+          .collect();
+        
+        predictions.push({
+          ...prediction,
+          history: history.map(h => ({
+            timestamp: h.timestamp,
+            probability: h.probability
+          }))
+        });
+      }
+    }
+    
+    return predictions;
+  },
+});
+
 // Clear all predictions and history (admin only)
 export const clearAllPredictions = mutation({
   args: {},
@@ -869,6 +1072,167 @@ export const clearAllPredictions = mutation({
       deletedPredictions: predictions.length,
       deletedHistory: history.length 
     };
+  },
+});
+
+// Fetch real market data from Polymarket to get current prices and market IDs
+export const fetchRealMarketData = action({
+  args: {},
+  handler: async (ctx) => {
+    "use node";
+    
+    const featuredSlugs = [
+      "iran-strike-on-israel-in-june",
+      "us-military-action-against-iran-before-july", 
+      "iran-nuke-in-2025",
+      "us-x-iran-nuclear-deal-in-2025",
+      "will-iran-close-the-strait-of-hormuz-in-2025",
+      "khamenei-out-as-supreme-leader-of-iran-by-june-30",
+      "nuclear-weapon-detonation-in-2025",
+      "netanyahu-out-in-2025"
+    ];
+    
+    const results = [];
+    
+    for (const slug of featuredSlugs) {
+      try {
+        // Fetch market data from Polymarket Gamma API
+        const response = await fetch(`https://gamma-api.polymarket.com/events?slug=${slug}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          
+          if (data && data.length > 0) {
+            const event = data[0];
+            const market = event.markets?.[0];
+            
+            if (market) {
+              results.push({
+                slug,
+                marketId: market.id,
+                title: event.title,
+                description: event.description,
+                currentPrice: market.outcomePrices?.[0] || 0,
+                probability: Math.round((market.outcomePrices?.[0] || 0) * 100),
+                endDate: event.endDate
+              });
+            }
+          }
+        }
+        
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+      } catch (error) {
+        console.error(`Error fetching ${slug}:`, error);
+        results.push({ slug, error: String(error) });
+      }
+    }
+    
+    return { results, total: results.length };
+  },
+});
+
+// Add featured markets manually
+export const addFeaturedMarkets = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const featuredMarkets = [
+      {
+        title: "1000+ deaths due to Israel-Iran conflict in 2025",
+        sourceUrl: "https://www.metaculus.com/questions/31298/1000-deaths-due-to-israel-iran-conflict-in-2025/",
+        category: "israel_relations" as const,
+        source: "metaculus" as const,
+        probability: 45,
+        description: "Will there be 1000 or more deaths due to conflict between Israel and Iran in 2025?"
+      },
+      {
+        title: "Iran strike on Israel in June",
+        sourceUrl: "https://polymarket.com/event/iran-strike-on-israel-in-june",
+        category: "israel_relations" as const,
+        source: "polymarket" as const,
+        probability: 15,
+        description: "Will Iran conduct a military strike on Israel in June 2025?"
+      },
+      {
+        title: "US military action against Iran before July",
+        sourceUrl: "https://polymarket.com/event/us-military-action-against-iran-before-july",
+        category: "military_action" as const,
+        source: "polymarket" as const,
+        probability: 20,
+        description: "Will the US take military action against Iran before July 2025?"
+      },
+      {
+        title: "Iran develops nuclear weapon in 2025",
+        sourceUrl: "https://polymarket.com/event/iran-nuke-in-2025",
+        category: "nuclear_program" as const,
+        source: "polymarket" as const,
+        probability: 25,
+        description: "Will Iran successfully develop a nuclear weapon in 2025?"
+      },
+      {
+        title: "US-Iran nuclear deal in 2025",
+        sourceUrl: "https://polymarket.com/event/us-x-iran-nuclear-deal-in-2025",
+        category: "nuclear_program" as const,
+        source: "polymarket" as const,
+        probability: 35,
+        description: "Will the US and Iran reach a nuclear deal in 2025?"
+      },
+      {
+        title: "US-Iran nuclear agreement",
+        sourceUrl: "https://kalshi.com/markets/kxusairanagreement/us-iran-nuclear-deal",
+        category: "nuclear_program" as const,
+        source: "kalshi" as const,
+        probability: 40,
+        description: "Will the US and Iran sign a nuclear agreement?"
+      },
+      {
+        title: "Iran closes the Strait of Hormuz in 2025",
+        sourceUrl: "https://polymarket.com/event/will-iran-close-the-strait-of-hormuz-in-2025",
+        category: "regional_conflict" as const,
+        source: "polymarket" as const,
+        probability: 10,
+        description: "Will Iran close the Strait of Hormuz in 2025?"
+      },
+      {
+        title: "Khamenei out as Supreme Leader by June 30",
+        sourceUrl: "https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-june-30",
+        category: "regime_stability" as const,
+        source: "polymarket" as const,
+        probability: 15,
+        description: "Will Khamenei no longer be Supreme Leader of Iran by June 30, 2025?"
+      },
+      {
+        title: "Nuclear weapon detonation in 2025",
+        sourceUrl: "https://polymarket.com/event/nuclear-weapon-detonation-in-2025",
+        category: "nuclear_program" as const,
+        source: "polymarket" as const,
+        probability: 5,
+        description: "Will there be a nuclear weapon detonation anywhere in 2025?"
+      },
+      {
+        title: "Netanyahu out in 2025",
+        sourceUrl: "https://polymarket.com/event/netanyahu-out-in-2025",
+        category: "israel_relations" as const,
+        source: "polymarket" as const,
+        probability: 45,
+        description: "Will Netanyahu no longer be Prime Minister of Israel in 2025?"
+      }
+    ];
+
+    for (const market of featuredMarkets) {
+      await ctx.runMutation(api.predictions.upsert, {
+        category: market.category,
+        title: market.title,
+        description: market.description,
+        probability: market.probability,
+        source: market.source,
+        sourceUrl: market.sourceUrl,
+        resolveDate: new Date("2025-12-31").getTime()
+      });
+    }
+
+    return { added: featuredMarkets.length };
   },
 });
 

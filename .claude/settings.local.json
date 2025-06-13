@@ -8,7 +8,10 @@
       "WebFetch(domain:docs.adj.news)",
       "WebFetch(domain:api.data.adj.news)",
       "WebFetch(domain:adj.news)",
-      "Bash(pnpx convex run:*)"
+      "Bash(pnpx convex run:*)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "Bash(node:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

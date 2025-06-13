@@ -1,43 +1,63 @@
-# Claude Notes - Iran Dashboard Refocus
+# Claude Notes - Iran Dashboard Implementation
 
-## Current Session: Transitioning from US Democratic Health to Iran Geopolitical Dashboard
+## Session: Iran Geopolitical Dashboard with Historical Data Collection
 
-**Note for future sessions**: If starting from a fresh Claude Code session, please review the full transition from US Democratic Health Dashboard to Iran Geopolitical Dashboard.
+**Dashboard Successfully Transitioned**: From US Democratic Health to Iran Geopolitical Risk tracking.
 
-### Major Changes Completed
-1. ✅ Updated CLAUDE.md project description to Iran Geopolitical Dashboard
-2. ✅ Changed schema categories from US democratic topics to Iran-focused categories:
-   - military_action (Military strikes/conflicts)
-   - nuclear_program (Nuclear development)
-   - sanctions (Economic sanctions)
-   - regional_conflict (Proxy conflicts)
-   - israel_relations (Iran-Israel tensions)
-   - protests (Internal unrest)
-   - regime_stability (Government stability)
-3. ✅ Updated categorization keywords for Iran focus
-4. ✅ Fixed Adjacent News API endpoint and added API key (38314d45-7899-4f51-a860-f6b898707a70)
-5. ✅ Fixed Polymarket GraphQL to REST API
-6. ✅ Updated all search terms to Iran-focused keywords
-7. ✅ Renamed getDemocraticHealthScore to getGeopoliticalRiskScore
-8. ✅ Updated UI text, branding, and category displays
-9. ✅ Added subscription link to nathanpmyoung.substack.com
+### Features Implemented
+1. ✅ Complete schema migration to Iran-focused categories
+2. ✅ Iran-specific prediction market integration
+3. ✅ Historical data collection system
+4. ✅ Featured market visualization with charts
+5. ✅ Real-time market data fetching
+6. ✅ Admin approval system for predictions
 
-### Schema Migration Issue
-- Changed category schema significantly
-- Existing predictions in database use old categories
-- Need to clear database through Convex dashboard due to schema incompatibility
+### Iran Categories
+- military_action (Military strikes/conflicts)
+- nuclear_program (Nuclear development) 
+- sanctions (Economic sanctions)
+- regional_conflict (Proxy conflicts)
+- israel_relations (Iran-Israel tensions)
+- protests (Internal unrest)
+- regime_stability (Government stability)
 
-### API Integration Updates
-- Adjacent News: Using correct endpoint with API key
-- Manifold: Updated search terms for Iran markets
-- Metaculus: Updated search terms for Iran questions
-- Polymarket: Fixed from GraphQL to REST API, filtering for Iran markets
+### Featured Markets Added (10 total)
+1. **NEW**: 1000+ deaths due to Israel-Iran conflict in 2025 (Metaculus)
+2. Iran strike on Israel in June (Polymarket)
+3. US military action against Iran before July (Polymarket)
+4. Iran develops nuclear weapon in 2025 (Polymarket)
+5. US-Iran nuclear deal in 2025 (Polymarket)
+6. US-Iran nuclear agreement (Kalshi)
+7. Iran closes Strait of Hormuz in 2025 (Polymarket)
+8. Khamenei out as Supreme Leader by June 30 (Polymarket)
+9. Nuclear weapon detonation in 2025 (Polymarket)
+10. Netanyahu out in 2025 (Polymarket)
+
+### Historical Data System
+- ✅ Implemented fetchMarketHistory action for individual markets
+- ✅ Created fetchAllMarketHistory for batch processing
+- ✅ Fixed Polymarket API integration (7-day max interval)
+- ✅ Added storeMarketHistory mutation for database persistence
+- ✅ Real market ID mapping (slug -> numeric ID)
+
+### API Integrations Working
+- ✅ Adjacent News API with key (38314d45-7899-4f51-a860-f6b898707a70)
+- ✅ Polymarket REST API with historical data
+- ✅ Metaculus questions API
+- ✅ Manifold Markets search
+
+### UI Features Complete
+- ✅ 2-wide grid layout for prediction market graphs
+- ✅ Recharts integration for historical visualization
+- ✅ Responsive design for mobile/tablet/desktop
+- ✅ Attribution to Goodheart Labs and Fullstack Vibe Coding
+- ✅ Subscription links integrated
+
+### Technical Achievements
+- ✅ Fixed TypeScript compilation errors
+- ✅ Resolved Polymarket API 400 errors (time interval limits)
+- ✅ Database schema migration without data loss
+- ✅ Real-time chart updates with sample data fallback
 
 ### Commits Made This Session
-- (pending): refocus: transition dashboard from US democratic health to Iran geopolitical tracking
-
-### Next Steps
-1. Clear database through Convex dashboard
-2. Restart servers and fetch Iran-focused predictions
-3. Test all API integrations
-4. Verify UI displays correct Iran content
+- feat: implement comprehensive Iran geopolitical dashboard with historical data collection
