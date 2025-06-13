@@ -13,7 +13,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(node:*)",
       "Bash(find:*)",
-      "Bash(pnpm install:*)"
+      "Bash(pnpm install:*)",
+      "Bash(convex env:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

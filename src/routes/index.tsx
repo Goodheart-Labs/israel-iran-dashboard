@@ -99,6 +99,11 @@ function HomePage() {
                   probability: h.probability
                 }))
               : [];
+          
+          // Get the most recent probability from chart data
+          const currentProbability = chartData.length > 0 
+            ? chartData[chartData.length - 1].probability 
+            : prediction.probability;
 
           return (
             <div key={prediction._id} className="card bg-base-100 shadow-xl">
@@ -159,20 +164,20 @@ function HomePage() {
                 {/* Current probability display */}
                 <div className="flex items-center justify-between mt-4">
                   <div className="text-center">
-                    <div className="text-3xl font-bold text-primary">{prediction.probability}%</div>
+                    <div className="text-3xl font-bold text-primary">{currentProbability}%</div>
                     <div className="text-sm opacity-70">Current Probability</div>
                   </div>
                   {prediction.previousProbability && (
                     <div className="text-right">
-                      {prediction.probability > prediction.previousProbability ? (
+                      {currentProbability > prediction.previousProbability ? (
                         <span className="text-success flex items-center">
                           <TrendingUp className="w-4 h-4 mr-1" />
-                          +{prediction.probability - prediction.previousProbability}%
+                          +{currentProbability - prediction.previousProbability}%
                         </span>
                       ) : (
                         <span className="text-error flex items-center">
                           <TrendingDown className="w-4 h-4 mr-1" />
-                          -{prediction.previousProbability - prediction.probability}%
+                          -{prediction.previousProbability - currentProbability}%
                         </span>
                       )}
                     </div>
