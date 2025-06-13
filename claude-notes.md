@@ -111,6 +111,54 @@
 - Simpler architecture
 - No background processing needed
 
+### Goodheart Labs Risk Dashboard Analysis
+
+**Repository**: https://github.com/Goodheart-Labs/risk-dashboard
+
+**Purpose**: H5N1 Bird Flu Pandemic Risk Assessment Dashboard
+
+**Risk Categories Tracked**:
+1. **H5N1 Pandemic Risk**: Probability that H5N1 bird flu becomes as disruptive as COVID-19
+2. **Case Thresholds**: Likelihood of 10,000+ US bird flu cases by 2026
+3. **Government Response**: CDC travel advisories, state emergency declarations
+
+**Data Sources & Prediction Markets**:
+- **Metaculus**: Community forecasting on pandemic scenarios
+- **Kalshi**: Real-money markets on case counts and CDC recommendations
+- **Polymarket**: State emergency declarations
+- **CDC**: Official case data and health metrics
+
+**Risk Calculation Method**:
+- Uses conditional probability weighting: `P(pandemic) = P(pandemic | 10k cases) × P(10k cases)`
+- Subjective weighting of different prediction sources
+- Creator acknowledges personal judgment in risk assessment
+- Open to future crowdsourcing refinements
+
+**Technical Implementation**:
+- **Next.js + TypeScript** (similar to our stack)
+- **Recharts** for data visualization (same as us)
+- **Playwright + Puppeteer** for web scraping
+- **No Database Storage** - fresh API calls only
+- **HTTP Caching** for performance (1-hour cache)
+
+**Key Differences from Our Iran Dashboard**:
+1. **Single Risk Focus**: Only H5N1 pandemic vs our multiple Iran categories
+2. **No Historical Storage**: Real-time API calls vs our persistent database
+3. **Simpler Risk Model**: Binary pandemic/no-pandemic vs complex geopolitical scenarios
+4. **Health Focus**: Medical/epidemiological vs geopolitical/military risks
+
+**Insights for Our Iran Dashboard**:
+1. **Conditional Probability Approach**: Could apply similar weighting for geopolitical scenarios
+2. **Multiple Source Aggregation**: Their multi-platform approach validates our strategy
+3. **Subjective Weighting**: Transparency about judgment calls in risk assessment
+4. **Visual Simplicity**: Clean, focused presentation of complex risk data
+5. **Real-time Updates**: Balance between fresh data and performance
+
+**Architecture Comparison**:
+- **Their Approach**: Simple, no storage, always fresh data, HTTP caching
+- **Our Approach**: Complex, persistent storage, historical accumulation, background processing
+- **Trade-offs**: Simplicity vs reliability, fresh data vs performance
+
 ### Commits Made This Session
 - feat: implement comprehensive Iran geopolitical dashboard with historical data collection
 - feat: fix historical data visualization with synthetic data generation
