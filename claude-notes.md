@@ -159,7 +159,45 @@
 - **Our Approach**: Complex, persistent storage, historical accumulation, background processing
 - **Trade-offs**: Simplicity vs reliability, fresh data vs performance
 
+### Environment Variables Configuration
+
+**Required Environment Variables:**
+- `CONVEX_DEPLOYMENT`: Convex deployment name (dev or prod)
+- `VITE_CONVEX_URL`: Convex backend URL
+- `ADJACENT_NEWS_API_KEY`: Adjacent News API key (38314d45-7899-4f51-a860-f6b898707a70)
+
+**Optional Environment Variables:**
+- `POLYMARKET_API_URL`: https://gamma-api.polymarket.com
+- `POLYMARKET_CLOB_API_URL`: https://clob.polymarket.com
+- `METACULUS_API_URL`: https://www.metaculus.com/api2
+- `MANIFOLD_API_URL`: https://api.manifold.markets/v0
+
+**For Vercel Deployment:**
+- Add `CONVEX_DEPLOY_KEY` (production deployment key from Convex)
+- Add `VITE_CONVEX_URL` (production Convex URL)
+- Add `ADJACENT_NEWS_API_KEY` for API access
+
+### Project Owner Information
+**Creator:** Nathan Young (@NathanPMYoung)
+**Website:** NathanPMYoung.com
+**Newsletter:** NathanPMYoung.substack.com
+**Twitter:** @NathanPMYoung
+
+### Key Technical Decisions
+- **No Synthetic Data**: Only real market values (per Nathan's strong preference)
+- **H5N1 Pattern**: Uses their approach for Polymarket data fetching
+- **Clerk Removed**: Authentication disabled for easy deployment
+- **Database Strategy**: Hybrid - stored historical data + fresh API calls
+
+### Security Notes
+- API keys were hardcoded in predictions.ts (lines 785, 865, 1388, 1482)
+- Need to replace with environment variable usage
+- Ensure API keys are not exposed in client-side bundles
+
 ### Commits Made This Session
 - feat: implement comprehensive Iran geopolitical dashboard with historical data collection
 - feat: fix historical data visualization with synthetic data generation
 - feat: deactivate Clerk authentication for easy Vercel deployment
+- feat: update page title, favicon, and meta tags
+- fix: display most recent data point as current probability
+- feat: remove central question section from dashboard

@@ -782,7 +782,7 @@ export const fetchAdjacentNewsMarkets = action({
       const response = await fetch("https://api.data.adj.news/api/markets?limit=100", {
         headers: {
           "Content-Type": "application/json",
-          "Authorization": `Bearer 38314d45-7899-4f51-a860-f6b898707a70`
+          "Authorization": `Bearer ${process.env.ADJACENT_NEWS_API_KEY}`
         }
       });
       
@@ -862,7 +862,7 @@ export const fetchNewsBasedMarkets = action({
           {
             headers: {
               "Content-Type": "application/json",
-              "Authorization": `Bearer 38314d45-7899-4f51-a860-f6b898707a70`
+              "Authorization": `Bearer ${process.env.ADJACENT_NEWS_API_KEY}`
             }
           }
         );
@@ -1385,7 +1385,7 @@ export const updateRealMarketProbabilities = action({
       // Fetch Iran-related markets from Adjacent News
       const response = await fetch("https://api.data.adj.news/api/search/query?q=Iran", {
         headers: {
-          "Authorization": "Bearer 38314d45-7899-4f51-a860-f6b898707a70"
+          "Authorization": `Bearer ${process.env.ADJACENT_NEWS_API_KEY}`
         }
       });
       
@@ -1479,7 +1479,7 @@ export const fetchRealHistoricalData = action({
           `https://api.data.adj.news/api/trade/price-history?market_id=${mapping.marketId}&interval=1h`,
           {
             headers: {
-              "Authorization": "Bearer 38314d45-7899-4f51-a860-f6b898707a70"
+              "Authorization": `Bearer ${process.env.ADJACENT_NEWS_API_KEY}`
             }
           }
         );
