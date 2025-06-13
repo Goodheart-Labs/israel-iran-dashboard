@@ -41,6 +41,7 @@ export default defineSchema({
     ),
     title: v.string(),
     description: v.optional(v.string()),
+    clarificationText: v.optional(v.string()), // Brief clarification text below title
     probability: v.number(), // 0-100
     previousProbability: v.optional(v.number()), // For trend calculation
     source: v.union(

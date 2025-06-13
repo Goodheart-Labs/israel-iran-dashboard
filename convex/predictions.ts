@@ -1917,3 +1917,17 @@ export const seedData = mutation({
     return { inserted: samplePredictions.length };
   },
 });
+
+// Admin function to update clarification text
+export const updateClarificationText = mutation({
+  args: {
+    predictionId: v.id("predictions"),
+    clarificationText: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.predictionId, {
+      clarificationText: args.clarificationText
+    });
+    return { success: true };
+  },
+});

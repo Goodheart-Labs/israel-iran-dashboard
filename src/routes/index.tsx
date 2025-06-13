@@ -145,6 +145,11 @@ function HomePage() {
                   </div>
                 </div>
                 
+                {/* Clarification text */}
+                {prediction.clarificationText && (
+                  <p className="text-sm opacity-70 mb-4">{prediction.clarificationText}</p>
+                )}
+                
                 {/* Chart */}
                 <div className="bg-base-200 rounded-lg p-4" style={{ height: '300px' }}>
                   {chartData.length > 0 ? (
@@ -227,12 +232,9 @@ function HomePage() {
       </div>
 
       {/* Support Link */}
-      <div className="not-prose mt-8 text-center pb-8">
-        <p className="text-lg mb-2">
+      <div className="not-prose mt-8 text-center pb-4">
+        <p className="text-lg">
           Built by <a href="https://goodheartlabs.com" target="_blank" rel="noopener noreferrer" className="link link-primary">Goodheart Labs</a> to support similar projects, please purchase a subscription <a href="https://nathanpmyoung.substack.com" target="_blank" rel="noopener noreferrer" className="link link-primary">here</a>
-        </p>
-        <p className="text-sm opacity-70">
-          Vibecoded using <a href="https://github.com/Crazytieguy/fullstack-vibe-coding-template" target="_blank" rel="noopener noreferrer" className="link link-primary">Fullstack Vibe Coding</a> template © 2025 Fullstack Vibe Coding
         </p>
       </div>
     </div>
