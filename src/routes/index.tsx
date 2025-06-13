@@ -8,21 +8,16 @@ import { useAction } from "convex/react";
 import { useEffect, useState } from "react";
 
 const featuredPredictionsQueryOptions = convexQuery(api.predictions.getFeaturedPredictions, {});
-const riskScoreQueryOptions = convexQuery(api.predictions.getGeopoliticalRiskScore, {});
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
-    await Promise.all([
-      queryClient.ensureQueryData(featuredPredictionsQueryOptions),
-      queryClient.ensureQueryData(riskScoreQueryOptions),
-    ]);
+    await queryClient.ensureQueryData(featuredPredictionsQueryOptions);
   },
   component: HomePage,
 });
 
 function HomePage() {
   const { data: featuredPredictions } = useSuspenseQuery(featuredPredictionsQueryOptions);
-  const { data: riskScore } = useSuspenseQuery(riskScoreQueryOptions);
   const getPolymarketHistoricalData = useAction(api.predictions.getPolymarketHistoricalData);
   const [historicalData, setHistoricalData] = useState<Record<string, any[]>>({});
   const [loadingHistorical, setLoadingHistorical] = useState(true);
@@ -72,19 +67,6 @@ function HomePage() {
         </p>
       </div>
 
-      {/* Overall Health Score */}
-      <div className="not-prose mb-8">
-        <div className="card bg-base-200 shadow-xl">
-          <div className="card-body text-center">
-            <div className="stat">
-              <div className="stat-value text-4xl">Current central question undefined</div>
-            </div>
-            <div className="text-xs opacity-50 mt-2">
-              Last updated: {new Date(riskScore.lastUpdated).toLocaleString()}
-            </div>
-          </div>
-        </div>
-      </div>
 
       {/* Featured Prediction Markets Grid */}
       <div className="not-prose grid grid-cols-1 lg:grid-cols-2 gap-6">
