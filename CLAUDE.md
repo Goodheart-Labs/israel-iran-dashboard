@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-- **US Democratic Health Dashboard**: A dashboard tracking prediction markets and forecasts related to democratic health indicators
+- **Iran Geopolitical Dashboard**: A dashboard tracking prediction markets and forecasts related to Iran's geopolitical events and regional dynamics
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
 - Development: Use `mcp__shell-commands__launch-dev-all` to start servers, then monitor output streams for validation
 - Import alias: `@/` maps to `src/` directory

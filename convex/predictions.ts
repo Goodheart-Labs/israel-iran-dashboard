@@ -98,8 +98,8 @@ export const getCategoryTimeSeries = query({
   },
 });
 
-// Calculate weighted democratic health score (following H5N1 pattern)
-export const getDemocraticHealthScore = query({
+// Calculate weighted geopolitical risk score
+export const getGeopoliticalRiskScore = query({
   args: {},
   handler: async (ctx) => {
     const predictions = await ctx.db
@@ -108,15 +108,15 @@ export const getDemocraticHealthScore = query({
       .filter(q => q.eq(q.field("isApproved"), true))
       .collect();
     
-    // Category weights (similar to H5N1's weighted approach)
+    // Category weights for Iran geopolitical risk
     const categoryWeights = {
-      elections: 0.25,        // Core democratic process
-      democratic_norms: 0.20, // Institutional health
-      voting_rights: 0.15,    // Access to democracy
-      civil_liberties: 0.15,  // Individual freedoms
-      press_freedom: 0.10,    // Information environment
-      stability: 0.10,        // Overall indicators
-      riots: 0.05,           // Violence (inverted - lower is better)
+      military_action: 0.25,     // Direct conflict risk
+      nuclear_program: 0.20,     // Nuclear escalation risk
+      israel_relations: 0.15,    // Regional war risk
+      regional_conflict: 0.15,   // Proxy conflict risk
+      sanctions: 0.10,           // Economic pressure
+      protests: 0.10,            // Internal instability
+      regime_stability: 0.05,    // Regime change (inverted - higher stability = lower risk)
     };
     
     // Calculate weighted scores by category
@@ -129,8 +129,8 @@ export const getDemocraticHealthScore = query({
       if (categoryPredictions.length > 0) {
         let categoryScore = categoryPredictions.reduce((sum, p) => sum + p.probability, 0) / categoryPredictions.length;
         
-        // Invert riots score (civil unrest is bad for democracy)
-        if (category === 'riots') {
+        // Invert regime_stability score (higher stability = lower risk)
+        if (category === 'regime_stability') {
           categoryScore = 100 - categoryScore;
         }
         
@@ -267,15 +267,27 @@ export const upsert = mutation({
 function categorizePrediction(title: string, description: string = ""): typeof predictionCategories[number] | null {
   const text = (title + " " + description).toLowerCase();
   
-  if (text.match(/election|electoral|vote|voting|ballot|polls/)) {
-    if (text.match(/suppress|restriction|access|rights/)) return "voting_rights";
-    return "elections";
+  if (text.match(/iran.*military|military.*iran|strike|attack|invasion|war|conflict/)) {
+    return "military_action";
   }
-  if (text.match(/riot|violence|unrest|protest|civil disorder/)) return "riots";
-  if (text.match(/press|journalism|media|reporter|news/)) return "press_freedom";
-  if (text.match(/civil liberties|civil rights|freedom|privacy|surveillance/)) return "civil_liberties";
-  if (text.match(/democratic norms|peaceful transfer|coup|military/)) return "democratic_norms";
-  if (text.match(/democracy index|democratic|stability|institution/)) return "stability";
+  if (text.match(/iran.*nuclear|nuclear.*iran|enrichment|uranium|iaea|weapons/)) {
+    return "nuclear_program";
+  }
+  if (text.match(/iran.*sanction|sanction.*iran|embargo|economic pressure/)) {
+    return "sanctions";
+  }
+  if (text.match(/hezbollah|hamas|proxy|syria|yemen|houthis|lebanon|gaza/)) {
+    return "regional_conflict";
+  }
+  if (text.match(/iran.*israel|israel.*iran|idf|mossad|normalization/)) {
+    return "israel_relations";
+  }
+  if (text.match(/iran.*protest|protest.*iran|uprising|demonstration|mahsa amini/)) {
+    return "protests";
+  }
+  if (text.match(/iran.*regime|regime.*iran|ayatollah|government|stability|collapse/)) {
+    return "regime_stability";
+  }
   
   return null;
 }
@@ -287,13 +299,13 @@ export const fetchManifoldMarkets = action({
     "use node";
     
     const searchTerms = [
-      "US democracy",
-      "US election",
-      "voting rights",
-      "press freedom",
-      "civil liberties",
-      "political violence",
-      "democratic institutions"
+      "Iran military",
+      "Iran nuclear",
+      "Iran sanctions",
+      "Iran Israel",
+      "Hezbollah",
+      "Iran protests",
+      "Iran regime"
     ];
     
     const allMarkets = [];
@@ -348,11 +360,11 @@ export const fetchMetaculusQuestions = action({
     "use node";
     
     const searchTerms = [
-      "US democracy",
-      "US election",
-      "voting rights", 
-      "press freedom",
-      "civil liberties"
+      "Iran military",
+      "Iran nuclear",
+      "Iran sanctions", 
+      "Iran Israel",
+      "Iran regime"
     ];
     
     const allQuestions = [];
@@ -409,55 +421,32 @@ export const fetchPolymarketMarkets = action({
     "use node";
     
     try {
-      // Polymarket GraphQL endpoint
-      const response = await fetch("https://gamma-api.polymarket.com/query", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: `
-            query GetMarkets {
-              markets(where: {
-                active: true,
-                closed: false,
-                question_contains: "US"
-              }, first: 100) {
-                id
-                question
-                description
-                outcomes
-                outcomePrices
-                volume
-                liquidity
-                endDate
-              }
-            }
-          `,
-        }),
-      });
+      // Polymarket uses REST API, not GraphQL
+      const response = await fetch("https://gamma-api.polymarket.com/markets?active=true&closed=false&limit=100");
       
-      const data = await response.json();
-      const markets = data.data?.markets || [];
+      const markets = await response.json();
       
       // Process relevant markets
       let saved = 0;
-      for (const market of markets) {
-        const category = categorizePrediction(market.question, market.description || "");
-        if (category && market.outcomePrices?.[0]) {
-          try {
-            await ctx.runMutation(api.predictions.upsert, {
-              category,
-              title: market.question,
-              description: market.description?.slice(0, 500),
-              probability: Math.round(parseFloat(market.outcomePrices[0]) * 100),
-              source: "polymarket",
-              sourceUrl: `https://polymarket.com/event/${market.id}`,
-              resolveDate: market.endDate ? new Date(market.endDate).getTime() : undefined,
-            });
-            saved++;
-          } catch (error) {
-            console.error("Error saving Polymarket market:", error);
+      for (const market of markets || []) {
+        // Filter for Iran-related markets
+        if (market.question && market.question.toLowerCase().includes('iran')) {
+          const category = categorizePrediction(market.question, market.description || "");
+          if (category && market.outcomePrices && market.outcomePrices.length > 0) {
+            try {
+              await ctx.runMutation(api.predictions.upsert, {
+                category,
+                title: market.question,
+                description: market.description?.slice(0, 500),
+                probability: Math.round(parseFloat(market.outcomePrices[0]) * 100),
+                source: "polymarket",
+                sourceUrl: `https://polymarket.com/market/${market.slug || market.id}`,
+                resolveDate: market.endDate ? new Date(market.endDate).getTime() : undefined,
+              });
+              saved++;
+            } catch (error) {
+              console.error("Error saving Polymarket market:", error);
+            }
           }
         }
       }
@@ -477,12 +466,11 @@ export const fetchAdjacentNewsMarkets = action({
     "use node";
     
     try {
-      // Note: API key would be set in Convex environment variables
-      // For now, fetching public data without authentication
+      // Use the correct Adjacent News endpoint with API key
       const response = await fetch("https://api.data.adj.news/api/markets?limit=100", {
         headers: {
           "Content-Type": "application/json",
-          // Add API key when available: "Authorization": `Bearer ${process.env.ADJACENT_NEWS_API_KEY}`
+          "Authorization": `Bearer 38314d45-7899-4f51-a860-f6b898707a70`
         }
       });
       
@@ -541,28 +529,28 @@ export const fetchNewsBasedMarkets = action({
   handler: async (ctx) => {
     "use node";
     
-    const democraticHealthKeywords = [
-      "US democracy election integrity",
-      "voting rights legislation America", 
-      "press freedom media censorship US",
-      "civil liberties surveillance United States",
-      "political violence riots protests America",
-      "democratic institutions crisis US",
-      "peaceful transfer power election",
-      "constitutional crisis democracy"
+    const iranKeywords = [
+      "Iran military strike attack",
+      "Iran nuclear enrichment uranium", 
+      "Iran sanctions economic pressure",
+      "Iran Israel conflict tension",
+      "Hezbollah Hamas proxy forces",
+      "Iran protests uprising demonstrations",
+      "Iran regime ayatollah stability",
+      "IAEA Iran nuclear deal"
     ];
     
     let savedFromNews = 0;
     
     // Try Adjacent News semantic search first
     try {
-      for (const searchTerm of democraticHealthKeywords) {
+      for (const searchTerm of iranKeywords) {
         const response = await fetch(
           `https://api.data.adj.news/api/search?q=${encodeURIComponent(searchTerm)}&limit=20`,
           {
             headers: {
               "Content-Type": "application/json",
-              // Add API key when available: "Authorization": `Bearer ${process.env.ADJACENT_NEWS_API_KEY}`
+              "Authorization": `Bearer 38314d45-7899-4f51-a860-f6b898707a70`
             }
           }
         );
@@ -610,7 +598,7 @@ export const fetchNewsBasedMarkets = action({
     if (savedFromNews === 0) {
       console.log("Falling back to direct platform searches...");
       
-      for (const keyword of ["election fraud", "voting rights", "press freedom", "civil liberties"]) {
+      for (const keyword of ["Iran attack", "Iran nuclear", "Iran sanctions", "Iran protests"]) {
         try {
           // Search Manifold as fallback
           const manifoldResponse = await fetch(
@@ -649,7 +637,7 @@ export const fetchNewsBasedMarkets = action({
       }
     }
     
-    return { savedFromNews, searchedKeywords: democraticHealthKeywords.length };
+    return { savedFromNews, searchedKeywords: iranKeywords.length };
   },
 });
 
@@ -677,7 +665,9 @@ export const fetchAllPredictions = action({
       manifold: results[0].status === "fulfilled" ? results[0].value : { fetched: 0, saved: 0, error: results[0].reason },
       metaculus: results[1].status === "fulfilled" ? results[1].value : { fetched: 0, saved: 0, error: results[1].reason },
       polymarket: results[2].status === "fulfilled" ? results[2].value : { fetched: 0, saved: 0, error: results[2].reason },
-      adjacentNews: results[3].status === "fulfilled" ? results[3].value : { savedFromAdjacent: 0, totalFetched: 0, error: results[3].reason },
+      adjacentNews: results[3].status === "fulfilled" 
+        ? { ...results[3].value, totalFetched: results[3].value.totalFetched || 0 }
+        : { savedFromAdjacent: 0, totalFetched: 0, error: results[3].reason },
       newsBased: results[4].status === "fulfilled" ? results[4].value : { savedFromNews: 0, searchedKeywords: 0, error: results[4].reason },
     };
     
@@ -859,70 +849,93 @@ export const testAdjacentNewsConnection = action({
   },
 });
 
+// Clear all predictions and history (admin only)
+export const clearAllPredictions = mutation({
+  args: {},
+  handler: async (ctx) => {
+    // Clear all predictions
+    const predictions = await ctx.db.query("predictions").collect();
+    for (const prediction of predictions) {
+      await ctx.db.delete(prediction._id);
+    }
+    
+    // Clear all history
+    const history = await ctx.db.query("predictionHistory").collect();
+    for (const historyItem of history) {
+      await ctx.db.delete(historyItem._id);
+    }
+    
+    return { 
+      deletedPredictions: predictions.length,
+      deletedHistory: history.length 
+    };
+  },
+});
+
 // Seed data for development
 export const seedData = mutation({
   args: {},
   handler: async (ctx) => {
     const samplePredictions = [
       {
-        category: "elections" as const,
-        title: "2024 Presidential Election Will Be Certified Without Major Disruption",
-        description: "The 2024 US presidential election results will be certified by Congress without violence or significant procedural delays",
-        probability: 75,
+        category: "military_action" as const,
+        title: "Direct Military Confrontation Between Iran and Israel in 2025",
+        description: "Iran and Israel will engage in direct military conflict involving airstrikes or missile attacks",
+        probability: 35,
         source: "metaculus" as const,
         sourceUrl: "https://www.metaculus.com/questions/example",
-        resolveDate: new Date("2025-01-20").getTime(),
-      },
-      {
-        category: "riots" as const,
-        title: "Major Civil Unrest in US City in 2025",
-        description: "At least one US city will experience riots lasting 3+ days with National Guard deployment",
-        probability: 35,
-        source: "kalshi" as const,
-        sourceUrl: "https://kalshi.com/markets/example",
         resolveDate: new Date("2025-12-31").getTime(),
       },
       {
-        category: "voting_rights" as const,
-        title: "Voting Rights Act Challenge at Supreme Court",
-        description: "Supreme Court will hear a major case challenging key provisions of voting rights legislation",
-        probability: 60,
-        source: "polymarket" as const,
-        sourceUrl: "https://polymarket.com/event/example",
+        category: "nuclear_program" as const,
+        title: "Iran Reaches 90% Uranium Enrichment by Q2 2025",
+        description: "IAEA will confirm Iran has enriched uranium to weapons-grade 90% purity",
+        probability: 45,
+        source: "kalshi" as const,
+        sourceUrl: "https://kalshi.com/markets/example",
         resolveDate: new Date("2025-06-30").getTime(),
       },
       {
-        category: "press_freedom" as const,
-        title: "Major News Outlet Faces Federal Investigation",
-        description: "A top 10 US news organization will be investigated for national security reporting",
-        probability: 25,
+        category: "sanctions" as const,
+        title: "New UN Sanctions on Iran in 2025",
+        description: "UN Security Council will pass new sanctions against Iran's nuclear or military programs",
+        probability: 60,
+        source: "polymarket" as const,
+        sourceUrl: "https://polymarket.com/event/example",
+        resolveDate: new Date("2025-12-31").getTime(),
+      },
+      {
+        category: "regional_conflict" as const,
+        title: "Major Hezbollah-Israel Escalation in 2025",
+        description: "Hezbollah and Israel will engage in conflict lasting more than 7 days",
+        probability: 40,
         source: "manifold" as const,
         sourceUrl: "https://manifold.markets/example",
         resolveDate: new Date("2025-12-31").getTime(),
       },
       {
-        category: "civil_liberties" as const,
-        title: "New Surveillance Legislation Passes Congress",
-        description: "Congress will pass legislation expanding government surveillance capabilities",
-        probability: 45,
+        category: "israel_relations" as const,
+        title: "Iran-Israel Proxy Conflict Expands to New Country",
+        description: "Iranian proxies will engage Israeli forces in a country where they haven't previously fought",
+        probability: 55,
         source: "predictit" as const,
         sourceUrl: "https://www.predictit.org/markets/example",
         resolveDate: new Date("2025-12-31").getTime(),
       },
       {
-        category: "democratic_norms" as const,
-        title: "Peaceful Transfer of Power in 2025",
-        description: "The 2024 election winner will take office without military intervention or constitutional crisis",
-        probability: 92,
+        category: "protests" as const,
+        title: "Major Anti-Government Protests in Iran in 2025",
+        description: "Iran will see nationwide protests lasting more than 30 days",
+        probability: 30,
         source: "metaculus" as const,
         sourceUrl: "https://www.metaculus.com/questions/example2",
-        resolveDate: new Date("2025-01-20").getTime(),
+        resolveDate: new Date("2025-12-31").getTime(),
       },
       {
-        category: "stability" as const,
-        title: "US Democracy Index Score Remains Above 7.0",
-        description: "The Economist's Democracy Index will rate the US above 7.0 (flawed democracy threshold)",
-        probability: 68,
+        category: "regime_stability" as const,
+        title: "Iranian Regime Remains in Power Through 2025",
+        description: "The current Iranian government system will remain in control without major changes",
+        probability: 85,
         source: "other" as const,
         sourceUrl: "https://example.com",
         resolveDate: new Date("2025-12-31").getTime(),

@@ -1,77 +1,77 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { TrendingUp, TrendingDown, AlertTriangle, Shield, Vote, Radio, Users, Scale, FileText } from "lucide-react";
+import { TrendingUp, TrendingDown, AlertTriangle, Shield, Bomb, RadioTower, Users, Swords, FileText, Atom, DollarSign } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 
 const predictionsQueryOptions = convexQuery(api.predictions.getGroupedByCategory, {});
-const healthScoreQueryOptions = convexQuery(api.predictions.getDemocraticHealthScore, {});
+const riskScoreQueryOptions = convexQuery(api.predictions.getGeopoliticalRiskScore, {});
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
     await Promise.all([
       queryClient.ensureQueryData(predictionsQueryOptions),
-      queryClient.ensureQueryData(healthScoreQueryOptions),
+      queryClient.ensureQueryData(riskScoreQueryOptions),
     ]);
   },
   component: HomePage,
 });
 
 const categoryConfig = {
-  elections: {
-    label: "Free & Fair Elections",
-    icon: Vote,
-    color: "primary",
-    description: "Electoral integrity and democratic processes"
-  },
-  riots: {
-    label: "Civil Unrest",
-    icon: AlertTriangle,
+  military_action: {
+    label: "Military Action",
+    icon: Bomb,
     color: "error",
-    description: "Riots and political violence"
+    description: "Direct military conflict and strikes"
   },
-  voting_rights: {
-    label: "Voting Rights",
-    icon: Shield,
+  nuclear_program: {
+    label: "Nuclear Program",
+    icon: Atom,
     color: "warning",
-    description: "Access to voting and suppression"
+    description: "Nuclear enrichment and weapons development"
   },
-  press_freedom: {
-    label: "Press Freedom",
-    icon: Radio,
+  sanctions: {
+    label: "Sanctions",
+    icon: DollarSign,
     color: "info",
-    description: "Journalism and media independence"
+    description: "Economic sanctions and embargoes"
   },
-  civil_liberties: {
-    label: "Civil Liberties",
+  regional_conflict: {
+    label: "Regional Conflict",
+    icon: Swords,
+    color: "secondary",
+    description: "Proxy conflicts and regional tensions"
+  },
+  israel_relations: {
+    label: "Israel Relations",
+    icon: Shield,
+    color: "primary",
+    description: "Iran-Israel tensions and confrontations"
+  },
+  protests: {
+    label: "Internal Protests",
     icon: Users,
     color: "success",
-    description: "Individual rights and freedoms"
+    description: "Anti-government protests and unrest"
   },
-  democratic_norms: {
-    label: "Democratic Norms",
-    icon: Scale,
-    color: "secondary",
-    description: "Institutional norms and practices"
-  },
-  stability: {
-    label: "Stability Metrics",
+  regime_stability: {
+    label: "Regime Stability",
     icon: FileText,
     color: "accent",
-    description: "Overall democratic health indicators"
+    description: "Government stability and continuity"
   }
 } as const;
 
 function HomePage() {
   const { data: predictionsByCategory } = useSuspenseQuery(predictionsQueryOptions);
-  const { data: healthScore } = useSuspenseQuery(healthScoreQueryOptions);
+  const { data: riskScore } = useSuspenseQuery(riskScoreQueryOptions);
 
   return (
     <div className="max-w-7xl mx-auto">
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4">US Democratic Health Dashboard</h1>
+        <h1 className="text-4xl font-bold mb-4">Iran Geopolitical Risk Dashboard</h1>
         <p className="text-lg opacity-80">
-          Tracking prediction markets and forecasts on democratic institutions
+          Tracking prediction markets and forecasts on Iran's geopolitical developments
         </p>
       </div>
 
@@ -79,13 +79,13 @@ function HomePage() {
       <div className="not-prose mb-8">
         <div className="card bg-base-200 shadow-xl">
           <div className="card-body text-center">
-            <h2 className="card-title justify-center text-2xl">Democratic Health Score</h2>
+            <h2 className="card-title justify-center text-2xl">Geopolitical Risk Level</h2>
             <div className="stat">
-              <div className="stat-value text-6xl">{healthScore.overallScore}%</div>
-              <div className="stat-desc">Weighted score across {healthScore.totalPredictions} active predictions</div>
+              <div className="stat-value text-6xl">{riskScore.overallScore}%</div>
+              <div className="stat-desc">Weighted risk score across {riskScore.totalPredictions} active predictions</div>
             </div>
             <div className="text-xs opacity-50 mt-2">
-              Last updated: {new Date(healthScore.lastUpdated).toLocaleString()}
+              Last updated: {new Date(riskScore.lastUpdated).toLocaleString()}
             </div>
           </div>
         </div>
@@ -98,8 +98,8 @@ function HomePage() {
           const predictions = predictionsByCategory[category] || [];
           const Icon = config.icon;
           
-          // Use weighted category score from health score calculation
-          const categoryScore = healthScore.categoryScores[category];
+          // Use weighted category score from risk score calculation
+          const categoryScore = riskScore.categoryScores[category];
           const categoryAvg = categoryScore?.score || null;
 
           return (
@@ -144,6 +144,18 @@ function HomePage() {
       {/* Data Sources */}
       <div className="not-prose mt-12 text-center opacity-70">
         <p>Data from: Adjacent News • Metaculus • Kalshi • Polymarket • PredictIt • Manifold Markets</p>
+      </div>
+
+      {/* Support Link */}
+      <div className="not-prose mt-8 text-center pb-8">
+        <a 
+          href="https://nathanpmyoung.substack.com" 
+          target="_blank" 
+          rel="noopener noreferrer"
+          className="link link-primary text-lg"
+        >
+          Buy a subscription if you want to support projects like this
+        </a>
       </div>
     </div>
   );

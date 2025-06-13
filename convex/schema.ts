@@ -2,13 +2,13 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export const predictionCategories = [
-  "elections",
-  "riots",
-  "voting_rights", 
-  "press_freedom",
-  "civil_liberties",
-  "democratic_norms",
-  "stability"
+  "military_action",
+  "nuclear_program",
+  "sanctions",
+  "regional_conflict", 
+  "israel_relations",
+  "protests",
+  "regime_stability"
 ] as const;
 
 export const predictionSources = [
@@ -31,13 +31,13 @@ export default defineSchema({
 
   predictions: defineTable({
     category: v.union(
-      v.literal("elections"),
-      v.literal("riots"),
-      v.literal("voting_rights"),
-      v.literal("press_freedom"),
-      v.literal("civil_liberties"),
-      v.literal("democratic_norms"),
-      v.literal("stability")
+      v.literal("military_action"),
+      v.literal("nuclear_program"),
+      v.literal("sanctions"),
+      v.literal("regional_conflict"),
+      v.literal("israel_relations"),
+      v.literal("protests"),
+      v.literal("regime_stability")
     ),
     title: v.string(),
     description: v.optional(v.string()),
