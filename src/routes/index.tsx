@@ -108,7 +108,20 @@ function HomePage() {
           return (
             <div key={prediction._id} className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <h3 className="card-title text-lg mb-4">{prediction.title}</h3>
+                {prediction.sourceUrl ? (
+                  <h3 className="card-title text-lg mb-4">
+                    <a 
+                      href={prediction.sourceUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="link link-hover"
+                    >
+                      {prediction.title}
+                    </a>
+                  </h3>
+                ) : (
+                  <h3 className="card-title text-lg mb-4">{prediction.title}</h3>
+                )}
                 
                 {/* Chart */}
                 <div className="bg-base-200 rounded-lg p-4" style={{ height: '300px' }}>
