@@ -15,16 +15,6 @@ Hi Claude, am Nathan Young, I'd like us to build cool, beneficial things togethe
 5. ✅ Real-time market data fetching
 6. ✅ Admin approval system for predictions
 
-### Iran Categories
-
-- military_action (Military strikes/conflicts)
-- nuclear_program (Nuclear development)
-- sanctions (Economic sanctions)
-- regional_conflict (Proxy conflicts)
-- israel_relations (Iran-Israel tensions)
-- protests (Internal unrest)
-- regime_stability (Government stability)
-
 ### Featured Markets Added (10 total)
 
 1. **NEW**: 1000+ deaths due to Israel-Iran conflict in 2025 (Metaculus)
@@ -232,3 +222,24 @@ Hi Claude, am Nathan Young, I'd like us to build cool, beneficial things togethe
 - feat: update page title, favicon, and meta tags
 - fix: display most recent data point as current probability
 - feat: remove central question section from dashboard
+- feat: make prediction market titles clickable links to source markets
+
+### Production Deployment Status
+
+**Currently in Production**: 
+- Iran geopolitical dashboard with historical data collection
+- Historical data visualization with synthetic data generation
+- Clerk authentication deactivated for easy deployment
+- Updated page title, favicon, and meta tags
+- Most recent data point as current probability display
+- Central question section removed from dashboard
+
+**Ready to Deploy** (local only):
+- ✅ Clickable prediction market titles linking to source markets
+
+**Future Tasks Tracked**:
+- Add PostHog analytics integration
+- Neaten up graphs
+- Fix screwed up labels 
+- Make Metaculus/Kalshi data work
+- Nuclear proviso, forecaster, admin improvements, etc.

@@ -108,20 +108,42 @@ function HomePage() {
           return (
             <div key={prediction._id} className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                {prediction.sourceUrl ? (
-                  <h3 className="card-title text-lg mb-4">
-                    <a 
-                      href={prediction.sourceUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="link link-hover"
-                    >
-                      {prediction.title}
-                    </a>
-                  </h3>
-                ) : (
-                  <h3 className="card-title text-lg mb-4">{prediction.title}</h3>
-                )}
+                <div className="flex items-start justify-between mb-4">
+                  {prediction.sourceUrl ? (
+                    <h3 className="card-title text-lg flex-1 mr-4">
+                      <a 
+                        href={prediction.sourceUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="link link-hover"
+                      >
+                        {prediction.title}
+                      </a>
+                    </h3>
+                  ) : (
+                    <h3 className="card-title text-lg flex-1 mr-4">{prediction.title}</h3>
+                  )}
+                  
+                  {/* Current probability display - top right */}
+                  <div className="text-right flex-shrink-0">
+                    <div className="text-xl font-bold text-primary">{currentProbability}%</div>
+                    {prediction.previousProbability && (
+                      <div className="text-xs">
+                        {currentProbability > prediction.previousProbability ? (
+                          <span className="text-success flex items-center justify-end">
+                            <TrendingUp className="w-3 h-3 mr-1" />
+                            +{currentProbability - prediction.previousProbability}%
+                          </span>
+                        ) : (
+                          <span className="text-error flex items-center justify-end">
+                            <TrendingDown className="w-3 h-3 mr-1" />
+                            -{prediction.previousProbability - currentProbability}%
+                          </span>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                </div>
                 
                 {/* Chart */}
                 <div className="bg-base-200 rounded-lg p-4" style={{ height: '300px' }}>
@@ -174,29 +196,6 @@ function HomePage() {
                   )}
                 </div>
                 
-                {/* Current probability display */}
-                <div className="flex items-center justify-between mt-4">
-                  <div className="text-center">
-                    <div className="text-3xl font-bold text-primary">{currentProbability}%</div>
-                    <div className="text-sm opacity-70">Current Probability</div>
-                  </div>
-                  {prediction.previousProbability && (
-                    <div className="text-right">
-                      {currentProbability > prediction.previousProbability ? (
-                        <span className="text-success flex items-center">
-                          <TrendingUp className="w-4 h-4 mr-1" />
-                          +{currentProbability - prediction.previousProbability}%
-                        </span>
-                      ) : (
-                        <span className="text-error flex items-center">
-                          <TrendingDown className="w-4 h-4 mr-1" />
-                          -{prediction.previousProbability - currentProbability}%
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-                
                 {prediction.description && (
                   <p className="text-sm opacity-70 mt-4">{prediction.description}</p>
                 )}
@@ -233,7 +232,7 @@ function HomePage() {
           Built by <a href="https://goodheartlabs.com" target="_blank" rel="noopener noreferrer" className="link link-primary">Goodheart Labs</a> to support similar projects, please purchase a subscription <a href="https://nathanpmyoung.substack.com" target="_blank" rel="noopener noreferrer" className="link link-primary">here</a>
         </p>
         <p className="text-sm opacity-70">
-          Vibecoded using <a href="https://github.com/Crazytieguy/fullstack-vibe-coding-template" target="_blank" rel="noopener noreferrer" className="link link-primary">Fullstack Vibe Coding</a> template
+          Vibecoded using <a href="https://github.com/Crazytieguy/fullstack-vibe-coding-template" target="_blank" rel="noopener noreferrer" className="link link-primary">Fullstack Vibe Coding</a> template © 2025 Fullstack Vibe Coding
         </p>
       </div>
     </div>
