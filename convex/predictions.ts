@@ -1009,6 +1009,7 @@ export const getFeaturedPredictions = query({
   handler: async (ctx) => {
     // List of featured market URLs
     const featuredUrls = [
+      "https://www.metaculus.com/questions/31298/1000-deaths-due-to-israel-iran-conflict-in-2025/",
       "https://polymarket.com/event/iran-strike-on-israel-in-june",
       "https://polymarket.com/event/us-military-action-against-iran-before-july",
       "https://polymarket.com/event/iran-nuke-in-2025",
@@ -1130,6 +1131,47 @@ export const fetchRealMarketData = action({
     }
     
     return { results, total: results.length };
+  },
+});
+
+// Generate synthetic historical data for demonstration (like H5N1 dashboard does)
+export const generateSyntheticHistory = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const predictions = await ctx.db.query("predictions").collect();
+    
+    for (const prediction of predictions) {
+      // Clear existing history
+      const existingHistory = await ctx.db
+        .query("predictionHistory")
+        .filter(q => q.eq(q.field("predictionId"), prediction._id))
+        .collect();
+      
+      for (const hist of existingHistory) {
+        await ctx.db.delete(hist._id);
+      }
+      
+      // Generate 30 days of synthetic historical data
+      const now = Date.now();
+      const baseProb = prediction.probability;
+      
+      for (let i = 30; i >= 0; i--) {
+        const timestamp = now - (i * 24 * 60 * 60 * 1000); // i days ago
+        
+        // Add some realistic variation around the base probability
+        const variation = (Math.random() - 0.5) * 20; // ±10% variation
+        const probability = Math.max(1, Math.min(99, baseProb + variation));
+        
+        await ctx.db.insert("predictionHistory", {
+          predictionId: prediction._id,
+          probability: Math.round(probability),
+          timestamp,
+          source: prediction.source,
+        });
+      }
+    }
+    
+    return { message: "Generated synthetic history for all predictions" };
   },
 });
 
