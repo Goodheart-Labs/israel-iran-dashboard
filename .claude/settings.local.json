@@ -14,7 +14,8 @@
       "Bash(node:*)",
       "Bash(find:*)",
       "Bash(pnpm install:*)",
-      "Bash(convex env:*)"
+      "Bash(convex env:*)",
+      "Bash(git push:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
