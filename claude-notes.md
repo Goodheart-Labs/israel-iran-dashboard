@@ -74,6 +74,43 @@
 - 📱 **Responsive Design** with 2-wide grid layout
 - 🔄 **Real-time Updates** via Convex backend
 
+### H5N1 Dashboard Analysis Results
+
+**Key Findings:**
+1. **No Database Storage**: They don't store historical data in any database/schema
+2. **Fresh API Calls**: They fetch historical data fresh from external APIs every time
+3. **No Cron Jobs**: No scheduled tasks or background data collection
+4. **Real-time Only**: They rely entirely on external APIs for historical data
+
+**Their Data Strategy:**
+- **Polymarket**: Uses CLOB API `/prices-history` endpoint with 1-minute intervals
+- **Kalshi**: Uses `/series/{seriesTicker}/markets/{marketId}/candlesticks` with 60-min intervals
+- **Metaculus**: Uses aggregations API for historical predictions
+- **CDC**: Fetches CSV data directly from CDC APIs
+
+**Data Flow:**
+1. Frontend makes API calls to their Next.js API routes
+2. API routes call external services (Polymarket, Kalshi, Metaculus)
+3. Data is transformed and cached with HTTP headers (1-hour cache)
+4. Charts are populated with fresh data on each page load
+5. Fallback to static example data if APIs fail
+
+**Comparison to Our Approach:**
+- **Theirs**: No storage, fresh API calls, HTTP caching only
+- **Ours**: Database storage, scheduled collection, persistent historical data
+
+**Advantages of Our Approach:**
+- Data persistence even if APIs go down
+- Faster page loads (no API calls needed)
+- Historical data accumulation over time
+- Better reliability and user experience
+
+**Advantages of Their Approach:**
+- No database costs or maintenance
+- Always fresh data
+- Simpler architecture
+- No background processing needed
+
 ### Commits Made This Session
 - feat: implement comprehensive Iran geopolitical dashboard with historical data collection
 - feat: fix historical data visualization with synthetic data generation
