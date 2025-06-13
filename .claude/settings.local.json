@@ -3,7 +3,11 @@
     "allow": [
       "mcp__playwright__browser_close",
       "mcp__shell-commands__launch-dev-frontend",
-      "Bash(pnpm build:*)"
+      "Bash(pnpm build:*)",
+      "WebFetch(domain:api.github.com)",
+      "WebFetch(domain:docs.adj.news)",
+      "WebFetch(domain:api.data.adj.news)",
+      "WebFetch(domain:adj.news)"
     ]
   },
   "enableAllProjectMcpServers": true,

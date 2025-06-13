@@ -143,7 +143,7 @@ function HomePage() {
 
       {/* Data Sources */}
       <div className="not-prose mt-12 text-center opacity-70">
-        <p>Data from: Metaculus • Kalshi • Polymarket • PredictIt • Manifold Markets</p>
+        <p>Data from: Adjacent News • Metaculus • Kalshi • Polymarket • PredictIt • Manifold Markets</p>
       </div>
     </div>
   );

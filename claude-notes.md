@@ -61,4 +61,12 @@ US Democratic Health Dashboard - A dashboard tracking prediction markets and for
 - Admin interface to curate which predictions show on dashboard
 
 ### Latest Commits
+- f069306: theme: update to custom fantasy light theme with matching dark variant
 - d37c360: theme: implement fantasy-based light and dark themes with daisyUI
+
+### Research Session: Adjacent News API Analysis
+- ✅ Analyzed Goodheart-Labs/metaculus-bot repository structure
+- ✅ Found Adjacent News API integration patterns
+- ✅ Documented API authentication and endpoints
+- ✅ Identified data structure and rate limiting
+- Note: Adjacent News API requires API key authentication for full access

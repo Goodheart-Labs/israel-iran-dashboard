@@ -470,93 +470,186 @@ export const fetchPolymarketMarkets = action({
   },
 });
 
-// Fetch markets based on news events and trends
+// Fetch markets from Adjacent News API
+export const fetchAdjacentNewsMarkets = action({
+  args: {},
+  handler: async (ctx) => {
+    "use node";
+    
+    try {
+      // Note: API key would be set in Convex environment variables
+      // For now, fetching public data without authentication
+      const response = await fetch("https://api.data.adj.news/api/markets?limit=100", {
+        headers: {
+          "Content-Type": "application/json",
+          // Add API key when available: "Authorization": `Bearer ${process.env.ADJACENT_NEWS_API_KEY}`
+        }
+      });
+      
+      if (!response.ok) {
+        console.error(`Adjacent News API error: ${response.status}`);
+        return { savedFromAdjacent: 0, error: `API error: ${response.status}` };
+      }
+      
+      const data = await response.json();
+      const markets = data.markets || data || []; // Handle different response formats
+      
+      let savedFromAdjacent = 0;
+      
+      for (const market of markets) {
+        // Map Adjacent News market data to our format
+        const category = categorizePrediction(market.title || market.question || "", market.description || "");
+        
+        if (category && market.probability !== undefined) {
+          try {
+            // Convert probability format if needed (Adjacent News might use different scales)
+            let probability = market.probability;
+            if (probability <= 1) {
+              probability = Math.round(probability * 100); // Convert 0-1 to 0-100
+            } else if (probability > 100) {
+              probability = Math.min(100, Math.round(probability / 100)); // Handle basis points
+            }
+            
+            await ctx.runMutation(api.predictions.upsert, {
+              category,
+              title: market.title || market.question || "Unknown Market",
+              description: market.description?.slice(0, 500),
+              probability: Math.round(probability),
+              source: "adjacent",
+              sourceUrl: market.url || market.market_url || `https://api.data.adj.news/api/markets/${market.id}`,
+              resolveDate: market.resolve_date ? new Date(market.resolve_date).getTime() : undefined,
+            });
+            savedFromAdjacent++;
+          } catch (error) {
+            console.error("Error saving Adjacent News market:", error);
+          }
+        }
+      }
+      
+      return { savedFromAdjacent, totalFetched: markets.length };
+      
+    } catch (error) {
+      console.error("Error fetching Adjacent News markets:", error);
+      return { savedFromAdjacent: 0, error: String(error) };
+    }
+  },
+});
+
+// Enhanced news-based market search using Adjacent News semantic search
 export const fetchNewsBasedMarkets = action({
   args: {},
   handler: async (ctx) => {
     "use node";
     
-    const newsKeywords = [
-      "election fraud",
-      "voting rights legislation", 
-      "press freedom restrictions",
-      "civil liberties surveillance",
-      "political violence",
-      "democratic institutions crisis",
-      "electoral integrity",
-      "media censorship",
-      "peaceful transfer power",
-      "constitutional crisis"
+    const democraticHealthKeywords = [
+      "US democracy election integrity",
+      "voting rights legislation America", 
+      "press freedom media censorship US",
+      "civil liberties surveillance United States",
+      "political violence riots protests America",
+      "democratic institutions crisis US",
+      "peaceful transfer power election",
+      "constitutional crisis democracy"
     ];
     
     let savedFromNews = 0;
     
-    // Check each prediction market for topics related to current news trends
-    for (const keyword of newsKeywords) {
-      try {
-        // Search Manifold for news-related markets
-        const manifoldResponse = await fetch(
-          `https://api.manifold.markets/v0/search-markets?term=${encodeURIComponent(keyword)}&limit=20&sort=newest`
-        );
-        const manifoldMarkets = await manifoldResponse.json();
-        
-        for (const market of manifoldMarkets) {
-          const category = categorizePrediction(market.question, market.description || "");
-          if (category && market.probability !== undefined) {
-            try {
-              await ctx.runMutation(api.predictions.upsert, {
-                category,
-                title: market.question,
-                description: market.description?.slice(0, 500),
-                probability: Math.round(market.probability * 100),
-                source: "manifold",
-                sourceUrl: market.url,
-                resolveDate: market.closeTime,
-              });
-              savedFromNews++;
-            } catch (error) {
-              console.error("Error saving news-based Manifold market:", error);
+    // Try Adjacent News semantic search first
+    try {
+      for (const searchTerm of democraticHealthKeywords) {
+        const response = await fetch(
+          `https://api.data.adj.news/api/search?q=${encodeURIComponent(searchTerm)}&limit=20`,
+          {
+            headers: {
+              "Content-Type": "application/json",
+              // Add API key when available: "Authorization": `Bearer ${process.env.ADJACENT_NEWS_API_KEY}`
             }
           }
-        }
-        
-        // Search Metaculus for news-related questions
-        const metaculusResponse = await fetch(
-          `https://www.metaculus.com/api2/questions/?search=${encodeURIComponent(keyword)}&status=open&limit=20&order_by=-publish_time`
         );
-        const metaculusData = await metaculusResponse.json();
         
-        if (metaculusData.results) {
-          for (const question of metaculusData.results) {
-            const category = categorizePrediction(question.title, "");
-            if (category && question.community_prediction?.full?.q2 !== undefined) {
+        if (response.ok) {
+          const searchData = await response.json();
+          const markets = searchData.markets || searchData.results || [];
+          
+          for (const market of markets) {
+            const category = categorizePrediction(market.title || market.question || "", market.description || "");
+            if (category && market.probability !== undefined) {
               try {
+                let probability = market.probability;
+                if (probability <= 1) {
+                  probability = Math.round(probability * 100);
+                } else if (probability > 100) {
+                  probability = Math.min(100, Math.round(probability / 100));
+                }
+                
                 await ctx.runMutation(api.predictions.upsert, {
                   category,
-                  title: question.title,
-                  description: question.description?.slice(0, 500),
-                  probability: Math.round(question.community_prediction.full.q2 * 100),
-                  source: "metaculus",
-                  sourceUrl: `https://www.metaculus.com/questions/${question.id}`,
-                  resolveDate: question.resolve_time ? new Date(question.resolve_time).getTime() : undefined,
+                  title: market.title || market.question || "Unknown Market",
+                  description: market.description?.slice(0, 500),
+                  probability: Math.round(probability),
+                  source: "adjacent",
+                  sourceUrl: market.url || market.market_url || `https://api.data.adj.news/api/markets/${market.id}`,
+                  resolveDate: market.resolve_date ? new Date(market.resolve_date).getTime() : undefined,
                 });
                 savedFromNews++;
               } catch (error) {
-                console.error("Error saving news-based Metaculus question:", error);
+                console.error("Error saving Adjacent News search result:", error);
               }
             }
           }
         }
         
-        // Small delay to be respectful to APIs
-        await new Promise(resolve => setTimeout(resolve, 100));
-        
-      } catch (error) {
-        console.error(`Error fetching news-based markets for "${keyword}":`, error);
+        // Small delay between requests
+        await new Promise(resolve => setTimeout(resolve, 200));
+      }
+    } catch (error) {
+      console.error("Error with Adjacent News semantic search:", error);
+    }
+    
+    // Fallback to direct platform searches if Adjacent News doesn't work
+    if (savedFromNews === 0) {
+      console.log("Falling back to direct platform searches...");
+      
+      for (const keyword of ["election fraud", "voting rights", "press freedom", "civil liberties"]) {
+        try {
+          // Search Manifold as fallback
+          const manifoldResponse = await fetch(
+            `https://api.manifold.markets/v0/search-markets?term=${encodeURIComponent(keyword)}&limit=10&sort=newest`
+          );
+          
+          if (manifoldResponse.ok) {
+            const manifoldMarkets = await manifoldResponse.json();
+            
+            for (const market of manifoldMarkets.slice(0, 5)) { // Limit to avoid spam
+              const category = categorizePrediction(market.question, market.description || "");
+              if (category && market.probability !== undefined) {
+                try {
+                  await ctx.runMutation(api.predictions.upsert, {
+                    category,
+                    title: market.question,
+                    description: market.description?.slice(0, 500),
+                    probability: Math.round(market.probability * 100),
+                    source: "manifold",
+                    sourceUrl: market.url,
+                    resolveDate: market.closeTime,
+                  });
+                  savedFromNews++;
+                } catch (error) {
+                  console.error("Error saving fallback Manifold market:", error);
+                }
+              }
+            }
+          }
+          
+          await new Promise(resolve => setTimeout(resolve, 100));
+          
+        } catch (error) {
+          console.error(`Error with fallback search for "${keyword}":`, error);
+        }
       }
     }
     
-    return { savedFromNews, keywords: newsKeywords.length };
+    return { savedFromNews, searchedKeywords: democraticHealthKeywords.length };
   },
 });
 
@@ -567,7 +660,8 @@ export const fetchAllPredictions = action({
     manifold: { fetched: number; saved: number; error?: any };
     metaculus: { fetched: number; saved: number; error?: any };
     polymarket: { fetched: number; saved: number; error?: any };
-    newsBased: { savedFromNews: number; keywords: number; error?: any };
+    adjacentNews: { savedFromAdjacent: number; totalFetched: number; error?: any };
+    newsBased: { savedFromNews: number; searchedKeywords: number; error?: any };
   }> => {
     "use node";
     
@@ -575,6 +669,7 @@ export const fetchAllPredictions = action({
       ctx.runAction(api.predictions.fetchManifoldMarkets, {}),
       ctx.runAction(api.predictions.fetchMetaculusQuestions, {}),
       ctx.runAction(api.predictions.fetchPolymarketMarkets, {}),
+      ctx.runAction(api.predictions.fetchAdjacentNewsMarkets, {}),
       ctx.runAction(api.predictions.fetchNewsBasedMarkets, {}),
     ]);
     
@@ -582,7 +677,8 @@ export const fetchAllPredictions = action({
       manifold: results[0].status === "fulfilled" ? results[0].value : { fetched: 0, saved: 0, error: results[0].reason },
       metaculus: results[1].status === "fulfilled" ? results[1].value : { fetched: 0, saved: 0, error: results[1].reason },
       polymarket: results[2].status === "fulfilled" ? results[2].value : { fetched: 0, saved: 0, error: results[2].reason },
-      newsBased: results[3].status === "fulfilled" ? results[3].value : { savedFromNews: 0, keywords: 0, error: results[3].reason },
+      adjacentNews: results[3].status === "fulfilled" ? results[3].value : { savedFromAdjacent: 0, totalFetched: 0, error: results[3].reason },
+      newsBased: results[4].status === "fulfilled" ? results[4].value : { savedFromNews: 0, searchedKeywords: 0, error: results[4].reason },
     };
     
     return summary;
@@ -691,6 +787,75 @@ export const fixInvalidProbabilities = mutation({
     }
     
     return { fixed };
+  },
+});
+
+// Admin: Test Adjacent News API connection
+export const testAdjacentNewsConnection = action({
+  args: {},
+  handler: async (ctx) => {
+    "use node";
+    
+    try {
+      console.log("Testing Adjacent News API connection...");
+      
+      // Test basic markets endpoint
+      const marketsResponse = await fetch("https://api.data.adj.news/api/markets?limit=5", {
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      
+      const marketsSuccess = marketsResponse.ok;
+      const marketsStatus = marketsResponse.status;
+      let marketsData = null;
+      
+      if (marketsSuccess) {
+        marketsData = await marketsResponse.json();
+      }
+      
+      // Test search endpoint
+      const searchResponse = await fetch("https://api.data.adj.news/api/search?q=US%20election&limit=3", {
+        headers: {
+          "Content-Type": "application/json",
+        }
+      });
+      
+      const searchSuccess = searchResponse.ok;
+      const searchStatus = searchResponse.status;
+      let searchData = null;
+      
+      if (searchSuccess) {
+        searchData = await searchResponse.json();
+      }
+      
+      return {
+        marketsEndpoint: {
+          success: marketsSuccess,
+          status: marketsStatus,
+          sampleData: marketsData ? {
+            totalResults: marketsData.length || marketsData.markets?.length || 0,
+            firstMarket: marketsData[0] || marketsData.markets?.[0] || null
+          } : null
+        },
+        searchEndpoint: {
+          success: searchSuccess,
+          status: searchStatus,
+          sampleData: searchData ? {
+            totalResults: searchData.length || searchData.results?.length || 0,
+            firstResult: searchData[0] || searchData.results?.[0] || null
+          } : null
+        },
+        timestamp: Date.now()
+      };
+      
+    } catch (error) {
+      console.error("Error testing Adjacent News connection:", error);
+      return {
+        error: String(error),
+        timestamp: Date.now()
+      };
+    }
   },
 });
 

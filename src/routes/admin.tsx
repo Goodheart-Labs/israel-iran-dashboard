@@ -48,6 +48,8 @@ function AdminPage() {
   const rejectPrediction = useMutation(api.predictions.rejectPrediction);
   const bulkApprove = useMutation(api.predictions.bulkApprovePredictions);
   const fixInvalidProbabilities = useMutation(api.predictions.fixInvalidProbabilities);
+  const testAdjacentNews = useMutation(api.predictions.testAdjacentNewsConnection);
+  const fetchAdjacentNews = useMutation(api.predictions.fetchAdjacentNewsMarkets);
   
   const currentPredictions = selectedTab === "pending" ? pendingPredictions : allPredictions;
   
@@ -73,6 +75,26 @@ function AdminPage() {
     alert(`Fixed ${result.fixed} predictions with invalid probabilities`);
   };
 
+  const handleTestAdjacentNews = async () => {
+    const result = await testAdjacentNews({});
+    console.log("Adjacent News test result:", result);
+    if (result.error) {
+      alert(`Adjacent News test failed: ${result.error}`);
+    } else {
+      alert(`Adjacent News test successful!\nMarkets endpoint: ${result.marketsEndpoint.success ? 'OK' : 'Failed'}\nSearch endpoint: ${result.searchEndpoint.success ? 'OK' : 'Failed'}`);
+    }
+  };
+
+  const handleFetchAdjacentNews = async () => {
+    const result = await fetchAdjacentNews({});
+    console.log("Adjacent News fetch result:", result);
+    if (result.error) {
+      alert(`Adjacent News fetch failed: ${result.error}`);
+    } else {
+      alert(`Adjacent News fetch successful!\nFetched: ${result.totalFetched} markets\nSaved: ${result.savedFromAdjacent} predictions`);
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-4">
       <div className="mb-8">
@@ -84,12 +106,24 @@ function AdminPage() {
               Only approved predictions will appear to users.
             </p>
           </div>
-          <div>
+          <div className="flex gap-2">
             <button 
               className="btn btn-warning btn-sm"
               onClick={handleFixProbabilities}
             >
               Fix Invalid Probabilities
+            </button>
+            <button 
+              className="btn btn-info btn-sm"
+              onClick={handleTestAdjacentNews}
+            >
+              Test Adjacent News
+            </button>
+            <button 
+              className="btn btn-primary btn-sm"
+              onClick={handleFetchAdjacentNews}
+            >
+              Fetch Adjacent News
             </button>
           </div>
         </div>
