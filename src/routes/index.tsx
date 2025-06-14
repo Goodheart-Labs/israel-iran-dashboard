@@ -64,7 +64,7 @@ function HomePage() {
     <div className="max-w-7xl mx-auto">
       <div className="flex justify-between items-start mb-8">
         <div className="text-center flex-1">
-          <h1 className="text-4xl font-bold mb-4">Iran Geopolitical Risk Dashboard [TEST-2025]</h1>
+          <h1 className="text-4xl font-bold mb-4">Iran Geopolitical Risk Dashboard</h1>
           <p className="text-lg opacity-80">
             Tracking prediction markets and forecasts on Iran's geopolitical developments
           </p>
@@ -246,7 +246,6 @@ function HomePage() {
 
       {/* Data Sources */}
       <div className="not-prose mt-12 text-center opacity-70">
-        <p>🚀 DEPLOYMENT TEST 2025 🚀</p>
         <p>Data from: Adjacent News • Metaculus • Kalshi • Polymarket • PredictIt • Manifold Markets</p>
       </div>
 

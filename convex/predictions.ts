@@ -555,7 +555,7 @@ export const fetchKalshiMarkets = action({
       console.log(`📈 Kalshi: Found ${relevantMarkets.length} relevant markets after filtering`);
       
       // Log some examples of what we found
-      relevantMarkets.slice(0, 5).forEach(market => {
+      relevantMarkets.slice(0, 5).forEach((market: any) => {
         console.log(`📈 Kalshi sample: ${market.title}`);
       });
       
@@ -602,7 +602,7 @@ export const fetchKalshiMarkets = action({
         fetched: markets.length, 
         saved, 
         relevant: relevantMarkets.length,
-        sampleTitles: relevantMarkets.slice(0, 3).map(m => m.title)
+        sampleTitles: relevantMarkets.slice(0, 3).map((m: any) => m.title)
       };
       
     } catch (error) {
@@ -615,7 +615,7 @@ export const fetchKalshiMarkets = action({
 // Retry Kalshi data collection multiple times
 export const retryKalshiCollection = action({
   args: { maxRetries: v.optional(v.number()) },
-  handler: async (ctx, args) => {
+  handler: async (ctx, args): Promise<{ results: any[]; totalSaved: number; attempts: number }> => {
     "use node";
     const maxRetries = args.maxRetries || 3;
     const results = [];
@@ -627,7 +627,7 @@ export const retryKalshiCollection = action({
       console.log(`🔄 Kalshi attempt ${attempt}/${maxRetries}`);
       
       try {
-        const result = await ctx.runAction(api.predictions.fetchKalshiMarkets, {});
+        const result: any = await ctx.runAction(api.predictions.fetchKalshiMarkets, {});
         results.push({ attempt, ...result });
         totalSaved += result.saved || 0;
         
