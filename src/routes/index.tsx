@@ -123,7 +123,7 @@ function HomePage() {
           return (
             <div key={prediction._id} className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <div className="flex items-start justify-between mb-4">
+                <div className="flex items-start justify-between mb-2">
                   {prediction.sourceUrl ? (
                     <h3 className="card-title text-lg flex-1 mr-4">
                       <a 
@@ -162,7 +162,7 @@ function HomePage() {
                 
                 {/* Clarification text */}
                 {prediction.clarificationText && (
-                  <p className="text-sm opacity-70 mb-4">{prediction.clarificationText}</p>
+                  <p className="text-sm opacity-70 mb-3">{prediction.clarificationText}</p>
                 )}
                 
                 {/* Chart */}
