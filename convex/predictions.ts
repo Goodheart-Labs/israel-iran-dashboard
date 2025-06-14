@@ -1378,12 +1378,12 @@ export const getFeaturedPredictions = query({
   handler: async (ctx) => {
     // List of featured market URLs
     const featuredUrls = [
-      "https://www.metaculus.com/questions/31298/1000-deaths-due-to-israel-iran-conflict-in-2025/",
-      "https://polymarket.com/event/iran-strike-on-israel-in-june",
+      // Removed: "https://www.metaculus.com/questions/31298/1000-deaths-due-to-israel-iran-conflict-in-2025/",
+      // Removed: "https://polymarket.com/event/iran-strike-on-israel-in-june",
       "https://polymarket.com/event/us-military-action-against-iran-before-july",
       "https://polymarket.com/event/iran-nuke-in-2025",
       "https://polymarket.com/event/us-x-iran-nuclear-deal-in-2025",
-      "https://kalshi.com/markets/kxusairanagreement/us-iran-nuclear-deal",
+      // Removed: "https://kalshi.com/markets/kxusairanagreement/us-iran-nuclear-deal",
       "https://polymarket.com/event/will-iran-close-the-strait-of-hormuz-in-2025",
       "https://polymarket.com/event/khamenei-out-as-supreme-leader-of-iran-by-june-30",
       "https://polymarket.com/event/nuclear-weapon-detonation-in-2025",
