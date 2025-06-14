@@ -2178,3 +2178,55 @@ export const testDataCollection = action({
     return results;
   },
 });
+
+// Count actual data points by source
+export const countDataPointsBySource = query({
+  args: {},
+  handler: async (ctx) => {
+    const allPredictions = await ctx.db.query("predictions").collect();
+    
+    const counts = {
+      polymarket: 0,
+      metaculus: 0,
+      kalshi: 0,
+      manifold: 0,
+      adjacent: 0,
+      other: 0,
+      total: allPredictions.length
+    };
+    
+    // Count by source
+    for (const prediction of allPredictions) {
+      if (prediction.source in counts) {
+        counts[prediction.source as keyof typeof counts]++;
+      } else {
+        counts.other++;
+      }
+    }
+    
+    // Get historical data counts
+    const allHistory = await ctx.db.query("predictionHistory").collect();
+    const historyCounts = {
+      polymarket: 0,
+      metaculus: 0,
+      kalshi: 0,
+      manifold: 0,
+      adjacent: 0,
+      other: 0,
+      total: allHistory.length
+    };
+    
+    for (const history of allHistory) {
+      if (history.source in historyCounts) {
+        historyCounts[history.source as keyof typeof historyCounts]++;
+      } else {
+        historyCounts.other++;
+      }
+    }
+    
+    return {
+      markets: counts,
+      historicalDataPoints: historyCounts
+    };
+  },
+});

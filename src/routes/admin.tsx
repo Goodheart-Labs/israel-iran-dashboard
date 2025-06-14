@@ -35,6 +35,7 @@ function AdminPage() {
   const deletePrediction = useMutation(api.predictions.deletePrediction);
   const testDataCollection = useMutation(api.predictions.testDataCollection);
   const platformGrades = useQuery(api.predictions.getPlatformGrades);
+  const dataPointCounts = useQuery(api.predictions.countDataPointsBySource);
   const createDashboard = useMutation(api.dashboards.create);
   const updateDashboard = useMutation(api.dashboards.update);
   const deleteDashboard = useMutation(api.dashboards.remove);
@@ -363,6 +364,39 @@ function AdminPage() {
                     </div>
                   </div>
                 </div>
+
+                {/* Data Summary Card */}
+                {dataPointCounts && (
+                  <div className="card bg-base-100 shadow-xl mb-6">
+                    <div className="card-body">
+                      <h3 className="card-title">Current Data Summary</h3>
+                      <div className="grid grid-cols-2 gap-6">
+                        <div>
+                          <h4 className="font-semibold mb-2">Markets by Source:</h4>
+                          <div className="space-y-1 text-sm">
+                            <div>Polymarket: <span className="font-mono">{dataPointCounts.markets.polymarket}</span></div>
+                            <div>Metaculus: <span className="font-mono">{dataPointCounts.markets.metaculus}</span></div>
+                            <div>Kalshi: <span className="font-mono">{dataPointCounts.markets.kalshi}</span></div>
+                            <div>Manifold: <span className="font-mono">{dataPointCounts.markets.manifold}</span></div>
+                            <div>Adjacent: <span className="font-mono">{dataPointCounts.markets.adjacent}</span></div>
+                            <div className="font-semibold border-t pt-1">Total: <span className="font-mono">{dataPointCounts.markets.total}</span></div>
+                          </div>
+                        </div>
+                        <div>
+                          <h4 className="font-semibold mb-2">Historical Data Points:</h4>
+                          <div className="space-y-1 text-sm">
+                            <div>Polymarket: <span className="font-mono">{dataPointCounts.historicalDataPoints.polymarket}</span></div>
+                            <div>Metaculus: <span className="font-mono">{dataPointCounts.historicalDataPoints.metaculus}</span></div>
+                            <div>Kalshi: <span className="font-mono">{dataPointCounts.historicalDataPoints.kalshi}</span></div>
+                            <div>Manifold: <span className="font-mono">{dataPointCounts.historicalDataPoints.manifold}</span></div>
+                            <div>Adjacent: <span className="font-mono">{dataPointCounts.historicalDataPoints.adjacent}</span></div>
+                            <div className="font-semibold border-t pt-1">Total: <span className="font-mono">{dataPointCounts.historicalDataPoints.total}</span></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
                 
                 <div className="space-y-6">
                   {allPredictions
