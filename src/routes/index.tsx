@@ -123,21 +123,27 @@ function HomePage() {
           return (
             <div key={prediction._id} className="card bg-base-100 shadow-xl">
               <div className="card-body">
-                <div className="flex items-start justify-between mb-2">
-                  {prediction.sourceUrl ? (
-                    <h3 className="card-title text-lg flex-1 mr-4">
-                      <a 
-                        href={prediction.sourceUrl} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="link link-hover"
-                      >
-                        {prediction.title}
-                      </a>
-                    </h3>
-                  ) : (
-                    <h3 className="card-title text-lg flex-1 mr-4">{prediction.title}</h3>
-                  )}
+                <div className="flex items-start justify-between mb-3">
+                  <div className="flex-1 mr-4">
+                    {prediction.sourceUrl ? (
+                      <h3 className="card-title text-lg mb-1">
+                        <a 
+                          href={prediction.sourceUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="link link-hover"
+                        >
+                          {prediction.title}
+                        </a>
+                      </h3>
+                    ) : (
+                      <h3 className="card-title text-lg mb-1">{prediction.title}</h3>
+                    )}
+                    {/* Clarification text directly under title */}
+                    {prediction.clarificationText && (
+                      <p className="text-sm opacity-70">{prediction.clarificationText}</p>
+                    )}
+                  </div>
                   
                   {/* Current probability display - top right */}
                   <div className="text-right flex-shrink-0">
@@ -159,10 +165,6 @@ function HomePage() {
                     )}
                   </div>
                 </div>
-                {/* Clarification text */}
-                {prediction.clarificationText && (
-                  <p className="text-sm opacity-70 mb-1 -mt-1">{prediction.clarificationText}</p>
-                )}
                 {/* Chart */}
                 <div className="bg-base-200 rounded-lg p-2" style={{ height: '260px' }}>
                   {chartData.length > 0 ? (
