@@ -390,22 +390,48 @@ function AdminPage() {
                         <div>
                           <h4 className="font-semibold mb-2">Markets by Source:</h4>
                           <div className="space-y-1 text-sm">
-                            <div>Polymarket: <span className="font-mono">{dataPointCounts.markets.polymarket}</span></div>
-                            <div>Metaculus: <span className="font-mono">{dataPointCounts.markets.metaculus}</span></div>
-                            <div>Kalshi: <span className="font-mono">{dataPointCounts.markets.kalshi}</span></div>
-                            <div>Manifold: <span className="font-mono">{dataPointCounts.markets.manifold}</span></div>
-                            <div>Adjacent: <span className="font-mono">{dataPointCounts.markets.adjacent}</span></div>
+                            {dataPointCounts.markets.polymarket > 0 && (
+                              <div>Polymarket: <span className="font-mono">{dataPointCounts.markets.polymarket}</span></div>
+                            )}
+                            {dataPointCounts.markets.metaculus > 0 && (
+                              <div>Metaculus: <span className="font-mono">{dataPointCounts.markets.metaculus}</span></div>
+                            )}
+                            {dataPointCounts.markets.kalshi > 0 && (
+                              <div>Kalshi: <span className="font-mono">{dataPointCounts.markets.kalshi}</span></div>
+                            )}
+                            {dataPointCounts.markets.manifold > 0 && (
+                              <div>Manifold: <span className="font-mono">{dataPointCounts.markets.manifold}</span></div>
+                            )}
+                            {dataPointCounts.markets.adjacent > 0 && (
+                              <div>Adjacent: <span className="font-mono">{dataPointCounts.markets.adjacent}</span></div>
+                            )}
+                            {dataPointCounts.markets.other > 0 && (
+                              <div>Other: <span className="font-mono">{dataPointCounts.markets.other}</span></div>
+                            )}
                             <div className="font-semibold border-t pt-1">Total: <span className="font-mono">{dataPointCounts.markets.total}</span></div>
                           </div>
                         </div>
                         <div>
                           <h4 className="font-semibold mb-2">Historical Data Points:</h4>
                           <div className="space-y-1 text-sm">
-                            <div>Polymarket: <span className="font-mono">{dataPointCounts.historicalDataPoints.polymarket}</span></div>
-                            <div>Metaculus: <span className="font-mono">{dataPointCounts.historicalDataPoints.metaculus}</span></div>
-                            <div>Kalshi: <span className="font-mono">{dataPointCounts.historicalDataPoints.kalshi}</span></div>
-                            <div>Manifold: <span className="font-mono">{dataPointCounts.historicalDataPoints.manifold}</span></div>
-                            <div>Adjacent: <span className="font-mono">{dataPointCounts.historicalDataPoints.adjacent}</span></div>
+                            {dataPointCounts.historicalDataPoints.polymarket > 0 && (
+                              <div>Polymarket: <span className="font-mono">{dataPointCounts.historicalDataPoints.polymarket}</span></div>
+                            )}
+                            {dataPointCounts.historicalDataPoints.metaculus > 0 && (
+                              <div>Metaculus: <span className="font-mono">{dataPointCounts.historicalDataPoints.metaculus}</span></div>
+                            )}
+                            {dataPointCounts.historicalDataPoints.kalshi > 0 && (
+                              <div>Kalshi: <span className="font-mono">{dataPointCounts.historicalDataPoints.kalshi}</span></div>
+                            )}
+                            {dataPointCounts.historicalDataPoints.manifold > 0 && (
+                              <div>Manifold: <span className="font-mono">{dataPointCounts.historicalDataPoints.manifold}</span></div>
+                            )}
+                            {dataPointCounts.historicalDataPoints.adjacent > 0 && (
+                              <div>Adjacent: <span className="font-mono">{dataPointCounts.historicalDataPoints.adjacent}</span></div>
+                            )}
+                            {dataPointCounts.historicalDataPoints.other > 0 && (
+                              <div>Other: <span className="font-mono">{dataPointCounts.historicalDataPoints.other}</span></div>
+                            )}
                             <div className="font-semibold border-t pt-1">Total: <span className="font-mono">{dataPointCounts.historicalDataPoints.total}</span></div>
                           </div>
                         </div>
