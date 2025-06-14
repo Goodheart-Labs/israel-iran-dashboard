@@ -220,7 +220,6 @@ function HomePage() {
                   )}
                 </div>
                 
-                
                 <div className="flex items-center justify-between mt-4 text-sm">
                   <span className="opacity-50 capitalize">
                     {prediction.source} • {new Date(prediction.lastUpdated).toLocaleDateString()}
