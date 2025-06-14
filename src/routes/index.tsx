@@ -169,7 +169,7 @@ function HomePage() {
                 <div className="bg-base-200 rounded-lg p-2" style={{ height: '260px' }}>
                   {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
+                      <LineChart data={chartData} margin={{ top: 5, right: 5, left: 0, bottom: 0 }}>
                         <XAxis 
                           dataKey="date" 
                           tick={{ fontSize: 10 }}
@@ -177,13 +177,14 @@ function HomePage() {
                           interval="preserveStartEnd"
                           angle={-45}
                           textAnchor="end"
-                          height={60}
+                          height={40}
                         />
                         <YAxis 
                           domain={[0, 100]}
                           tick={{ fontSize: 10 }}
                           stroke="#9CA3AF"
                           label={{ value: '%', angle: 0, position: 'top' }}
+                          width={30}
                         />
                         <Tooltip 
                           contentStyle={{
