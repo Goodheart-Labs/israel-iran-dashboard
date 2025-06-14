@@ -502,7 +502,7 @@ export const fetchMetaculusQuestions = action({
   },
 });
 
-// Fetch from Kalshi
+// Enhanced Kalshi market fetching with broader search
 export const fetchKalshiMarkets = action({
   args: {},
   handler: async (ctx) => {
@@ -511,7 +511,7 @@ export const fetchKalshiMarkets = action({
     try {
       // Try the public markets endpoint (no auth required for public data)
       const response = await fetch(
-        `https://trading-api.kalshi.com/trade-api/v2/markets?limit=200&status=open`,
+        `https://trading-api.kalshi.com/trade-api/v2/markets?limit=500&status=open`,
         {
           headers: {
             'Accept': 'application/json',
@@ -527,36 +527,60 @@ export const fetchKalshiMarkets = action({
       
       const data = await response.json();
       const markets = data.markets || [];
+      console.log(`📈 Kalshi: Retrieved ${markets.length} total markets`);
       
-      // Filter for Iran-related markets
-      const iranMarkets = markets.filter((market: any) => {
+      // Enhanced filtering for geopolitical and Iran-related markets
+      const relevantMarkets = markets.filter((market: any) => {
         const title = (market.title || '').toLowerCase();
         const subtitle = (market.subtitle || '').toLowerCase();
-        return title.includes('iran') || subtitle.includes('iran') || 
-               title.includes('israel') || subtitle.includes('israel') ||
-               title.includes('nuclear') || subtitle.includes('nuclear') ||
-               title.includes('middle east') || subtitle.includes('middle east');
+        const description = (market.description || '').toLowerCase();
+        const text = `${title} ${subtitle} ${description}`;
+        
+        // Direct Iran keywords
+        const iranKeywords = ['iran', 'iranian', 'tehran'];
+        // Israel keywords  
+        const israelKeywords = ['israel', 'israeli', 'netanyahu', 'gaza', 'hamas', 'hezbollah'];
+        // Nuclear keywords
+        const nuclearKeywords = ['nuclear', 'uranium', 'enrichment', 'nuke', 'atomic'];
+        // Geopolitical keywords
+        const geopoliticalKeywords = ['middle east', 'persian gulf', 'sanctions', 'regime', 'ayatollah', 'khamenei'];
+        // War/conflict keywords
+        const conflictKeywords = ['war', 'conflict', 'attack', 'strike', 'military', 'invasion'];
+        
+        const allKeywords = [...iranKeywords, ...israelKeywords, ...nuclearKeywords, ...geopoliticalKeywords, ...conflictKeywords];
+        
+        return allKeywords.some(keyword => text.includes(keyword));
+      });
+      
+      console.log(`📈 Kalshi: Found ${relevantMarkets.length} relevant markets after filtering`);
+      
+      // Log some examples of what we found
+      relevantMarkets.slice(0, 5).forEach(market => {
+        console.log(`📈 Kalshi sample: ${market.title}`);
       });
       
       // Process and save relevant markets
       let saved = 0;
-      for (const market of iranMarkets) {
+      for (const market of relevantMarkets) {
         const category = categorizePrediction(market.title || '', market.subtitle || '');
         
         // Try multiple probability sources
         let probability = null;
-        if (market.yes_ask !== undefined) {
+        if (market.yes_ask !== undefined && market.yes_ask > 0) {
           probability = Math.round(market.yes_ask * 100);
-        } else if (market.yes_bid !== undefined) {
+        } else if (market.yes_bid !== undefined && market.yes_bid > 0) {
           probability = Math.round(market.yes_bid * 100);
-        } else if (market.last_price !== undefined) {
+        } else if (market.last_price !== undefined && market.last_price > 0) {
           probability = Math.round(market.last_price * 100);
+        } else if (market.close_price !== undefined && market.close_price > 0) {
+          probability = Math.round(market.close_price * 100);
         }
         
-        if (category && probability !== null) {
+        // More flexible category matching - save even without perfect category match
+        if (probability !== null && probability >= 0 && probability <= 100) {
           try {
             await ctx.runMutation(api.predictions.upsert, {
-              category,
+              category: category || "regional_conflict", // Default to regional_conflict if no category
               title: market.title || 'Unknown Market',
               description: market.subtitle?.slice(0, 500),
               probability,
@@ -565,21 +589,63 @@ export const fetchKalshiMarkets = action({
               resolveDate: market.close_time ? new Date(market.close_time).getTime() : undefined,
             });
             saved++;
-            console.log(`Saved Kalshi market: ${market.title} (${probability}%)`);
+            console.log(`✅ Saved Kalshi market: ${market.title} (${probability}%) - Category: ${category || 'regional_conflict'}`);
           } catch (error) {
-            console.error("Error saving Kalshi market:", error);
+            console.error("❌ Error saving Kalshi market:", error);
           }
         } else {
-          console.log(`Skipped Kalshi market (no category or probability): ${market.title}`);
+          console.log(`⚠️ Skipped Kalshi market (no valid probability): ${market.title} - Prob: ${probability}`);
         }
       }
       
-      return { fetched: markets.length, saved, iranMarkets: iranMarkets.length };
+      return { 
+        fetched: markets.length, 
+        saved, 
+        relevant: relevantMarkets.length,
+        sampleTitles: relevantMarkets.slice(0, 3).map(m => m.title)
+      };
       
     } catch (error) {
-      console.error("Error fetching Kalshi markets:", error);
+      console.error("❌ Error fetching Kalshi markets:", error);
       return { fetched: 0, saved: 0, error: String(error) };
     }
+  },
+});
+
+// Retry Kalshi data collection multiple times
+export const retryKalshiCollection = action({
+  args: { maxRetries: v.optional(v.number()) },
+  handler: async (ctx, args) => {
+    "use node";
+    const maxRetries = args.maxRetries || 3;
+    const results = [];
+    let totalSaved = 0;
+    
+    console.log(`🔄 Starting Kalshi retry collection with ${maxRetries} attempts...`);
+    
+    for (let attempt = 1; attempt <= maxRetries; attempt++) {
+      console.log(`🔄 Kalshi attempt ${attempt}/${maxRetries}`);
+      
+      try {
+        const result = await ctx.runAction(api.predictions.fetchKalshiMarkets, {});
+        results.push({ attempt, ...result });
+        totalSaved += result.saved || 0;
+        
+        console.log(`✅ Attempt ${attempt}: Fetched ${result.fetched}, Saved ${result.saved}`);
+        
+        // Wait between attempts to be respectful to API
+        if (attempt < maxRetries) {
+          await new Promise(resolve => setTimeout(resolve, 2000));
+        }
+        
+      } catch (error) {
+        console.error(`❌ Attempt ${attempt} failed:`, error);
+        results.push({ attempt, error: String(error), fetched: 0, saved: 0 });
+      }
+    }
+    
+    console.log(`🏁 Kalshi retry collection complete. Total saved: ${totalSaved}`);
+    return { results, totalSaved, attempts: maxRetries };
   },
 });
 

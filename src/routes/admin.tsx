@@ -34,6 +34,7 @@ function AdminPage() {
   const reactivatePrediction = useMutation(api.predictions.reactivatePrediction);
   const deletePrediction = useMutation(api.predictions.deletePrediction);
   const testDataCollection = useMutation(api.predictions.testDataCollection);
+  const retryKalshiCollection = useMutation(api.predictions.retryKalshiCollection);
   const platformGrades = useQuery(api.predictions.getPlatformGrades);
   const dataPointCounts = useQuery(api.predictions.countDataPointsBySource);
   const createDashboard = useMutation(api.dashboards.create);
@@ -316,6 +317,21 @@ function AdminPage() {
                       }}
                     >
                       Test Data Collection
+                    </button>
+
+                    {/* Retry Kalshi Button */}
+                    <button
+                      className="btn btn-secondary btn-sm"
+                      onClick={async () => {
+                        try {
+                          const result = await retryKalshiCollection({ maxRetries: 3 });
+                          alert(`Kalshi Retry Results:\nTotal Saved: ${result.totalSaved}\nAttempts: ${result.attempts}\nCheck console for details`);
+                        } catch (error) {
+                          alert(`Retry failed: ${error}`);
+                        }
+                      }}
+                    >
+                      Retry Kalshi (3x)
                     </button>
                   </div>
                   
