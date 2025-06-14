@@ -2,7 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from "../../convex/_generated/api";
 import { useAction } from "convex/react";
 import { useEffect, useState } from "react";
@@ -86,7 +86,7 @@ function HomePage() {
       {/* Featured Prediction Markets Grid */}
       <div className="not-prose grid grid-cols-1 lg:grid-cols-2 gap-6">
         {featuredPredictions
-          .sort((a, b) => {
+          .sort((a: any, b: any) => {
             // Put both markets with minimal data at the bottom
             if (a.title.includes("US-Iran nuclear agreement")) return 1;
             if (b.title.includes("US-Iran nuclear agreement")) return -1;
@@ -100,7 +100,7 @@ function HomePage() {
             if (!aHasData && bHasData) return 1;
             return 0;
           })
-          .map((prediction) => {
+          .map((prediction: any) => {
           // Use fresh historical data from H5N1 approach or stored data
           const freshData = historicalData[prediction._id] || [];
           const chartData = freshData.length > 0 
@@ -109,7 +109,7 @@ function HomePage() {
                 probability: point.probability
               }))
             : prediction.history && prediction.history.length > 0 
-              ? prediction.history.map(h => ({
+              ? prediction.history.map((h: any) => ({
                   date: new Date(h.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                   probability: h.probability
                 }))
@@ -166,7 +166,7 @@ function HomePage() {
                 )}
                 
                 {/* Chart */}
-                <div className="bg-base-200 rounded-lg p-4" style={{ height: '280px' }}>
+                <div className="bg-base-200 rounded-lg p-2" style={{ height: '260px' }}>
                   {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData}>

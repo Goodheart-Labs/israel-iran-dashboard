@@ -24,7 +24,7 @@ export const Route = createFileRoute("/admin")({
 });
 
 function AdminPage() {
-  const { data: predictions } = useSuspenseQuery(featuredPredictionsQueryOptions);
+  // const { data: predictions } = useSuspenseQuery(featuredPredictionsQueryOptions);
   const { data: allPredictions } = useSuspenseQuery(allPredictionsQueryOptions);
   const { data: dashboards } = useSuspenseQuery(dashboardsQueryOptions);
   const { data: dashboardMarkets } = useSuspenseQuery(dashboardMarketsQueryOptions);
@@ -257,7 +257,7 @@ function AdminPage() {
 
                 {/* Existing Dashboards */}
                 <div className="space-y-4">
-                  {dashboards.map((dashboard) => (
+                  {dashboards.map((dashboard: any) => (
                     <div key={dashboard._id} className="card bg-base-100 shadow-xl">
                       <div className="card-body">
                         <div className="flex justify-between items-start">
@@ -349,7 +349,7 @@ function AdminPage() {
                       >
                         <option value="all">All Markets</option>
                         <option value="unassigned">Unassigned Markets</option>
-                        {dashboards.map((dashboard) => (
+                        {dashboards.map((dashboard: any) => (
                           <option key={dashboard._id} value={dashboard._id}>
                             {dashboard.name}
                           </option>
