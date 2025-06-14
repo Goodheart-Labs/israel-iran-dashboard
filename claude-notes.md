@@ -208,6 +208,7 @@ Hi Claude, am Nathan Young, I'd like us to build cool, beneficial things togethe
 - fix: display most recent data point as current probability
 - feat: remove central question section from dashboard
 - feat: make prediction market titles clickable links to source markets
+- feat: add Brier score grading system and market management tools
 
 ### Production Deployment Status
 
@@ -224,10 +225,25 @@ Hi Claude, am Nathan Young, I'd like us to build cool, beneficial things togethe
 
 - ✅ Clickable prediction market titles linking to source markets
 
+**Completed This Session**:
+
+- ✅ Brier Score grading system with platform performance data from brier.fyi
+- ✅ Market management tools (deactivate, reactivate, delete predictions)
+- ✅ Enhanced admin panel with new tabs and comprehensive controls
+
+**In Progress**:
+
+- 🔄 Adding missing charts (risk gauge, radar chart components created)
+
 **Future Tasks Tracked**:
 
-- Add PostHog analytics integration
-- Neaten up graphs
-- Fix screwed up labels
-- Make Metaculus/Kalshi data work
-- Nuclear proviso, forecaster, admin improvements, etc.
+- Add nuclear proviso feature
+- Add forecaster functionality  
+- Add Paul C chart
+- Add US collapse prediction markets
+- Add AI 2027 predictions
+- Add requests feature
+- Add voting functionality
+- Add comment summaries feature
+- Consolidate sloppy sites into one big site
+- Improve admin panel further
