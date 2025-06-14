@@ -478,6 +478,68 @@ export const fetchMetaculusQuestions = action({
   },
 });
 
+// Fetch from Kalshi
+export const fetchKalshiMarkets = action({
+  args: {},
+  handler: async (ctx) => {
+    "use node";
+    
+    const searchTerms = [
+      "iran",
+      "nuclear", 
+      "israel",
+      "middle east",
+      "sanctions"
+    ];
+    
+    const allMarkets = [];
+    
+    for (const term of searchTerms) {
+      try {
+        const response = await fetch(
+          `https://api.kalshi.com/trade-api/v2/markets?limit=100&cursor=&event_ticker=${encodeURIComponent(term)}`
+        );
+        const data = await response.json();
+        if (data.markets) {
+          allMarkets.push(...data.markets);
+        }
+      } catch (error) {
+        console.error(`Error fetching Kalshi markets for "${term}":`, error);
+      }
+    }
+    
+    // Deduplicate by ticker
+    const uniqueMarkets = Array.from(
+      new Map(allMarkets.map(m => [m.ticker, m])).values()
+    );
+    
+    // Process and save relevant markets
+    let saved = 0;
+    for (const market of uniqueMarkets) {
+      const category = categorizePrediction(market.title, "");
+      if (category && market.yes_ask !== undefined) {
+        try {
+          const probability = Math.round(market.yes_ask * 100); // Convert to percentage
+          await ctx.runMutation(api.predictions.upsert, {
+            category,
+            title: market.title,
+            description: market.subtitle?.slice(0, 500),
+            probability,
+            source: "kalshi",
+            sourceUrl: `https://kalshi.com/markets/${market.ticker}`,
+            resolveDate: market.close_time ? new Date(market.close_time).getTime() : undefined,
+          });
+          saved++;
+        } catch (error) {
+          console.error("Error saving Kalshi market:", error);
+        }
+      }
+    }
+    
+    return { fetched: uniqueMarkets.length, saved };
+  },
+});
+
 // Fetch historical data for a specific market
 export const fetchMarketHistory = action({
   args: { 
@@ -959,6 +1021,7 @@ export const fetchAllPredictions = action({
   handler: async (ctx): Promise<{
     manifold: { fetched: number; saved: number; error?: any };
     metaculus: { fetched: number; saved: number; error?: any };
+    kalshi: { fetched: number; saved: number; error?: any };
     polymarket: { fetched: number; saved: number; error?: any };
     adjacentNews: { savedFromAdjacent: number; totalFetched: number; error?: any };
     newsBased: { savedFromNews: number; searchedKeywords: number; error?: any };
@@ -968,6 +1031,7 @@ export const fetchAllPredictions = action({
     const results = await Promise.allSettled([
       ctx.runAction(api.predictions.fetchManifoldMarkets, {}),
       ctx.runAction(api.predictions.fetchMetaculusQuestions, {}),
+      ctx.runAction(api.predictions.fetchKalshiMarkets, {}),
       ctx.runAction(api.predictions.fetchPolymarketMarkets, {}),
       ctx.runAction(api.predictions.fetchAdjacentNewsMarkets, {}),
       ctx.runAction(api.predictions.fetchNewsBasedMarkets, {}),
@@ -976,11 +1040,12 @@ export const fetchAllPredictions = action({
     const summary = {
       manifold: results[0].status === "fulfilled" ? results[0].value : { fetched: 0, saved: 0, error: results[0].reason },
       metaculus: results[1].status === "fulfilled" ? results[1].value : { fetched: 0, saved: 0, error: results[1].reason },
-      polymarket: results[2].status === "fulfilled" ? results[2].value : { fetched: 0, saved: 0, error: results[2].reason },
-      adjacentNews: results[3].status === "fulfilled" 
-        ? { ...results[3].value, totalFetched: results[3].value.totalFetched || 0 }
-        : { savedFromAdjacent: 0, totalFetched: 0, error: results[3].reason },
-      newsBased: results[4].status === "fulfilled" ? results[4].value : { savedFromNews: 0, searchedKeywords: 0, error: results[4].reason },
+      kalshi: results[2].status === "fulfilled" ? results[2].value : { fetched: 0, saved: 0, error: results[2].reason },
+      polymarket: results[3].status === "fulfilled" ? results[3].value : { fetched: 0, saved: 0, error: results[3].reason },
+      adjacentNews: results[4].status === "fulfilled" 
+        ? { ...results[4].value, totalFetched: results[4].value.totalFetched || 0 }
+        : { savedFromAdjacent: 0, totalFetched: 0, error: results[4].reason },
+      newsBased: results[5].status === "fulfilled" ? results[5].value : { savedFromNews: 0, searchedKeywords: 0, error: results[5].reason },
     };
     
     return summary;

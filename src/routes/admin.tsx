@@ -1,9 +1,11 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
-import { createFileRoute } from "@tanstack/router";
+import { createFileRoute } from "@tanstack/react-router";
 import { api } from "../../convex/_generated/api";
-import { useMutation } from "convex/react";
-import { useState } from "react";
+import { useMutation, useQuery } from "convex/react";
+import { useState, useEffect } from "react";
+import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
+import { SignInButton } from "@clerk/clerk-react";
 import type { Id } from "../../convex/_generated/dataModel";
 
 const featuredPredictionsQueryOptions = convexQuery(api.predictions.getFeaturedPredictions, {});
@@ -18,8 +20,15 @@ export const Route = createFileRoute("/admin")({
 function AdminPage() {
   const { data: predictions } = useSuspenseQuery(featuredPredictionsQueryOptions);
   const updateClarificationText = useMutation(api.predictions.updateClarificationText);
+  const storeUser = useMutation(api.users.store);
+  const isAdmin = useQuery(api.users.isAdmin);
   const [editingId, setEditingId] = useState<Id<"predictions"> | null>(null);
   const [editText, setEditText] = useState("");
+
+  // Auto-create user when they first visit admin
+  useEffect(() => {
+    void storeUser();
+  }, [storeUser]);
 
   const handleEdit = (prediction: any) => {
     setEditingId(prediction._id);
@@ -41,11 +50,43 @@ function AdminPage() {
   };
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
-      <p className="text-lg opacity-80 mb-8">
-        Manage clarification text for prediction markets
-      </p>
+    <>
+      <AuthLoading>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="loading loading-spinner loading-lg"></div>
+        </div>
+      </AuthLoading>
+      
+      <Unauthenticated>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-center">
+            <h1 className="text-2xl font-bold mb-4">Admin Access Required</h1>
+            <p className="text-lg opacity-70 mb-6">Please sign in to access the admin panel</p>
+            <SignInButton mode="modal">
+              <button className="btn btn-primary">Sign In</button>
+            </SignInButton>
+          </div>
+        </div>
+      </Unauthenticated>
+      
+      <Authenticated>
+        {isAdmin === false ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="text-center">
+              <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
+              <p className="text-lg opacity-70">You don't have admin permissions</p>
+            </div>
+          </div>
+        ) : isAdmin === undefined ? (
+          <div className="flex items-center justify-center min-h-screen">
+            <div className="loading loading-spinner loading-lg"></div>
+          </div>
+        ) : (
+          <div className="max-w-4xl mx-auto p-6">
+            <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
+            <p className="text-lg opacity-80 mb-8">
+              Manage clarification text for prediction markets
+            </p>
 
       <div className="space-y-6">
         {predictions.map((prediction) => (
@@ -111,7 +152,10 @@ function AdminPage() {
             </div>
           </div>
         ))}
-      </div>
-    </div>
+            </div>
+          </div>
+        )}
+      </Authenticated>
+    </>
   );
 }

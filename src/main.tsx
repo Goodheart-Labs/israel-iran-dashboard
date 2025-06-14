@@ -4,6 +4,9 @@ import { createRoot } from "react-dom/client";
 import { QueryClient } from "@tanstack/react-query";
 import { ConvexReactClient } from "convex/react";
 import { ConvexQueryClient } from "@convex-dev/react-query";
+import { ClerkProvider, useAuth } from "@clerk/clerk-react";
+import { ConvexProviderWithClerk } from "convex/react-clerk";
+import { CSPostHogProvider } from "./components/PostHogProvider";
 import "./index.css";
 
 import { routeTree } from "./routeTree.gen";
@@ -36,9 +39,21 @@ declare module "@tanstack/react-router" {
   }
 }
 
+const publishableKey = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+if (!publishableKey) {
+  throw new Error("Missing Publishable Key");
+}
+
 // Render the app
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <RouterProvider router={router} />
+    <CSPostHogProvider>
+      <ClerkProvider publishableKey={publishableKey}>
+        <ConvexProviderWithClerk client={convex} useAuth={useAuth}>
+          <RouterProvider router={router} />
+        </ConvexProviderWithClerk>
+      </ClerkProvider>
+    </CSPostHogProvider>
   </StrictMode>,
 );

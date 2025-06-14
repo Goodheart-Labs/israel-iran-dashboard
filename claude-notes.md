@@ -15,19 +15,6 @@ Hi Claude, am Nathan Young, I'd like us to build cool, beneficial things togethe
 5. ✅ Real-time market data fetching
 6. ✅ Admin approval system for predictions
 
-### Featured Markets Added (10 total)
-
-1. **NEW**: 1000+ deaths due to Israel-Iran conflict in 2025 (Metaculus)
-2. Iran strike on Israel in June (Polymarket)
-3. US military action against Iran before July (Polymarket)
-4. Iran develops nuclear weapon in 2025 (Polymarket)
-5. US-Iran nuclear deal in 2025 (Polymarket)
-6. US-Iran nuclear agreement (Kalshi)
-7. Iran closes Strait of Hormuz in 2025 (Polymarket)
-8. Khamenei out as Supreme Leader by June 30 (Polymarket)
-9. Nuclear weapon detonation in 2025 (Polymarket)
-10. Netanyahu out in 2025 (Polymarket)
-
 ### Historical Data System
 
 - ✅ Implemented fetchMarketHistory action for individual markets
@@ -38,7 +25,7 @@ Hi Claude, am Nathan Young, I'd like us to build cool, beneficial things togethe
 
 ### API Integrations Working
 
-- ✅ Adjacent News API with key (38314d45-7899-4f51-a860-f6b898707a70)
+- ✅ Adjacent News API with key
 - ✅ Polymarket REST API with historical data
 - ✅ Metaculus questions API
 - ✅ Manifold Markets search
@@ -69,11 +56,9 @@ Hi Claude, am Nathan Young, I'd like us to build cool, beneficial things togethe
 ### Live Dashboard Features
 
 - 🌐 **URL**: http://localhost:5175
-- 📊 **10 Featured Markets** including new Metaculus question about deaths
-- 📈 **Real Historical Charts** with month of synthetic trading data
-- 🎯 **Iran Focus Categories**: military_action, nuclear_program, sanctions, regional_conflict, israel_relations, protests, regime_stability
-- 📱 **Responsive Design** with 2-wide grid layout
-- 🔄 **Real-time Updates** via Convex backend
+- 📊 **Markets and forecasts**
+- 📱 **Responsive design** with 2-wide grid layout
+- 🔄 **Real-time updates** via Convex backend
 
 ### H5N1 Dashboard Analysis Results
 
@@ -226,7 +211,8 @@ Hi Claude, am Nathan Young, I'd like us to build cool, beneficial things togethe
 
 ### Production Deployment Status
 
-**Currently in Production**: 
+**Currently in Production**:
+
 - Iran geopolitical dashboard with historical data collection
 - Historical data visualization with synthetic data generation
 - Clerk authentication deactivated for easy deployment
@@ -235,11 +221,13 @@ Hi Claude, am Nathan Young, I'd like us to build cool, beneficial things togethe
 - Central question section removed from dashboard
 
 **Ready to Deploy** (local only):
+
 - ✅ Clickable prediction market titles linking to source markets
 
 **Future Tasks Tracked**:
+
 - Add PostHog analytics integration
 - Neaten up graphs
-- Fix screwed up labels 
+- Fix screwed up labels
 - Make Metaculus/Kalshi data work
 - Nuclear proviso, forecaster, admin improvements, etc.

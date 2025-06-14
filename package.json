@@ -13,6 +13,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@clerk/clerk-react": "^5.32.0",
     "@convex-dev/react-query": "0.0.0-alpha.8",
     "@tanstack/react-form": "^1.9.0",
     "@tanstack/react-query": "^5.79.0",
@@ -20,6 +21,7 @@
     "@tanstack/react-router-devtools": "^1.119.1",
     "convex": "^1.23.0",
     "lucide-react": "^0.511.0",
+    "posthog-js": "^1.252.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "recharts": "^2.15.3"

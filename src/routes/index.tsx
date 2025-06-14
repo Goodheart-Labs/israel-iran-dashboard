@@ -6,6 +6,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { api } from "../../convex/_generated/api";
 import { useAction } from "convex/react";
 import { useEffect, useState } from "react";
+import { SignInButton, UserButton } from "@clerk/clerk-react";
+import { Authenticated, Unauthenticated } from "convex/react";
 
 const featuredPredictionsQueryOptions = convexQuery(api.predictions.getFeaturedPredictions, {});
 
@@ -60,11 +62,24 @@ function HomePage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4">Iran Geopolitical Risk Dashboard</h1>
-        <p className="text-lg opacity-80">
-          Tracking prediction markets and forecasts on Iran's geopolitical developments
-        </p>
+      <div className="flex justify-between items-start mb-8">
+        <div className="text-center flex-1">
+          <h1 className="text-4xl font-bold mb-4">Iran Geopolitical Risk Dashboard</h1>
+          <p className="text-lg opacity-80">
+            Tracking prediction markets and forecasts on Iran's geopolitical developments
+          </p>
+        </div>
+        
+        <div className="flex-shrink-0 ml-4">
+          <Unauthenticated>
+            <SignInButton mode="modal">
+              <button className="btn btn-outline btn-sm">Sign In</button>
+            </SignInButton>
+          </Unauthenticated>
+          <Authenticated>
+            <UserButton />
+          </Authenticated>
+        </div>
       </div>
 
 
@@ -90,12 +105,12 @@ function HomePage() {
           const freshData = historicalData[prediction._id] || [];
           const chartData = freshData.length > 0 
             ? freshData.map(point => ({
-                date: new Date(point.date).toLocaleDateString(),
+                date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                 probability: point.probability
               }))
             : prediction.history && prediction.history.length > 0 
               ? prediction.history.map(h => ({
-                  date: new Date(h.timestamp).toLocaleDateString(),
+                  date: new Date(h.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
                   probability: h.probability
                 }))
               : [];
@@ -151,20 +166,25 @@ function HomePage() {
                 )}
                 
                 {/* Chart */}
-                <div className="bg-base-200 rounded-lg p-4" style={{ height: '300px' }}>
+                <div className="bg-base-200 rounded-lg p-4" style={{ height: '280px' }}>
                   {chartData.length > 0 ? (
                     <ResponsiveContainer width="100%" height="100%">
                       <LineChart data={chartData}>
                         <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
                         <XAxis 
                           dataKey="date" 
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 10 }}
                           stroke="#9CA3AF"
+                          interval="preserveStartEnd"
+                          angle={-45}
+                          textAnchor="end"
+                          height={60}
                         />
                         <YAxis 
                           domain={[0, 100]}
-                          tick={{ fontSize: 12 }}
+                          tick={{ fontSize: 10 }}
                           stroke="#9CA3AF"
+                          label={{ value: '%', angle: 0, position: 'top' }}
                         />
                         <Tooltip 
                           contentStyle={{
@@ -178,10 +198,10 @@ function HomePage() {
                         <Line 
                           type="monotone" 
                           dataKey="probability" 
-                          stroke="#8B5CF6" 
-                          strokeWidth={3}
-                          dot={{ fill: '#8B5CF6', strokeWidth: 1, r: 1 }}
-                          activeDot={{ r: 4, fill: '#8B5CF6' }}
+                          stroke="#3B82F6" 
+                          strokeWidth={2.5}
+                          dot={{ fill: '#3B82F6', strokeWidth: 0, r: 0 }}
+                          activeDot={{ r: 5, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
                         />
                       </LineChart>
                     </ResponsiveContainer>
@@ -201,9 +221,6 @@ function HomePage() {
                   )}
                 </div>
                 
-                {prediction.description && (
-                  <p className="text-sm opacity-70 mt-4">{prediction.description}</p>
-                )}
                 
                 <div className="flex items-center justify-between mt-4 text-sm">
                   <span className="opacity-50 capitalize">

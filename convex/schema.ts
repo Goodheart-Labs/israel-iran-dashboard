@@ -29,6 +29,26 @@ export default defineSchema({
     role: v.optional(v.union(v.literal("user"), v.literal("admin"))),
   }).index("by_clerkId", ["clerkId"]),
 
+  dashboards: defineTable({
+    name: v.string(),
+    slug: v.string(),
+    description: v.optional(v.string()),
+    order: v.number(),
+    isActive: v.boolean(),
+    isPublic: v.boolean(), // Private tabs for staging/editing
+  }).index("by_slug", ["slug"])
+    .index("by_active_order", ["isActive", "order"])
+    .index("by_public_order", ["isPublic", "isActive", "order"]),
+
+  dashboardMarkets: defineTable({
+    dashboardId: v.id("dashboards"),
+    predictionId: v.id("predictions"),
+    order: v.number(),
+    clarificationOverride: v.optional(v.string()),
+  }).index("by_dashboard", ["dashboardId"])
+    .index("by_dashboard_order", ["dashboardId", "order"])
+    .index("by_prediction", ["predictionId"]),
+
   predictions: defineTable({
     category: v.union(
       v.literal("military_action"),
