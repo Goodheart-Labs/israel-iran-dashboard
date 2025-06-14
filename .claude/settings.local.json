@@ -17,7 +17,11 @@
       "Bash(convex env:*)",
       "Bash(git push:*)",
       "WebFetch(domain:briar.fyi)",
-      "WebFetch(domain:brier.fyi)"
+      "WebFetch(domain:brier.fyi)",
+      "WebFetch(domain:www.metaculus.com)",
+      "WebFetch(domain:api.kalshi.com)",
+      "WebFetch(domain:trading-api.readme.io)",
+      "WebFetch(domain:help.kalshi.com)"
     ]
   },
   "enableAllProjectMcpServers": true,

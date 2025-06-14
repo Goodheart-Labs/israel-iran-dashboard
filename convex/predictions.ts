@@ -456,21 +456,45 @@ export const fetchMetaculusQuestions = action({
     let saved = 0;
     for (const question of uniqueQuestions) {
       const category = categorizePrediction(question.title, "");
-      if (category && question.community_prediction?.full?.q2 !== undefined) {
+      
+      // Try multiple prediction sources in order of preference
+      let probability = null;
+      
+      // Method 1: recency_weighted aggregation (most reliable)
+      if (question.aggregations?.recency_weighted?.latest?.means?.[0] !== undefined) {
+        probability = Math.round(question.aggregations.recency_weighted.latest.means[0] * 100);
+      }
+      // Method 2: unweighted aggregation
+      else if (question.aggregations?.unweighted?.latest?.means?.[0] !== undefined) {
+        probability = Math.round(question.aggregations.unweighted.latest.means[0] * 100);
+      }
+      // Method 3: metaculus_prediction aggregation
+      else if (question.aggregations?.metaculus_prediction?.latest?.means?.[0] !== undefined) {
+        probability = Math.round(question.aggregations.metaculus_prediction.latest.means[0] * 100);
+      }
+      // Method 4: Legacy community_prediction (fallback)
+      else if (question.community_prediction?.full?.q2 !== undefined) {
+        probability = Math.round(question.community_prediction.full.q2 * 100);
+      }
+      
+      if (category && probability !== null) {
         try {
           await ctx.runMutation(api.predictions.upsert, {
             category,
             title: question.title,
             description: question.description?.slice(0, 500),
-            probability: Math.round(question.community_prediction.full.q2 * 100),
+            probability: probability,
             source: "metaculus",
             sourceUrl: `https://www.metaculus.com/questions/${question.id}`,
             resolveDate: question.resolve_time ? new Date(question.resolve_time).getTime() : undefined,
           });
           saved++;
+          console.log(`Saved Metaculus question: ${question.title} (${probability}%)`);
         } catch (error) {
           console.error("Error saving Metaculus question:", error);
         }
+      } else {
+        console.log(`Skipped Metaculus question (no category or probability): ${question.title}`);
       }
     }
     
@@ -484,59 +508,78 @@ export const fetchKalshiMarkets = action({
   handler: async (ctx) => {
     "use node";
     
-    const searchTerms = [
-      "iran",
-      "nuclear", 
-      "israel",
-      "middle east",
-      "sanctions"
-    ];
-    
-    const allMarkets = [];
-    
-    for (const term of searchTerms) {
-      try {
-        const response = await fetch(
-          `https://api.kalshi.com/trade-api/v2/markets?limit=100&cursor=&event_ticker=${encodeURIComponent(term)}`
-        );
-        const data = await response.json();
-        if (data.markets) {
-          allMarkets.push(...data.markets);
+    try {
+      // Try the public markets endpoint (no auth required for public data)
+      const response = await fetch(
+        `https://trading-api.kalshi.com/trade-api/v2/markets?limit=200&status=open`,
+        {
+          headers: {
+            'Accept': 'application/json',
+            'User-Agent': 'IranDashboard/1.0'
+          }
         }
-      } catch (error) {
-        console.error(`Error fetching Kalshi markets for "${term}":`, error);
+      );
+      
+      if (!response.ok) {
+        console.error(`Kalshi API error: ${response.status} - ${response.statusText}`);
+        return { fetched: 0, saved: 0, error: `API error: ${response.status}` };
       }
-    }
-    
-    // Deduplicate by ticker
-    const uniqueMarkets = Array.from(
-      new Map(allMarkets.map(m => [m.ticker, m])).values()
-    );
-    
-    // Process and save relevant markets
-    let saved = 0;
-    for (const market of uniqueMarkets) {
-      const category = categorizePrediction(market.title, "");
-      if (category && market.yes_ask !== undefined) {
-        try {
-          const probability = Math.round(market.yes_ask * 100); // Convert to percentage
-          await ctx.runMutation(api.predictions.upsert, {
-            category,
-            title: market.title,
-            description: market.subtitle?.slice(0, 500),
-            probability,
-            source: "kalshi",
-            sourceUrl: `https://kalshi.com/markets/${market.ticker}`,
-            resolveDate: market.close_time ? new Date(market.close_time).getTime() : undefined,
-          });
-          saved++;
-        } catch (error) {
-          console.error("Error saving Kalshi market:", error);
+      
+      const data = await response.json();
+      const markets = data.markets || [];
+      
+      // Filter for Iran-related markets
+      const iranMarkets = markets.filter(market => {
+        const title = (market.title || '').toLowerCase();
+        const subtitle = (market.subtitle || '').toLowerCase();
+        return title.includes('iran') || subtitle.includes('iran') || 
+               title.includes('israel') || subtitle.includes('israel') ||
+               title.includes('nuclear') || subtitle.includes('nuclear') ||
+               title.includes('middle east') || subtitle.includes('middle east');
+      });
+      
+      // Process and save relevant markets
+      let saved = 0;
+      for (const market of iranMarkets) {
+        const category = categorizePrediction(market.title || '', market.subtitle || '');
+        
+        // Try multiple probability sources
+        let probability = null;
+        if (market.yes_ask !== undefined) {
+          probability = Math.round(market.yes_ask * 100);
+        } else if (market.yes_bid !== undefined) {
+          probability = Math.round(market.yes_bid * 100);
+        } else if (market.last_price !== undefined) {
+          probability = Math.round(market.last_price * 100);
+        }
+        
+        if (category && probability !== null) {
+          try {
+            await ctx.runMutation(api.predictions.upsert, {
+              category,
+              title: market.title || 'Unknown Market',
+              description: market.subtitle?.slice(0, 500),
+              probability,
+              source: "kalshi",
+              sourceUrl: `https://kalshi.com/events/${market.event_ticker}/markets/${market.ticker}`,
+              resolveDate: market.close_time ? new Date(market.close_time).getTime() : undefined,
+            });
+            saved++;
+            console.log(`Saved Kalshi market: ${market.title} (${probability}%)`);
+          } catch (error) {
+            console.error("Error saving Kalshi market:", error);
+          }
+        } else {
+          console.log(`Skipped Kalshi market (no category or probability): ${market.title}`);
         }
       }
+      
+      return { fetched: markets.length, saved, iranMarkets: iranMarkets.length };
+      
+    } catch (error) {
+      console.error("Error fetching Kalshi markets:", error);
+      return { fetched: 0, saved: 0, error: String(error) };
     }
-    
-    return { fetched: uniqueMarkets.length, saved };
   },
 });
 
@@ -2093,5 +2136,43 @@ export const getAllForAdmin = query({
     return await ctx.db
       .query("predictions")
       .collect();
+  },
+});
+
+// Test Metaculus and Kalshi data collection
+export const testDataCollection = action({
+  args: {},
+  handler: async (ctx) => {
+    "use node";
+    console.log("🔍 Testing Metaculus and Kalshi data collection...");
+    
+    const results = {
+      metaculus: { fetched: 0, saved: 0, error: null },
+      kalshi: { fetched: 0, saved: 0, error: null }
+    };
+    
+    // Test Metaculus
+    try {
+      console.log("📊 Testing Metaculus API...");
+      const metaculusResult = await ctx.runAction(api.predictions.fetchMetaculusQuestions, {});
+      results.metaculus = metaculusResult;
+      console.log(`✅ Metaculus: Fetched ${metaculusResult.fetched}, Saved ${metaculusResult.saved}`);
+    } catch (error) {
+      results.metaculus.error = String(error);
+      console.error("❌ Metaculus error:", error);
+    }
+    
+    // Test Kalshi
+    try {
+      console.log("📈 Testing Kalshi API...");
+      const kalshiResult = await ctx.runAction(api.predictions.fetchKalshiMarkets, {});
+      results.kalshi = kalshiResult;
+      console.log(`✅ Kalshi: Fetched ${kalshiResult.fetched}, Saved ${kalshiResult.saved}`);
+    } catch (error) {
+      results.kalshi.error = String(error);
+      console.error("❌ Kalshi error:", error);
+    }
+    
+    return results;
   },
 });

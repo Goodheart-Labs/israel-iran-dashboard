@@ -33,6 +33,7 @@ function AdminPage() {
   const deactivatePrediction = useMutation(api.predictions.deactivatePrediction);
   const reactivatePrediction = useMutation(api.predictions.reactivatePrediction);
   const deletePrediction = useMutation(api.predictions.deletePrediction);
+  const testDataCollection = useMutation(api.predictions.testDataCollection);
   const platformGrades = useQuery(api.predictions.getPlatformGrades);
   const createDashboard = useMutation(api.dashboards.create);
   const updateDashboard = useMutation(api.dashboards.update);
@@ -298,7 +299,24 @@ function AdminPage() {
             {activeTab === "manage" && (
               <div>
                 <div className="flex justify-between items-end mb-6">
-                  <h2 className="text-2xl font-bold">Manage Prediction Markets</h2>
+                  <div className="flex items-center gap-4">
+                    <h2 className="text-2xl font-bold">Manage Prediction Markets</h2>
+                    
+                    {/* Test Data Collection Button */}
+                    <button
+                      className="btn btn-outline btn-sm"
+                      onClick={async () => {
+                        try {
+                          const result = await testDataCollection();
+                          alert(`Test Results:\nMetaculus: ${result.metaculus.fetched} fetched, ${result.metaculus.saved} saved\nKalshi: ${result.kalshi.fetched} fetched, ${result.kalshi.saved} saved`);
+                        } catch (error) {
+                          alert(`Test failed: ${error}`);
+                        }
+                      }}
+                    >
+                      Test Data Collection
+                    </button>
+                  </div>
                   
                   {/* Filter and Sort Controls */}
                   <div className="flex gap-4">
