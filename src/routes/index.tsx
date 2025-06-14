@@ -178,6 +178,7 @@ function HomePage() {
                           angle={-45}
                           textAnchor="end"
                           height={40}
+                          tickLine={false}
                         />
                         <YAxis 
                           domain={[0, 100]}
@@ -185,6 +186,7 @@ function HomePage() {
                           stroke="#9CA3AF"
                           label={{ value: '%', angle: 0, position: 'top' }}
                           width={30}
+                          tickLine={false}
                         />
                         <Tooltip 
                           contentStyle={{
