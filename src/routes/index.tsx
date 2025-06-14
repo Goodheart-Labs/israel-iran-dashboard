@@ -159,12 +159,10 @@ function HomePage() {
                     )}
                   </div>
                 </div>
-                
                 {/* Clarification text */}
                 {prediction.clarificationText && (
                   <p className="text-sm opacity-70 mb-3">{prediction.clarificationText}</p>
                 )}
-                
                 {/* Chart */}
                 <div className="bg-base-200 rounded-lg p-2" style={{ height: '260px' }}>
                   {chartData.length > 0 ? (
