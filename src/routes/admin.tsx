@@ -44,6 +44,7 @@ function AdminPage() {
   const [editingId, setEditingId] = useState<Id<"predictions"> | null>(null);
   const [editText, setEditText] = useState("");
   const [selectedDashboard, setSelectedDashboard] = useState<string>("all");
+  const [sortBy, setSortBy] = useState<string>("status-date");
   
   // Dashboard creation state
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -296,27 +297,52 @@ function AdminPage() {
             {/* Manage Markets Tab */}
             {activeTab === "manage" && (
               <div>
-                <div className="flex justify-between items-center mb-6">
+                <div className="flex justify-between items-end mb-6">
                   <h2 className="text-2xl font-bold">Manage Prediction Markets</h2>
                   
-                  {/* Dashboard Filter Dropdown */}
-                  <div className="form-control">
-                    <label className="label">
-                      <span className="label-text">Filter by Dashboard:</span>
-                    </label>
-                    <select
-                      className="select select-bordered w-64"
-                      value={selectedDashboard}
-                      onChange={(e) => setSelectedDashboard(e.target.value)}
-                    >
-                      <option value="all">All Markets</option>
-                      <option value="unassigned">Unassigned Markets</option>
-                      {dashboards.map((dashboard) => (
-                        <option key={dashboard._id} value={dashboard._id}>
-                          {dashboard.name}
-                        </option>
-                      ))}
-                    </select>
+                  {/* Filter and Sort Controls */}
+                  <div className="flex gap-4">
+                    {/* Dashboard Filter Dropdown */}
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Filter by Dashboard:</span>
+                      </label>
+                      <select
+                        className="select select-bordered w-48"
+                        value={selectedDashboard}
+                        onChange={(e) => setSelectedDashboard(e.target.value)}
+                      >
+                        <option value="all">All Markets</option>
+                        <option value="unassigned">Unassigned Markets</option>
+                        {dashboards.map((dashboard) => (
+                          <option key={dashboard._id} value={dashboard._id}>
+                            {dashboard.name}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
+
+                    {/* Sort Dropdown */}
+                    <div className="form-control">
+                      <label className="label">
+                        <span className="label-text">Sort by:</span>
+                      </label>
+                      <select
+                        className="select select-bordered w-48"
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                      >
+                        <option value="status-date">Status + Recent</option>
+                        <option value="date-newest">Date (Newest)</option>
+                        <option value="date-oldest">Date (Oldest)</option>
+                        <option value="title-az">Title (A-Z)</option>
+                        <option value="title-za">Title (Z-A)</option>
+                        <option value="source">Source</option>
+                        <option value="category">Category</option>
+                        <option value="probability-high">Probability (High)</option>
+                        <option value="probability-low">Probability (Low)</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
                 
@@ -334,10 +360,40 @@ function AdminPage() {
                       );
                     })
                     .sort((a, b) => {
-                      // Active markets first, then by last updated
-                      if (a.isActive && !b.isActive) return -1;
-                      if (!a.isActive && b.isActive) return 1;
-                      return b.lastUpdated - a.lastUpdated;
+                      switch (sortBy) {
+                        case "status-date":
+                          // Active markets first, then by last updated
+                          if (a.isActive && !b.isActive) return -1;
+                          if (!a.isActive && b.isActive) return 1;
+                          return b.lastUpdated - a.lastUpdated;
+                        
+                        case "date-newest":
+                          return b.lastUpdated - a.lastUpdated;
+                        
+                        case "date-oldest":
+                          return a.lastUpdated - b.lastUpdated;
+                        
+                        case "title-az":
+                          return a.title.localeCompare(b.title);
+                        
+                        case "title-za":
+                          return b.title.localeCompare(a.title);
+                        
+                        case "source":
+                          return a.source.localeCompare(b.source);
+                        
+                        case "category":
+                          return a.category.localeCompare(b.category);
+                        
+                        case "probability-high":
+                          return b.probability - a.probability;
+                        
+                        case "probability-low":
+                          return a.probability - b.probability;
+                        
+                        default:
+                          return 0;
+                      }
                     })
                     .map((prediction) => {
                       // Get dashboard info for this prediction
