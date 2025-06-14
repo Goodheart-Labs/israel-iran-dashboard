@@ -383,6 +383,56 @@ function AdminPage() {
                                 </div>
                               )}
                             </div>
+
+                            {/* Brier Score Section */}
+                            <div className="mt-4">
+                              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                {/* Brier Category */}
+                                <div className="form-control">
+                                  <label className="label">
+                                    <span className="label-text font-medium">Brier Category</span>
+                                  </label>
+                                  <select
+                                    className="select select-bordered select-sm"
+                                    value={prediction.brierCategory || ""}
+                                    onChange={async (e) => {
+                                      const category = e.target.value || undefined;
+                                      const grade = category && platformGrades ? 
+                                        platformGrades[category as keyof typeof platformGrades]?.[prediction.source as keyof typeof platformGrades.culture] : undefined;
+                                      
+                                      await updateBrierScore({
+                                        predictionId: prediction._id,
+                                        brierCategory: category as any,
+                                        brierGrade: grade
+                                      });
+                                    }}
+                                  >
+                                    <option value="">Select category...</option>
+                                    <option value="culture">Culture</option>
+                                    <option value="economics">Economics</option>
+                                    <option value="politics">Politics</option>
+                                    <option value="science">Science</option>
+                                    <option value="sports">Sports</option>
+                                    <option value="technology">Technology</option>
+                                  </select>
+                                </div>
+
+                                {/* Brier Grade Display */}
+                                <div className="form-control">
+                                  <label className="label">
+                                    <span className="label-text font-medium">Platform Grade</span>
+                                  </label>
+                                  <div className="flex items-center gap-2">
+                                    <div className="badge badge-outline font-mono">
+                                      {prediction.brierGrade || "Not set"}
+                                    </div>
+                                    <span className="text-xs opacity-70">
+                                      ({prediction.source})
+                                    </span>
+                                  </div>
+                                </div>
+                              </div>
+                            </div>
                           </div>
                           
                           <div className="flex gap-2">
@@ -430,104 +480,56 @@ function AdminPage() {
             {/* Brier Scores Tab */}
             {activeTab === "brier" && (
               <div>
-                <h2 className="text-2xl font-bold mb-6">Brier Score Management</h2>
+                <h2 className="text-2xl font-bold mb-6">Platform Grade Reference</h2>
+                <p className="text-lg opacity-80 mb-6">
+                  Use this reference table when categorizing markets in the "Manage Markets" tab. 
+                  Grades are automatically assigned based on platform and category selection.
+                </p>
                 
                 {/* Platform Grades Reference */}
                 {platformGrades && (
-                  <div className="card bg-base-100 shadow-xl mb-6">
+                  <div className="card bg-base-100 shadow-xl">
                     <div className="card-body">
                       <h3 className="card-title">Platform Grades by Category</h3>
                       <div className="overflow-x-auto">
-                        <table className="table table-sm">
+                        <table className="table">
                           <thead>
                             <tr>
-                              <th>Category</th>
-                              <th>Kalshi</th>
-                              <th>Manifold</th>
-                              <th>Metaculus</th>
-                              <th>Polymarket</th>
+                              <th className="text-base">Category</th>
+                              <th className="text-base">Kalshi</th>
+                              <th className="text-base">Manifold</th>
+                              <th className="text-base">Metaculus</th>
+                              <th className="text-base">Polymarket</th>
                             </tr>
                           </thead>
                           <tbody>
                             {Object.entries(platformGrades).map(([category, grades]) => (
-                              <tr key={category}>
-                                <td className="font-medium capitalize">{category}</td>
-                                <td className="font-mono">{grades.kalshi}</td>
-                                <td className="font-mono">{grades.manifold}</td>
-                                <td className="font-mono">{grades.metaculus}</td>
-                                <td className="font-mono">{grades.polymarket}</td>
+                              <tr key={category} className="hover">
+                                <td className="font-medium capitalize text-lg">{category}</td>
+                                <td className="font-mono text-lg font-bold">{grades.kalshi}</td>
+                                <td className="font-mono text-lg font-bold">{grades.manifold}</td>
+                                <td className="font-mono text-lg font-bold">{grades.metaculus}</td>
+                                <td className="font-mono text-lg font-bold">{grades.polymarket}</td>
                               </tr>
                             ))}
                           </tbody>
                         </table>
                       </div>
-                      <p className="text-sm opacity-70 mt-2">
-                        Letter grades based on relative Brier scores from n=942 matched markets.
-                      </p>
+                      <div className="mt-4 space-y-2">
+                        <p className="text-sm opacity-70">
+                          <strong>Letter grades based on relative Brier scores from n=942 matched markets.</strong>
+                        </p>
+                        <p className="text-sm opacity-70">
+                          Brier scores measure prediction accuracy - lower scores are better. 
+                          These grades reflect each platform's relative performance in different categories.
+                        </p>
+                        <p className="text-sm opacity-70">
+                          Source: <a href="https://brier.fyi/" target="_blank" rel="noopener noreferrer" className="link link-primary">brier.fyi</a>
+                        </p>
+                      </div>
                     </div>
                   </div>
                 )}
-
-                <div className="space-y-6">
-                  {predictions.map((prediction) => (
-                    <div key={prediction._id} className="card bg-base-100 shadow-xl">
-                      <div className="card-body">
-                        <h3 className="card-title text-lg">{prediction.title}</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
-                          {/* Brier Category */}
-                          <div className="form-control">
-                            <label className="label">
-                              <span className="label-text">Brier Category</span>
-                            </label>
-                            <select
-                              className="select select-bordered"
-                              value={prediction.brierCategory || ""}
-                              onChange={async (e) => {
-                                const category = e.target.value || undefined;
-                                const grade = category && platformGrades ? 
-                                  platformGrades[category as keyof typeof platformGrades]?.[prediction.source as keyof typeof platformGrades.culture] : undefined;
-                                
-                                await updateBrierScore({
-                                  predictionId: prediction._id,
-                                  brierCategory: category as any,
-                                  brierGrade: grade
-                                });
-                              }}
-                            >
-                              <option value="">Select category...</option>
-                              <option value="culture">Culture</option>
-                              <option value="economics">Economics</option>
-                              <option value="politics">Politics</option>
-                              <option value="science">Science</option>
-                              <option value="sports">Sports</option>
-                              <option value="technology">Technology</option>
-                            </select>
-                          </div>
-
-                          {/* Brier Grade Display */}
-                          <div className="form-control">
-                            <label className="label">
-                              <span className="label-text">Platform Grade</span>
-                            </label>
-                            <div className="flex items-center gap-2">
-                              <div className="badge badge-lg font-mono">
-                                {prediction.brierGrade || "Not set"}
-                              </div>
-                              <span className="text-sm opacity-70">
-                                ({prediction.source})
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                        
-                        <div className="mt-4 text-sm opacity-50">
-                          Source: {prediction.source} • Last updated: {new Date(prediction.lastUpdated).toLocaleDateString()}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
               </div>
             )}
 
