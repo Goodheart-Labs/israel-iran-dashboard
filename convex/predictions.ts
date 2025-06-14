@@ -529,7 +529,7 @@ export const fetchKalshiMarkets = action({
       const markets = data.markets || [];
       
       // Filter for Iran-related markets
-      const iranMarkets = markets.filter(market => {
+      const iranMarkets = markets.filter((market: any) => {
         const title = (market.title || '').toLowerCase();
         const subtitle = (market.subtitle || '').toLowerCase();
         return title.includes('iran') || subtitle.includes('iran') || 
@@ -2147,15 +2147,16 @@ export const testDataCollection = action({
     console.log("🔍 Testing Metaculus and Kalshi data collection...");
     
     const results = {
-      metaculus: { fetched: 0, saved: 0, error: null },
-      kalshi: { fetched: 0, saved: 0, error: null }
+      metaculus: { fetched: 0, saved: 0, error: null as string | null },
+      kalshi: { fetched: 0, saved: 0, error: null as string | null }
     };
     
     // Test Metaculus
     try {
       console.log("📊 Testing Metaculus API...");
       const metaculusResult = await ctx.runAction(api.predictions.fetchMetaculusQuestions, {});
-      results.metaculus = metaculusResult;
+      results.metaculus.fetched = metaculusResult.fetched;
+      results.metaculus.saved = metaculusResult.saved;
       console.log(`✅ Metaculus: Fetched ${metaculusResult.fetched}, Saved ${metaculusResult.saved}`);
     } catch (error) {
       results.metaculus.error = String(error);
@@ -2166,7 +2167,8 @@ export const testDataCollection = action({
     try {
       console.log("📈 Testing Kalshi API...");
       const kalshiResult = await ctx.runAction(api.predictions.fetchKalshiMarkets, {});
-      results.kalshi = kalshiResult;
+      results.kalshi.fetched = kalshiResult.fetched;
+      results.kalshi.saved = kalshiResult.saved;
       console.log(`✅ Kalshi: Fetched ${kalshiResult.fetched}, Saved ${kalshiResult.saved}`);
     } catch (error) {
       results.kalshi.error = String(error);
