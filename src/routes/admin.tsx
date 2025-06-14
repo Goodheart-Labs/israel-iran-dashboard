@@ -11,12 +11,14 @@ import type { Id } from "../../convex/_generated/dataModel";
 const featuredPredictionsQueryOptions = convexQuery(api.predictions.getFeaturedPredictions, {});
 const allPredictionsQueryOptions = convexQuery(api.predictions.getAllForAdmin, {});
 const dashboardsQueryOptions = convexQuery(api.dashboards.getAll, {});
+const dashboardMarketsQueryOptions = convexQuery(api.dashboards.getAllMarkets, {});
 
 export const Route = createFileRoute("/admin")({
   loader: async ({ context: { queryClient } }) => {
     await queryClient.ensureQueryData(featuredPredictionsQueryOptions);
     await queryClient.ensureQueryData(allPredictionsQueryOptions);
     await queryClient.ensureQueryData(dashboardsQueryOptions);
+    await queryClient.ensureQueryData(dashboardMarketsQueryOptions);
   },
   component: AdminPage,
 });
@@ -25,6 +27,7 @@ function AdminPage() {
   const { data: predictions } = useSuspenseQuery(featuredPredictionsQueryOptions);
   const { data: allPredictions } = useSuspenseQuery(allPredictionsQueryOptions);
   const { data: dashboards } = useSuspenseQuery(dashboardsQueryOptions);
+  const { data: dashboardMarkets } = useSuspenseQuery(dashboardMarketsQueryOptions);
   const updateClarificationText = useMutation(api.predictions.updateClarificationText);
   const updateBrierScore = useMutation(api.predictions.updateBrierScore);
   const deactivatePrediction = useMutation(api.predictions.deactivatePrediction);
@@ -40,6 +43,7 @@ function AdminPage() {
   const [activeTab, setActiveTab] = useState<"dashboards" | "brier" | "manage">("dashboards");
   const [editingId, setEditingId] = useState<Id<"predictions"> | null>(null);
   const [editText, setEditText] = useState("");
+  const [selectedDashboard, setSelectedDashboard] = useState<string>("all");
   
   // Dashboard creation state
   const [showCreateForm, setShowCreateForm] = useState(false);
@@ -292,17 +296,56 @@ function AdminPage() {
             {/* Manage Markets Tab */}
             {activeTab === "manage" && (
               <div>
-                <h2 className="text-2xl font-bold mb-6">Manage Prediction Markets</h2>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Manage Prediction Markets</h2>
+                  
+                  {/* Dashboard Filter Dropdown */}
+                  <div className="form-control">
+                    <label className="label">
+                      <span className="label-text">Filter by Dashboard:</span>
+                    </label>
+                    <select
+                      className="select select-bordered w-64"
+                      value={selectedDashboard}
+                      onChange={(e) => setSelectedDashboard(e.target.value)}
+                    >
+                      <option value="all">All Markets</option>
+                      <option value="unassigned">Unassigned Markets</option>
+                      {dashboards.map((dashboard) => (
+                        <option key={dashboard._id} value={dashboard._id}>
+                          {dashboard.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                </div>
                 
                 <div className="space-y-6">
                   {allPredictions
+                    .filter((prediction) => {
+                      if (selectedDashboard === "all") return true;
+                      if (selectedDashboard === "unassigned") {
+                        // Show predictions not assigned to any dashboard
+                        return !dashboardMarkets.some(dm => dm.predictionId === prediction._id);
+                      }
+                      // Show predictions assigned to the selected dashboard
+                      return dashboardMarkets.some(dm => 
+                        dm.predictionId === prediction._id && dm.dashboardId === selectedDashboard
+                      );
+                    })
                     .sort((a, b) => {
                       // Active markets first, then by last updated
                       if (a.isActive && !b.isActive) return -1;
                       if (!a.isActive && b.isActive) return 1;
                       return b.lastUpdated - a.lastUpdated;
                     })
-                    .map((prediction) => (
+                    .map((prediction) => {
+                      // Get dashboard info for this prediction
+                      const dashboardMarket = dashboardMarkets.find(dm => dm.predictionId === prediction._id);
+                      const assignedDashboard = dashboardMarket ? 
+                        dashboards.find(d => d._id === dashboardMarket.dashboardId) : null;
+                      
+                      return (
                     <div key={prediction._id} className={`card shadow-xl ${prediction.isActive ? 'bg-base-100' : 'bg-base-200 opacity-60'}`}>
                       <div className="card-body">
                         <div className="flex justify-between items-start">
@@ -314,6 +357,12 @@ function AdminPage() {
                               )}
                               {prediction.isApproved === false && (
                                 <span className="badge badge-warning badge-sm">Pending</span>
+                              )}
+                              {assignedDashboard && (
+                                <span className="badge badge-info badge-sm">{assignedDashboard.name}</span>
+                              )}
+                              {!assignedDashboard && (
+                                <span className="badge badge-ghost badge-sm">Unassigned</span>
                               )}
                             </h3>
                             
@@ -472,7 +521,8 @@ function AdminPage() {
                         </div>
                       </div>
                     </div>
-                  ))}
+                      );
+                    })}
                 </div>
               </div>
             )}

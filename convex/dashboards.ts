@@ -271,3 +271,13 @@ export const removeMarket = mutation({
     }
   },
 });
+
+// Get all dashboard markets (for admin filtering)
+export const getAllMarkets = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("dashboardMarkets")
+      .collect();
+  },
+});
