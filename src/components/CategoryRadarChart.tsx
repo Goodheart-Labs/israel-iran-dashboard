@@ -35,7 +35,6 @@ export function CategoryRadarChart({ categoryScores }: CategoryRadarChartProps) 
     <div className="w-full h-80">
       <ResponsiveContainer width="100%" height="100%">
         <RadarChart data={radarData}>
-          <PolarGrid stroke="#374151" />
           <PolarAngleAxis 
             dataKey="category" 
             tick={{ fontSize: 11, fill: '#9CA3AF' }}
