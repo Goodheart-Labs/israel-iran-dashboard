@@ -9,21 +9,46 @@ import { SignInButton } from "@clerk/clerk-react";
 import type { Id } from "../../convex/_generated/dataModel";
 
 const featuredPredictionsQueryOptions = convexQuery(api.predictions.getFeaturedPredictions, {});
+const allPredictionsQueryOptions = convexQuery(api.predictions.getAllForAdmin, {});
+const dashboardsQueryOptions = convexQuery(api.dashboards.getAll, {});
 
 export const Route = createFileRoute("/admin")({
   loader: async ({ context: { queryClient } }) => {
     await queryClient.ensureQueryData(featuredPredictionsQueryOptions);
+    await queryClient.ensureQueryData(allPredictionsQueryOptions);
+    await queryClient.ensureQueryData(dashboardsQueryOptions);
   },
   component: AdminPage,
 });
 
 function AdminPage() {
   const { data: predictions } = useSuspenseQuery(featuredPredictionsQueryOptions);
+  const { data: allPredictions } = useSuspenseQuery(allPredictionsQueryOptions);
+  const { data: dashboards } = useSuspenseQuery(dashboardsQueryOptions);
   const updateClarificationText = useMutation(api.predictions.updateClarificationText);
+  const updateBrierScore = useMutation(api.predictions.updateBrierScore);
+  const deactivatePrediction = useMutation(api.predictions.deactivatePrediction);
+  const reactivatePrediction = useMutation(api.predictions.reactivatePrediction);
+  const deletePrediction = useMutation(api.predictions.deletePrediction);
+  const platformGrades = useQuery(api.predictions.getPlatformGrades);
+  const createDashboard = useMutation(api.dashboards.create);
+  const updateDashboard = useMutation(api.dashboards.update);
+  const deleteDashboard = useMutation(api.dashboards.remove);
   const storeUser = useMutation(api.users.store);
   const isAdmin = useQuery(api.users.isAdmin);
+  
+  const [activeTab, setActiveTab] = useState<"clarification" | "dashboards" | "brier" | "manage">("dashboards");
   const [editingId, setEditingId] = useState<Id<"predictions"> | null>(null);
   const [editText, setEditText] = useState("");
+  
+  // Dashboard creation state
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [newDashboard, setNewDashboard] = useState({
+    name: "",
+    slug: "",
+    description: "",
+    isPublic: false
+  });
 
   // Auto-create user when they first visit admin
   useEffect(() => {
@@ -47,6 +72,36 @@ function AdminPage() {
   const handleCancel = () => {
     setEditingId(null);
     setEditText("");
+  };
+
+  const handleCreateDashboard = async () => {
+    if (!newDashboard.name || !newDashboard.slug) return;
+    
+    try {
+      await createDashboard(newDashboard);
+      setNewDashboard({ name: "", slug: "", description: "", isPublic: false });
+      setShowCreateForm(false);
+    } catch (error) {
+      console.error("Error creating dashboard:", error);
+    }
+  };
+
+  const handleTogglePublic = async (dashboardId: Id<"dashboards">, isPublic: boolean) => {
+    try {
+      await updateDashboard({ id: dashboardId, isPublic: !isPublic });
+    } catch (error) {
+      console.error("Error updating dashboard:", error);
+    }
+  };
+
+  const handleDeleteDashboard = async (dashboardId: Id<"dashboards">) => {
+    if (confirm("Are you sure you want to delete this dashboard?")) {
+      try {
+        await deleteDashboard({ id: dashboardId });
+      } catch (error) {
+        console.error("Error deleting dashboard:", error);
+      }
+    }
   };
 
   return (
@@ -82,14 +137,359 @@ function AdminPage() {
             <div className="loading loading-spinner loading-lg"></div>
           </div>
         ) : (
-          <div className="max-w-4xl mx-auto p-6">
+          <div className="max-w-6xl mx-auto p-6">
             <h1 className="text-3xl font-bold mb-6">Admin Panel</h1>
-            <p className="text-lg opacity-80 mb-8">
-              Manage clarification text for prediction markets
-            </p>
+            
+            {/* Tabs */}
+            <div className="tabs tabs-bordered mb-8">
+              <button 
+                className={`tab tab-lg ${activeTab === "dashboards" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("dashboards")}
+              >
+                Dashboards
+              </button>
+              <button 
+                className={`tab tab-lg ${activeTab === "manage" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("manage")}
+              >
+                Manage Markets
+              </button>
+              <button 
+                className={`tab tab-lg ${activeTab === "brier" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("brier")}
+              >
+                Brier Scores
+              </button>
+              <button 
+                className={`tab tab-lg ${activeTab === "clarification" ? "tab-active" : ""}`}
+                onClick={() => setActiveTab("clarification")}
+              >
+                Clarification Text
+              </button>
+            </div>
 
-      <div className="space-y-6">
-        {predictions.map((prediction) => (
+            {/* Dashboard Management Tab */}
+            {activeTab === "dashboards" && (
+              <div>
+                <div className="flex justify-between items-center mb-6">
+                  <h2 className="text-2xl font-bold">Manage Dashboards</h2>
+                  <button 
+                    className="btn btn-primary"
+                    onClick={() => setShowCreateForm(true)}
+                  >
+                    Create New Dashboard
+                  </button>
+                </div>
+
+                {/* Create Dashboard Form */}
+                {showCreateForm && (
+                  <div className="card bg-base-100 shadow-xl mb-6">
+                    <div className="card-body">
+                      <h3 className="card-title">Create New Dashboard</h3>
+                      
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Dashboard Name</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input input-bordered"
+                          placeholder="e.g., AI Risk 2027"
+                          value={newDashboard.name}
+                          onChange={(e) => setNewDashboard(prev => ({ ...prev, name: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">URL Slug</span>
+                        </label>
+                        <input
+                          type="text"
+                          className="input input-bordered"
+                          placeholder="e.g., ai-2027"
+                          value={newDashboard.slug}
+                          onChange={(e) => setNewDashboard(prev => ({ ...prev, slug: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="form-control">
+                        <label className="label">
+                          <span className="label-text">Description (Optional)</span>
+                        </label>
+                        <textarea
+                          className="textarea textarea-bordered"
+                          placeholder="Brief description of this dashboard"
+                          value={newDashboard.description}
+                          onChange={(e) => setNewDashboard(prev => ({ ...prev, description: e.target.value }))}
+                        />
+                      </div>
+
+                      <div className="form-control">
+                        <label className="label cursor-pointer">
+                          <span className="label-text">Make Public</span>
+                          <input
+                            type="checkbox"
+                            className="checkbox"
+                            checked={newDashboard.isPublic}
+                            onChange={(e) => setNewDashboard(prev => ({ ...prev, isPublic: e.target.checked }))}
+                          />
+                        </label>
+                      </div>
+
+                      <div className="card-actions justify-end">
+                        <button className="btn btn-ghost" onClick={() => setShowCreateForm(false)}>
+                          Cancel
+                        </button>
+                        <button 
+                          className="btn btn-primary"
+                          onClick={handleCreateDashboard}
+                          disabled={!newDashboard.name || !newDashboard.slug}
+                        >
+                          Create Dashboard
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Existing Dashboards */}
+                <div className="space-y-4">
+                  {dashboards.map((dashboard) => (
+                    <div key={dashboard._id} className="card bg-base-100 shadow-xl">
+                      <div className="card-body">
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <h3 className="card-title">{dashboard.name}</h3>
+                            <p className="text-sm opacity-70">/{dashboard.slug}</p>
+                            {dashboard.description && (
+                              <p className="text-sm mt-2">{dashboard.description}</p>
+                            )}
+                          </div>
+                          
+                          <div className="flex items-center gap-2">
+                            <div className="form-control">
+                              <label className="label cursor-pointer">
+                                <span className="label-text mr-2">Public</span>
+                                <input
+                                  type="checkbox"
+                                  className="checkbox checkbox-sm"
+                                  checked={dashboard.isPublic}
+                                  onChange={() => handleTogglePublic(dashboard._id, dashboard.isPublic)}
+                                />
+                              </label>
+                            </div>
+                            
+                            <button 
+                              className="btn btn-error btn-sm"
+                              onClick={() => handleDeleteDashboard(dashboard._id)}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Manage Markets Tab */}
+            {activeTab === "manage" && (
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Manage Prediction Markets</h2>
+                
+                <div className="space-y-6">
+                  {allPredictions
+                    .sort((a, b) => {
+                      // Active markets first, then by last updated
+                      if (a.isActive && !b.isActive) return -1;
+                      if (!a.isActive && b.isActive) return 1;
+                      return b.lastUpdated - a.lastUpdated;
+                    })
+                    .map((prediction) => (
+                    <div key={prediction._id} className={`card shadow-xl ${prediction.isActive ? 'bg-base-100' : 'bg-base-200 opacity-60'}`}>
+                      <div className="card-body">
+                        <div className="flex justify-between items-start">
+                          <div className="flex-1">
+                            <h3 className="card-title text-lg flex items-center gap-2">
+                              {prediction.title}
+                              {!prediction.isActive && (
+                                <span className="badge badge-error badge-sm">Inactive</span>
+                              )}
+                              {prediction.isApproved === false && (
+                                <span className="badge badge-warning badge-sm">Pending</span>
+                              )}
+                            </h3>
+                            
+                            <div className="mt-2 space-y-1 text-sm opacity-70">
+                              <p><strong>Source:</strong> {prediction.source}</p>
+                              <p><strong>Category:</strong> {prediction.category.replace('_', ' ')}</p>
+                              <p><strong>Probability:</strong> {prediction.probability}%</p>
+                              <p><strong>Last Updated:</strong> {new Date(prediction.lastUpdated).toLocaleString()}</p>
+                              {prediction.sourceUrl && (
+                                <p><strong>URL:</strong> 
+                                  <a href={prediction.sourceUrl} target="_blank" rel="noopener noreferrer" className="link link-primary ml-1">
+                                    {prediction.sourceUrl.length > 50 ? prediction.sourceUrl.substring(0, 50) + '...' : prediction.sourceUrl}
+                                  </a>
+                                </p>
+                              )}
+                            </div>
+                          </div>
+                          
+                          <div className="flex gap-2">
+                            {prediction.isActive ? (
+                              <button
+                                className="btn btn-warning btn-sm"
+                                onClick={async () => {
+                                  if (confirm('Are you sure you want to deactivate this market? It will be hidden from the dashboard.')) {
+                                    await deactivatePrediction({ predictionId: prediction._id });
+                                  }
+                                }}
+                              >
+                                Deactivate
+                              </button>
+                            ) : (
+                              <button
+                                className="btn btn-success btn-sm"
+                                onClick={async () => {
+                                  await reactivatePrediction({ predictionId: prediction._id });
+                                }}
+                              >
+                                Reactivate
+                              </button>
+                            )}
+                            
+                            <button
+                              className="btn btn-error btn-sm"
+                              onClick={async () => {
+                                if (confirm('Are you sure you want to permanently delete this market? This action cannot be undone and will delete all historical data.')) {
+                                  await deletePrediction({ predictionId: prediction._id });
+                                }
+                              }}
+                            >
+                              Delete
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Brier Scores Tab */}
+            {activeTab === "brier" && (
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Brier Score Management</h2>
+                
+                {/* Platform Grades Reference */}
+                {platformGrades && (
+                  <div className="card bg-base-100 shadow-xl mb-6">
+                    <div className="card-body">
+                      <h3 className="card-title">Platform Grades by Category</h3>
+                      <div className="overflow-x-auto">
+                        <table className="table table-sm">
+                          <thead>
+                            <tr>
+                              <th>Category</th>
+                              <th>Kalshi</th>
+                              <th>Manifold</th>
+                              <th>Metaculus</th>
+                              <th>Polymarket</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {Object.entries(platformGrades).map(([category, grades]) => (
+                              <tr key={category}>
+                                <td className="font-medium capitalize">{category}</td>
+                                <td className="font-mono">{grades.kalshi}</td>
+                                <td className="font-mono">{grades.manifold}</td>
+                                <td className="font-mono">{grades.metaculus}</td>
+                                <td className="font-mono">{grades.polymarket}</td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                      <p className="text-sm opacity-70 mt-2">
+                        Letter grades based on relative Brier scores from n=942 matched markets.
+                      </p>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-6">
+                  {predictions.map((prediction) => (
+                    <div key={prediction._id} className="card bg-base-100 shadow-xl">
+                      <div className="card-body">
+                        <h3 className="card-title text-lg">{prediction.title}</h3>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          {/* Brier Category */}
+                          <div className="form-control">
+                            <label className="label">
+                              <span className="label-text">Brier Category</span>
+                            </label>
+                            <select
+                              className="select select-bordered"
+                              value={prediction.brierCategory || ""}
+                              onChange={async (e) => {
+                                const category = e.target.value || undefined;
+                                const grade = category && platformGrades ? 
+                                  platformGrades[category as keyof typeof platformGrades]?.[prediction.source as keyof typeof platformGrades.culture] : undefined;
+                                
+                                await updateBrierScore({
+                                  predictionId: prediction._id,
+                                  brierCategory: category as any,
+                                  brierGrade: grade
+                                });
+                              }}
+                            >
+                              <option value="">Select category...</option>
+                              <option value="culture">Culture</option>
+                              <option value="economics">Economics</option>
+                              <option value="politics">Politics</option>
+                              <option value="science">Science</option>
+                              <option value="sports">Sports</option>
+                              <option value="technology">Technology</option>
+                            </select>
+                          </div>
+
+                          {/* Brier Grade Display */}
+                          <div className="form-control">
+                            <label className="label">
+                              <span className="label-text">Platform Grade</span>
+                            </label>
+                            <div className="flex items-center gap-2">
+                              <div className="badge badge-lg font-mono">
+                                {prediction.brierGrade || "Not set"}
+                              </div>
+                              <span className="text-sm opacity-70">
+                                ({prediction.source})
+                              </span>
+                            </div>
+                          </div>
+                        </div>
+                        
+                        <div className="mt-4 text-sm opacity-50">
+                          Source: {prediction.source} • Last updated: {new Date(prediction.lastUpdated).toLocaleDateString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Clarification Text Tab */}
+            {activeTab === "clarification" && (
+              <div>
+                <h2 className="text-2xl font-bold mb-6">Manage Clarification Text</h2>
+                <div className="space-y-6">
+                  {predictions.map((prediction) => (
           <div key={prediction._id} className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h3 className="card-title text-lg">{prediction.title}</h3>
@@ -151,11 +551,13 @@ function AdminPage() {
               </div>
             </div>
           </div>
-        ))}
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
-        )}
-      </Authenticated>
+          )}
+        </Authenticated>
     </>
   );
 }

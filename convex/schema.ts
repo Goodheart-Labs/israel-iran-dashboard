@@ -11,6 +11,15 @@ export const predictionCategories = [
   "regime_stability"
 ] as const;
 
+export const brierCategories = [
+  "culture",
+  "economics",
+  "politics",
+  "science",
+  "sports",
+  "technology"
+] as const;
+
 export const predictionSources = [
   "metaculus",
   "kalshi", 
@@ -76,6 +85,15 @@ export default defineSchema({
     sourceUrl: v.optional(v.string()),
     lastUpdated: v.number(), // Unix timestamp
     resolveDate: v.optional(v.number()), // When the prediction resolves
+    brierCategory: v.optional(v.union(
+      v.literal("culture"),
+      v.literal("economics"),
+      v.literal("politics"),
+      v.literal("science"),
+      v.literal("sports"),
+      v.literal("technology")
+    )),
+    brierGrade: v.optional(v.string()), // A+, A, A-, B+, B, B-, C+, C, C-, D+, D, D-, F
     isActive: v.boolean(),
     isApproved: v.optional(v.boolean()), // Admin approval
     isRejected: v.optional(v.boolean()), // Admin rejection

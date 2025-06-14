@@ -15,7 +15,9 @@
       "Bash(find:*)",
       "Bash(pnpm install:*)",
       "Bash(convex env:*)",
-      "Bash(git push:*)"
+      "Bash(git push:*)",
+      "WebFetch(domain:briar.fyi)",
+      "WebFetch(domain:brier.fyi)"
     ]
   },
   "enableAllProjectMcpServers": true,

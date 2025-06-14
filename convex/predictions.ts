@@ -1996,3 +1996,102 @@ export const updateClarificationText = mutation({
     return { success: true };
   },
 });
+
+// Admin function to update Brier category and grade
+export const updateBrierScore = mutation({
+  args: {
+    predictionId: v.id("predictions"),
+    brierCategory: v.optional(v.union(
+      v.literal("culture"),
+      v.literal("economics"),
+      v.literal("politics"),
+      v.literal("science"),
+      v.literal("sports"),
+      v.literal("technology")
+    )),
+    brierGrade: v.optional(v.string())
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.predictionId, {
+      brierCategory: args.brierCategory,
+      brierGrade: args.brierGrade
+    });
+    return { success: true };
+  },
+});
+
+// Get platform grades by category
+export const getPlatformGrades = query({
+  args: {},
+  handler: async (ctx) => {
+    // Platform grades from brier.fyi data
+    const platformGrades = {
+      culture: { kalshi: "A-", manifold: "D", metaculus: "F", polymarket: "B" },
+      economics: { kalshi: "B+", manifold: "D+", metaculus: "C", polymarket: "A-" },
+      politics: { kalshi: "B", manifold: "C-", metaculus: "C", polymarket: "C+" },
+      science: { kalshi: "C", manifold: "C-", metaculus: "B", polymarket: "A" },
+      sports: { kalshi: "A-", manifold: "D+", metaculus: "D", polymarket: "A-" },
+      technology: { kalshi: "A-", manifold: "C", metaculus: "C", polymarket: "C+" }
+    };
+    
+    return platformGrades;
+  },
+});
+
+// Admin function to remove/deactivate a prediction
+export const deactivatePrediction = mutation({
+  args: {
+    predictionId: v.id("predictions")
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.predictionId, {
+      isActive: false
+    });
+    return { success: true };
+  },
+});
+
+// Admin function to reactivate a prediction
+export const reactivatePrediction = mutation({
+  args: {
+    predictionId: v.id("predictions")
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.predictionId, {
+      isActive: true
+    });
+    return { success: true };
+  },
+});
+
+// Admin function to permanently delete a prediction
+export const deletePrediction = mutation({
+  args: {
+    predictionId: v.id("predictions")
+  },
+  handler: async (ctx, args) => {
+    // Delete historical data first
+    const history = await ctx.db
+      .query("predictionHistory")
+      .withIndex("by_prediction", (q) => q.eq("predictionId", args.predictionId))
+      .collect();
+    
+    for (const record of history) {
+      await ctx.db.delete(record._id);
+    }
+    
+    // Delete the prediction
+    await ctx.db.delete(args.predictionId);
+    return { success: true };
+  },
+});
+
+// Get all predictions including inactive ones (admin only)
+export const getAllForAdmin = query({
+  args: {},
+  handler: async (ctx) => {
+    return await ctx.db
+      .query("predictions")
+      .collect();
+  },
+});
