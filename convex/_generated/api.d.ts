@@ -13,9 +13,11 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as debug_checkHistory from "../debug/checkHistory.js";
 import type * as predictions from "../predictions.js";
 import type * as seed from "../seed.js";
 import type * as simple from "../simple.js";
+import type * as sync_syncData from "../sync/syncData.js";
 import type * as users from "../users.js";
 
 /**
@@ -27,9 +29,11 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  "debug/checkHistory": typeof debug_checkHistory;
   predictions: typeof predictions;
   seed: typeof seed;
   simple: typeof simple;
+  "sync/syncData": typeof sync_syncData;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

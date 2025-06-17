@@ -3,6 +3,7 @@ import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { api } from "../../convex/_generated/api";
+import { MarketChart } from "@/components/MarketChart";
 
 // Use the simple query - no circular dependencies
 const simpleMarketsQuery = convexQuery(api.simple.getMarkets, {});
@@ -73,10 +74,8 @@ function HomePage() {
                 </div>
               </div>
               
-              {/* Placeholder for chart - we'll add this back later */}
-              <div className="bg-base-200 rounded-lg p-8 text-center opacity-50">
-                <p>Chart coming soon</p>
-              </div>
+              {/* Historical chart */}
+              <MarketChart history={market.history} />
               
               <div className="flex items-center justify-between mt-4 text-sm">
                 <span className="opacity-50 capitalize">

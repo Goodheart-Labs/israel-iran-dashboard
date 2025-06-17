@@ -13,16 +13,37 @@ export const getMarkets = query({
     // Sort by creation time, newest first
     predictions.sort((a, b) => b._creationTime - a._creationTime);
     
-    // Return just what we need for display
-    return predictions.map(p => ({
-      _id: p._id,
-      title: p.title,
-      probability: p.probability,
-      previousProbability: p.previousProbability,
-      source: p.source,
-      sourceUrl: p.sourceUrl,
-      lastUpdated: p.lastUpdated,
-      clarificationText: p.clarificationText
-    }));
+    // For each prediction, get its history
+    const predictionsWithHistory = await Promise.all(
+      predictions.map(async (p) => {
+        // Get historical data from predictionHistory table
+        const history = await ctx.db
+          .query("predictionHistory")
+          .withIndex("by_prediction_time", (q) => 
+            q.eq("predictionId", p._id)
+          )
+          .order("desc")
+          .take(50) // Last 50 data points
+          .collect();
+        
+        return {
+          _id: p._id,
+          title: p.title,
+          probability: p.probability,
+          previousProbability: p.previousProbability,
+          source: p.source,
+          sourceUrl: p.sourceUrl,
+          lastUpdated: p.lastUpdated,
+          clarificationText: p.clarificationText,
+          // Add the historical data
+          history: history.reverse().map(h => ({
+            timestamp: h.timestamp,
+            probability: h.probability
+          }))
+        };
+      })
+    );
+    
+    return predictionsWithHistory;
   }
 });
