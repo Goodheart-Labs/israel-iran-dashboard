@@ -9,7 +9,6 @@ export const checkMarketStatus = query({
     const marketStatus = predictions.map(p => ({
       title: p.title,
       source: p.source,
-      externalId: p.externalId,
       currentProbability: p.probability,
       lastUpdated: p.lastUpdated ? new Date(p.lastUpdated).toISOString() : 'Never',
       minutesAgo: p.lastUpdated ? Math.floor((Date.now() - p.lastUpdated) / 1000 / 60) : null,

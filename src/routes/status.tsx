@@ -10,7 +10,7 @@ function StatusPage() {
   const predictions = useQuery(api.predictions.getActive) || [];
   
   // Get the most recent history point for each market
-  const marketStatus = predictions.map(pred => {
+  const marketStatus = predictions.map((pred: any) => {
     const lastUpdate = pred.lastUpdated ? new Date(pred.lastUpdated) : null;
     const minutesAgo = lastUpdate 
       ? Math.floor((Date.now() - lastUpdate.getTime()) / 1000 / 60)
@@ -25,7 +25,7 @@ function StatusPage() {
     };
   });
   
-  const staleCount = marketStatus.filter(m => m.isStale).length;
+  const staleCount = marketStatus.filter((m: any) => m.isStale).length;
   
   return (
     <div className="max-w-4xl mx-auto p-6">
@@ -70,7 +70,7 @@ function StatusPage() {
                 </tr>
               </thead>
               <tbody>
-                {marketStatus.map((market, idx) => (
+                {marketStatus.map((market: any, idx: number) => (
                   <tr key={idx}>
                     <td className="max-w-xs truncate">{market.title}</td>
                     <td>{market.probability}%</td>

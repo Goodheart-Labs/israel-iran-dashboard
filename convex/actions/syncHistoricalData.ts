@@ -37,7 +37,8 @@ export const syncAllHistoricalData = action({
                 dataPoints: historicalData.map((point: any) => ({
                   timestamp: new Date(point.date).getTime(),
                   probability: point.probability
-                }))
+                })),
+                source: prediction.source
               });
               
               results.updated++;
@@ -69,7 +70,16 @@ export const storeHistoricalData = internalMutation({
     dataPoints: v.array(v.object({
       timestamp: v.number(),
       probability: v.number()
-    }))
+    })),
+    source: v.union(
+      v.literal("polymarket"),
+      v.literal("kalshi"),
+      v.literal("metaculus"),
+      v.literal("manifold"),
+      v.literal("predictit"),
+      v.literal("adjacent"),
+      v.literal("other")
+    )
   },
   handler: async (ctx, args) => {
     // Delete existing history for this prediction
@@ -89,7 +99,8 @@ export const storeHistoricalData = internalMutation({
       await ctx.db.insert("predictionHistory", {
         predictionId: args.predictionId,
         timestamp: point.timestamp,
-        probability: point.probability
+        probability: point.probability,
+        source: args.source
       });
     }
     

@@ -133,7 +133,7 @@ function AdminDashboard() {
                     </tr>
                   </thead>
                   <tbody>
-                    {markets.map((market) => (
+                    {markets.map((market: any) => (
                       <tr key={market._id}>
                         <td>
                           <div className="max-w-xs">
@@ -178,7 +178,7 @@ function AdminDashboard() {
                   <div className="stat-title">Last Updated</div>
                   <div className="stat-value text-lg">
                     {markets.length > 0 
-                      ? new Date(Math.max(...markets.map(m => m.lastUpdated))).toLocaleDateString()
+                      ? new Date(Math.max(...markets.map((m: any) => m.lastUpdated))).toLocaleDateString()
                       : 'N/A'
                     }
                   </div>

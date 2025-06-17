@@ -4,7 +4,13 @@ import { api, internal } from "../_generated/api";
 
 // Update current prices for all markets and record in history
 export const updateAllCurrentPrices = action({
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<{
+    polymarketUpdated: number;
+    historyRecorded: number;
+    duration: number;
+    timestamp: string;
+    message: string;
+  }> => {
     "use node";
     
     const startTime = Date.now();
@@ -22,7 +28,8 @@ export const updateAllCurrentPrices = action({
         await ctx.runMutation(internal.actions.updateCurrentPrices.addHistoryPoint, {
           predictionId: prediction._id,
           timestamp: Date.now(),
-          probability: prediction.probability
+          probability: prediction.probability,
+          source: prediction.source
         });
         recorded++;
       }
@@ -49,7 +56,16 @@ export const addHistoryPoint = internalMutation({
   args: {
     predictionId: v.id("predictions"),
     timestamp: v.number(),
-    probability: v.number()
+    probability: v.number(),
+    source: v.union(
+      v.literal("metaculus"),
+      v.literal("kalshi"),
+      v.literal("polymarket"),
+      v.literal("predictit"),
+      v.literal("manifold"),
+      v.literal("adjacent"),
+      v.literal("other")
+    )
   },
   handler: async (ctx, args) => {
     // Check if we already have data for today
@@ -82,7 +98,8 @@ export const addHistoryPoint = internalMutation({
       await ctx.db.insert("predictionHistory", {
         predictionId: args.predictionId,
         timestamp: args.timestamp,
-        probability: args.probability
+        probability: args.probability,
+        source: args.source
       });
     }
   }

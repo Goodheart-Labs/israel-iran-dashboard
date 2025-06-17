@@ -29,7 +29,7 @@ function HomePage() {
 
       {/* Simple Markets Grid */}
       <div className="not-prose grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {markets.map((market) => (
+        {markets.map((market: any) => (
           <div key={market._id} className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <div className="flex items-start justify-between mb-3">

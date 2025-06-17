@@ -24,7 +24,11 @@ export const startMarketUpdater = action({
 
 // Internal action that updates markets and reschedules itself
 export const updateMarkets = internalAction({
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<{
+    success: boolean;
+    updated: number;
+    nextUpdate: string;
+  }> => {
     "use node";
     
     console.log(`[Market Updater] Running update at ${new Date().toISOString()}`);
@@ -37,10 +41,11 @@ export const updateMarkets = internalAction({
       // Record current values in history (this already dedupes to one per day)
       const predictions = await ctx.runQuery(api.predictions.getActive);
       for (const prediction of predictions) {
-        await ctx.runMutation(internal.predictions.storeMarketHistory, {
+        await ctx.runMutation(internal.actions.updateCurrentPrices.addHistoryPoint, {
           predictionId: prediction._id,
           timestamp: Date.now(),
-          probability: prediction.probability
+          probability: prediction.probability,
+          source: prediction.source
         });
       }
       
@@ -73,7 +78,7 @@ export const updateMarkets = internalAction({
 
 // Stop the updater (useful for maintenance)
 export const stopMarketUpdater = action({
-  handler: async (ctx) => {
+  handler: async () => {
     // This doesn't actually stop scheduled functions, but we can use it
     // to track state if needed in the future
     return { message: "To stop updates, scheduled functions must expire naturally" };

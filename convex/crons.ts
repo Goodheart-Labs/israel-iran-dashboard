@@ -1,5 +1,5 @@
 import { cronJobs } from "convex/server";
-import { internal } from "./_generated/api";
+import { api } from "./_generated/api";
 
 const crons = cronJobs();
 
@@ -7,7 +7,7 @@ const crons = cronJobs();
 crons.interval(
   "update-prices",
   { minutes: 30 },
-  internal.predictions.fetchPolymarketDirectMarkets
+  api.predictions.fetchPolymarketDirectMarkets
 );
 
 // Sync historical data weekly (Sundays at 2 AM UTC)
@@ -15,7 +15,7 @@ crons.interval(
 crons.weekly(
   "sync-historical",
   { dayOfWeek: "sunday", hourUTC: 2, minuteUTC: 0 },
-  internal.predictions.fetchAllMarketHistory
+  api.predictions.fetchAllMarketHistory
 );
 
 export default crons;
