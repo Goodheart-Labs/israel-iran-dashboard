@@ -11,11 +11,18 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as StatusImport } from './routes/status'
 import { Route as DebugAuthImport } from './routes/debug-auth'
 import { Route as AdminImport } from './routes/admin'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const StatusRoute = StatusImport.update({
+  id: '/status',
+  path: '/status',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const DebugAuthRoute = DebugAuthImport.update({
   id: '/debug-auth',
@@ -60,6 +67,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DebugAuthImport
       parentRoute: typeof rootRoute
     }
+    '/status': {
+      id: '/status'
+      path: '/status'
+      fullPath: '/status'
+      preLoaderRoute: typeof StatusImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -69,12 +83,14 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/status': typeof StatusRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/status': typeof StatusRoute
 }
 
 export interface FileRoutesById {
@@ -82,14 +98,15 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/status': typeof StatusRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/debug-auth'
+  fullPaths: '/' | '/admin' | '/debug-auth' | '/status'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/debug-auth'
-  id: '__root__' | '/' | '/admin' | '/debug-auth'
+  to: '/' | '/admin' | '/debug-auth' | '/status'
+  id: '__root__' | '/' | '/admin' | '/debug-auth' | '/status'
   fileRoutesById: FileRoutesById
 }
 
@@ -97,12 +114,14 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   DebugAuthRoute: typeof DebugAuthRoute
+  StatusRoute: typeof StatusRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   DebugAuthRoute: DebugAuthRoute,
+  StatusRoute: StatusRoute,
 }
 
 export const routeTree = rootRoute
@@ -117,7 +136,8 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/admin",
-        "/debug-auth"
+        "/debug-auth",
+        "/status"
       ]
     },
     "/": {
@@ -128,6 +148,9 @@ export const routeTree = rootRoute
     },
     "/debug-auth": {
       "filePath": "debug-auth.tsx"
+    },
+    "/status": {
+      "filePath": "status.tsx"
     }
   }
 }

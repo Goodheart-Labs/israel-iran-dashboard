@@ -7,6 +7,9 @@ export const syncAllHistoricalData = action({
   handler: async (ctx) => {
     "use node";
     
+    console.log(`[CRON] Starting historical data sync at ${new Date().toISOString()}`);
+    const startTime = Date.now();
+    
     // Get all active predictions
     const predictions = await ctx.runQuery(api.predictions.getActive);
     
@@ -47,8 +50,13 @@ export const syncAllHistoricalData = action({
       }
     }
     
+    const duration = Date.now() - startTime;
+    console.log(`[CRON] Historical sync completed in ${duration}ms - Updated ${results.updated} markets, ${results.failed} failures`);
+    
     return {
       ...results,
+      duration,
+      timestamp: new Date().toISOString(),
       message: `Updated historical data for ${results.updated} markets`
     };
   }

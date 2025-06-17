@@ -15,6 +15,7 @@ import type {
 } from "convex/server";
 import type * as actions_syncHistoricalData from "../actions/syncHistoricalData.js";
 import type * as actions_updateCurrentPrices from "../actions/updateCurrentPrices.js";
+import type * as crons from "../crons.js";
 import type * as debug_checkHistory from "../debug/checkHistory.js";
 import type * as predictions from "../predictions.js";
 import type * as seed from "../seed.js";
@@ -33,6 +34,7 @@ import type * as users from "../users.js";
 declare const fullApi: ApiFromModules<{
   "actions/syncHistoricalData": typeof actions_syncHistoricalData;
   "actions/updateCurrentPrices": typeof actions_updateCurrentPrices;
+  crons: typeof crons;
   "debug/checkHistory": typeof debug_checkHistory;
   predictions: typeof predictions;
   seed: typeof seed;
