@@ -2,245 +2,100 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { TrendingUp, TrendingDown } from "lucide-react";
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { api } from "../../convex/_generated/api";
-import { useAction } from "convex/react";
-import { useEffect, useState } from "react";
-import { SignInButton, UserButton } from "@clerk/clerk-react";
-import { Authenticated, Unauthenticated } from "convex/react";
 
-const featuredPredictionsQueryOptions = convexQuery(api.predictions.getFeaturedPredictions, {});
+// Use the simple query - no circular dependencies
+const simpleMarketsQuery = convexQuery(api.simple.getMarkets, {});
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(featuredPredictionsQueryOptions);
+    await queryClient.ensureQueryData(simpleMarketsQuery);
   },
   component: HomePage,
 });
 
 function HomePage() {
-  const { data: featuredPredictions } = useSuspenseQuery(featuredPredictionsQueryOptions);
-  const getPolymarketHistoricalData = useAction(api.predictions.getPolymarketHistoricalData);
-  const [historicalData, setHistoricalData] = useState<Record<string, any[]>>({});
-  const [loadingHistorical, setLoadingHistorical] = useState(true);
-
-  // Extract slug from sourceUrl
-  const getSlugFromUrl = (sourceUrl: string) => {
-    const match = sourceUrl.match(/polymarket\.com\/event\/([^/]+)/);
-    return match ? match[1] : null;
-  };
-
-  // Fetch historical data for all Polymarket markets on load (H5N1 approach)
-  useEffect(() => {
-    const fetchAllHistoricalData = async () => {
-      const dataMap: Record<string, any[]> = {};
-      
-      for (const prediction of featuredPredictions) {
-        const slug = getSlugFromUrl(prediction.sourceUrl || "");
-        
-        if (slug && prediction.source === "polymarket") {
-          try {
-            const data = await getPolymarketHistoricalData({ slug });
-            dataMap[prediction._id] = data;
-          } catch (error) {
-            console.error(`Error fetching historical data for ${slug}:`, error);
-            dataMap[prediction._id] = [];
-          }
-        } else {
-          dataMap[prediction._id] = [];
-        }
-      }
-      
-      setHistoricalData(dataMap);
-      setLoadingHistorical(false);
-    };
-
-    if (featuredPredictions?.length > 0) {
-      void fetchAllHistoricalData();
-    }
-  }, [featuredPredictions, getPolymarketHistoricalData]);
+  const { data: markets } = useSuspenseQuery(simpleMarketsQuery);
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="flex justify-between items-start mb-8">
-        <div className="text-center flex-1">
-          <h1 className="text-4xl font-bold mb-4">Iran Geopolitical Risk Dashboard</h1>
-          <p className="text-lg opacity-80">
-            Tracking prediction markets and forecasts on Iran's geopolitical developments
-          </p>
-        </div>
-        
-        <div className="flex-shrink-0 ml-4">
-          <Unauthenticated>
-            <SignInButton mode="modal">
-              <button className="btn btn-outline btn-sm">Sign In</button>
-            </SignInButton>
-          </Unauthenticated>
-          <Authenticated>
-            <UserButton />
-          </Authenticated>
-        </div>
+      <div className="text-center mb-8">
+        <h1 className="text-4xl font-bold mb-4">Iran Geopolitical Risk Dashboard</h1>
+        <p className="text-lg opacity-80">
+          Tracking prediction markets and forecasts on Iran's geopolitical developments
+        </p>
       </div>
 
-
-      {/* Featured Prediction Markets Grid */}
+      {/* Simple Markets Grid */}
       <div className="not-prose grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {featuredPredictions
-          .sort((a, b) => {
-            // Put both markets with minimal data at the bottom
-            if (a.title.includes("US-Iran nuclear agreement")) return 1;
-            if (b.title.includes("US-Iran nuclear agreement")) return -1;
-            if (a.title.includes("1000+ deaths")) return 1;
-            if (b.title.includes("1000+ deaths")) return -1;
-            
-            // Sort by data availability - markets with historical data first
-            const aHasData = a.history && a.history.length > 0;
-            const bHasData = b.history && b.history.length > 0;
-            if (aHasData && !bHasData) return -1;
-            if (!aHasData && bHasData) return 1;
-            return 0;
-          })
-          .map((prediction) => {
-          // Use fresh historical data from H5N1 approach or stored data
-          const freshData = historicalData[prediction._id] || [];
-          const chartData = freshData.length > 0 
-            ? freshData.map(point => ({
-                date: new Date(point.date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                probability: point.probability
-              }))
-            : prediction.history && prediction.history.length > 0 
-              ? prediction.history.map(h => ({
-                  date: new Date(h.timestamp).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
-                  probability: h.probability
-                }))
-              : [];
-          
-          // Get the most recent probability from chart data
-          const currentProbability = chartData.length > 0 
-            ? chartData[chartData.length - 1].probability 
-            : prediction.probability;
-
-          return (
-            <div key={prediction._id} className="card bg-base-100 shadow-xl">
-              <div className="card-body">
-                <div className="flex items-start justify-between mb-4">
-                  {prediction.sourceUrl ? (
-                    <h3 className="card-title text-lg flex-1 mr-4">
+        {markets.map((market) => (
+          <div key={market._id} className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 mr-4">
+                  {market.sourceUrl ? (
+                    <h3 className="card-title text-lg mb-1">
                       <a 
-                        href={prediction.sourceUrl} 
+                        href={market.sourceUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="link link-hover"
                       >
-                        {prediction.title}
+                        {market.title}
                       </a>
                     </h3>
                   ) : (
-                    <h3 className="card-title text-lg flex-1 mr-4">{prediction.title}</h3>
+                    <h3 className="card-title text-lg mb-1">{market.title}</h3>
                   )}
-                  
-                  {/* Current probability display - top right */}
-                  <div className="text-right flex-shrink-0">
-                    <div className="text-xl font-bold text-primary">{currentProbability}%</div>
-                    {prediction.previousProbability && (
-                      <div className="text-xs">
-                        {currentProbability > prediction.previousProbability ? (
-                          <span className="text-success flex items-center justify-end">
-                            <TrendingUp className="w-3 h-3 mr-1" />
-                            +{currentProbability - prediction.previousProbability}%
-                          </span>
-                        ) : (
-                          <span className="text-error flex items-center justify-end">
-                            <TrendingDown className="w-3 h-3 mr-1" />
-                            -{prediction.previousProbability - currentProbability}%
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                  {market.clarificationText && (
+                    <p className="text-sm opacity-70">{market.clarificationText}</p>
+                  )}
                 </div>
                 
-                {/* Clarification text */}
-                {prediction.clarificationText && (
-                  <p className="text-sm opacity-70 mb-4">{prediction.clarificationText}</p>
-                )}
-                
-                {/* Chart */}
-                <div className="bg-base-200 rounded-lg p-4" style={{ height: '280px' }}>
-                  {chartData.length > 0 ? (
-                    <ResponsiveContainer width="100%" height="100%">
-                      <LineChart data={chartData}>
-                        <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-                        <XAxis 
-                          dataKey="date" 
-                          tick={{ fontSize: 10 }}
-                          stroke="#9CA3AF"
-                          interval="preserveStartEnd"
-                          angle={-45}
-                          textAnchor="end"
-                          height={60}
-                        />
-                        <YAxis 
-                          domain={[0, 100]}
-                          tick={{ fontSize: 10 }}
-                          stroke="#9CA3AF"
-                          label={{ value: '%', angle: 0, position: 'top' }}
-                        />
-                        <Tooltip 
-                          contentStyle={{
-                            backgroundColor: '#1F2937',
-                            border: '1px solid #374151',
-                            borderRadius: '8px',
-                            color: '#F9FAFB'
-                          }}
-                          formatter={(value) => [`${String(value)}%`, 'Probability']}
-                        />
-                        <Line 
-                          type="monotone" 
-                          dataKey="probability" 
-                          stroke="#3B82F6" 
-                          strokeWidth={2.5}
-                          dot={{ fill: '#3B82F6', strokeWidth: 0, r: 0 }}
-                          activeDot={{ r: 5, fill: '#3B82F6', strokeWidth: 2, stroke: '#fff' }}
-                        />
-                      </LineChart>
-                    </ResponsiveContainer>
-                  ) : (
-                    <div className="flex items-center justify-center h-full text-center">
-                      <div>
-                        <div className="text-lg font-medium opacity-70 mb-2">
-                          {loadingHistorical ? "Loading Historical Data..." : "No Historical Data"}
-                        </div>
-                        <div className="text-sm opacity-50">
-                          {loadingHistorical 
-                            ? "Fetching fresh market data..." 
-                            : "Historical price data not available for this market"}
-                        </div>
-                      </div>
+                {/* Current probability display */}
+                <div className="text-right flex-shrink-0">
+                  <div className="text-xl font-bold text-primary">{market.probability}%</div>
+                  {market.previousProbability && (
+                    <div className="text-xs">
+                      {market.probability > market.previousProbability ? (
+                        <span className="text-success flex items-center justify-end">
+                          <TrendingUp className="w-3 h-3 mr-1" />
+                          +{market.probability - market.previousProbability}%
+                        </span>
+                      ) : (
+                        <span className="text-error flex items-center justify-end">
+                          <TrendingDown className="w-3 h-3 mr-1" />
+                          -{market.previousProbability - market.probability}%
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
-                
-                
-                <div className="flex items-center justify-between mt-4 text-sm">
-                  <span className="opacity-50 capitalize">
-                    {prediction.source} • {new Date(prediction.lastUpdated).toLocaleDateString()}
-                  </span>
-                  {prediction.sourceUrl && (
-                    <a 
-                      href={prediction.sourceUrl} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="link link-primary"
-                    >
-                      View Market →
-                    </a>
-                  )}
-                </div>
+              </div>
+              
+              {/* Placeholder for chart - we'll add this back later */}
+              <div className="bg-base-200 rounded-lg p-8 text-center opacity-50">
+                <p>Chart coming soon</p>
+              </div>
+              
+              <div className="flex items-center justify-between mt-4 text-sm">
+                <span className="opacity-50 capitalize">
+                  {market.source} • {new Date(market.lastUpdated).toLocaleDateString()}
+                </span>
+                {market.sourceUrl && (
+                  <a 
+                    href={market.sourceUrl} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="link link-primary"
+                  >
+                    View Market →
+                  </a>
+                )}
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
 
       {/* Data Sources */}
@@ -257,4 +112,3 @@ function HomePage() {
     </div>
   );
 }
-
