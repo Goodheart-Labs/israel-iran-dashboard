@@ -18,6 +18,7 @@ import type * as actions_updateCurrentPrices from "../actions/updateCurrentPrice
 import type * as crons from "../crons.js";
 import type * as debug_checkHistory from "../debug/checkHistory.js";
 import type * as debug_checkMarketStatus from "../debug/checkMarketStatus.js";
+import type * as marketUpdater from "../marketUpdater.js";
 import type * as predictions from "../predictions.js";
 import type * as seed from "../seed.js";
 import type * as simple from "../simple.js";
@@ -38,6 +39,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "debug/checkHistory": typeof debug_checkHistory;
   "debug/checkMarketStatus": typeof debug_checkMarketStatus;
+  marketUpdater: typeof marketUpdater;
   predictions: typeof predictions;
   seed: typeof seed;
   simple: typeof simple;

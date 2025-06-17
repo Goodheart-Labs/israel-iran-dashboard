@@ -3,10 +3,10 @@ import { internal } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Update market prices every 5 minutes
+// Update market prices every 30 minutes
 crons.interval(
   "update-prices",
-  { minutes: 5 },
+  { minutes: 30 },
   internal.predictions.fetchPolymarketDirectMarkets
 );
 
