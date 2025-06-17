@@ -22,9 +22,11 @@ export const getMarkets = query({
           .withIndex("by_prediction_time", (q) => 
             q.eq("predictionId", p._id)
           )
-          .order("desc")
-          .take(50) // Last 50 data points
           .collect();
+        
+        // Sort by timestamp descending and take last 50 points
+        history.sort((a, b) => b.timestamp - a.timestamp);
+        const recentHistory = history.slice(0, 50);
         
         return {
           _id: p._id,
@@ -35,8 +37,8 @@ export const getMarkets = query({
           sourceUrl: p.sourceUrl,
           lastUpdated: p.lastUpdated,
           clarificationText: p.clarificationText,
-          // Add the historical data
-          history: history.reverse().map(h => ({
+          // Add the historical data (reverse to show oldest first)
+          history: recentHistory.reverse().map(h => ({
             timestamp: h.timestamp,
             probability: h.probability
           }))
