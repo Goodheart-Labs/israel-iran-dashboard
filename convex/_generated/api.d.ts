@@ -17,6 +17,7 @@ import type * as actions_syncHistoricalData from "../actions/syncHistoricalData.
 import type * as actions_updateCurrentPrices from "../actions/updateCurrentPrices.js";
 import type * as crons from "../crons.js";
 import type * as debug_checkHistory from "../debug/checkHistory.js";
+import type * as debug_checkMarketStatus from "../debug/checkMarketStatus.js";
 import type * as predictions from "../predictions.js";
 import type * as seed from "../seed.js";
 import type * as simple from "../simple.js";
@@ -36,6 +37,7 @@ declare const fullApi: ApiFromModules<{
   "actions/updateCurrentPrices": typeof actions_updateCurrentPrices;
   crons: typeof crons;
   "debug/checkHistory": typeof debug_checkHistory;
+  "debug/checkMarketStatus": typeof debug_checkMarketStatus;
   predictions: typeof predictions;
   seed: typeof seed;
   simple: typeof simple;

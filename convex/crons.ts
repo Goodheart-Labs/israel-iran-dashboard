@@ -7,7 +7,7 @@ const crons = cronJobs();
 crons.interval(
   "update-prices",
   { minutes: 5 },
-  internal.actions.updateCurrentPrices.updateAllCurrentPrices
+  internal.predictions.fetchPolymarketDirectMarkets
 );
 
 // Sync historical data weekly (Sundays at 2 AM UTC)
@@ -15,7 +15,7 @@ crons.interval(
 crons.weekly(
   "sync-historical",
   { dayOfWeek: "sunday", hourUTC: 2, minuteUTC: 0 },
-  internal.actions.syncHistoricalData.syncAllHistoricalData
+  internal.predictions.fetchAllMarketHistory
 );
 
 export default crons;
