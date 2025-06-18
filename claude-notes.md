@@ -38,58 +38,143 @@ export const getMarkets = query({
 - Keep database queries simple, do joins in memory
 - Use api.* references for cron jobs, not internal.*
 
-## Updated Roadmap (Priority Order)
+## Development Roadmap with Best Practices
 
-### Phase 1: Improve Data Structure 🗄️
-1. **Add Votes Table**
-   - New table: `votes` with userId, predictionId, voteType, timestamp
-   - Self-contained mutations: `castVote.ts`, `removeVote.ts`
-   - Query: `getVotesForPrediction.ts` (no dependencies)
+### Phase 1: MVP Voting System (1-2 weeks) 🚀
+**Goal**: Validate user interest in voting feature with minimal complexity
 
-2. **Add Dashboards Feature**
-   - New table: `dashboards` for custom user dashboards
-   - Schema: dashboardId, userId, name, marketIds[], layout
-   - Isolated CRUD operations in separate files
+1. **Client-Side Vote Storage**
+   ```typescript
+   // Use Zustand/Valtio for state management
+   interface VoteStore {
+     votes: Map<predictionId, 'up' | 'down' | null>
+     toggleVote: (id: string, type: 'up' | 'down') => void
+   }
+   ```
+   - SessionStorage for persistence across tabs
+   - Optimistic UI updates with debouncing
+   - Generate unique sessionId on first visit
 
-3. **Enhance Predictions Schema**
-   - Add fields: voteCount, sentiment, lastVoteTime
-   - Migration strategy: optional fields first, then populate
+2. **Backend Vote Tracking**
+   ```typescript
+   // convex/predictions.ts - Add to existing schema
+   upvotes: v.optional(v.number()),
+   downvotes: v.optional(v.number()),
+   lastVoteUpdate: v.optional(v.number()),
+   ```
+   - Simple increment/decrement mutations
+   - Rate limiting: 1 vote per prediction per session
+   - No user tracking initially
 
-### Phase 2: Multi-Source Integration 🔌
-1. **Fix Existing Sources**
-   - Debug Metaculus API integration
-   - Fix Kalshi market data fetching
-   - Ensure Manifold search works properly
+3. **UI Components**
+   - Accessible vote buttons (ARIA labels, keyboard nav)
+   - Vote count badge with formatting (1.2K)
+   - Loading states during vote submission
+   - Toast notifications for vote feedback
 
-2. **Add New Sources**
-   - Each in isolated action file:
-     - `convex/sources/predictit.ts`
-     - `convex/sources/augur.ts`
-     - `convex/sources/insight.ts`
+### Phase 2: Enhanced Voting System (2-3 weeks) 📊
+**Goal**: Add persistence and analytics while maintaining simplicity
 
-3. **Source Aggregation**
-   - Single query: `getAggregatedMarkets.ts`
-   - Combines all sources in memory
-   - No complex dependencies
+1. **Database Schema Evolution**
+   ```typescript
+   // convex/schema.ts - New votes table
+   votes: defineTable({
+     sessionId: v.string(),
+     predictionId: v.id("predictions"),
+     voteType: v.union(v.literal("up"), v.literal("down")),
+     timestamp: v.number(),
+     userId: v.optional(v.string()), // For future auth
+   }).index("by_session", ["sessionId", "predictionId"])
+     .index("by_prediction", ["predictionId"])
+   ```
 
-### Phase 3: Frontend Reimplementation 🎨
-1. **New Card Types**
-   - VoteCard: Shows community sentiment
-   - ComparisonCard: Multiple sources for same event
-   - TrendCard: Momentum indicators
-   - DashboardCard: User-curated collections
+2. **Smart Aggregation**
+   - Batch vote updates every 30 seconds
+   - Materialized vote counts on predictions
+   - Trending algorithm: (votes / hours_since_creation)^gravity
+   - Cache popular predictions in Redis/memory
 
-2. **Enhanced Market Display**
-   - Show votes alongside probability
-   - Source comparison view
-   - Trend indicators (up/down/stable)
-   - Community comments preview
+3. **Analytics & Insights**
+   - Track vote patterns per session
+   - A/B test vote UI variations
+   - Measure engagement lift from voting
+   - Admin dashboard for vote analytics
 
-3. **Dashboard Builder**
-   - Drag-and-drop interface
-   - Save custom layouts
-   - Share dashboard URLs
-   - Export dashboard data
+### Phase 3: Social Features (3-4 weeks) 🌟
+**Goal**: Build community around high-quality predictions
+
+1. **User Authentication Integration**
+   - Migrate anonymous votes to user accounts
+   - Vote history in user profile
+   - Reputation system based on early correct votes
+   - OAuth with Twitter/Google for easy sharing
+
+2. **Advanced Features**
+   - Comments on predictions (nested, voteable)
+   - "Explain your vote" optional text
+   - Follow other users with good track records
+   - Weekly digest of top-voted predictions
+
+3. **Gamification**
+   - Badges for consistent voting
+   - Leaderboards for prediction accuracy
+   - Points for upvoting eventual correct predictions
+   - Achievements system
+
+### Phase 4: Platform Expansion (4-6 weeks) 🔧
+**Goal**: Scale to handle multiple prediction sources efficiently
+
+1. **Multi-Source Architecture**
+   ```typescript
+   // convex/sources/base.ts
+   interface PredictionSource {
+     fetchMarkets(): Promise<Market[]>
+     normalizeData(raw: any): NormalizedMarket
+     validateData(market: Market): boolean
+   }
+   ```
+   - Adapter pattern for each source
+   - Parallel fetching with error boundaries
+   - Automatic retry with exponential backoff
+   - Source health monitoring dashboard
+
+2. **Data Quality Pipeline**
+   - Deduplication across sources
+   - Confidence scoring per source
+   - Automated flagging of anomalies
+   - Manual review queue for edge cases
+
+3. **Performance Optimization**
+   - GraphQL/tRPC for efficient data fetching
+   - Incremental Static Regeneration (ISR)
+   - Edge caching for global performance
+   - WebSocket for real-time vote updates
+
+### Technical Best Practices Throughout 🛠️
+
+1. **Testing Strategy**
+   - Unit tests for vote logic (Vitest)
+   - Integration tests for API endpoints
+   - E2E tests for critical user flows (Playwright)
+   - Load testing for vote endpoints
+
+2. **Monitoring & Observability**
+   - Sentry for error tracking
+   - PostHog for user analytics
+   - Custom dashboards for vote metrics
+   - Performance budgets for page load
+
+3. **Security Considerations**
+   - CSRF protection for vote endpoints
+   - Rate limiting per IP/session
+   - Input validation and sanitization
+   - Regular security audits
+
+4. **Development Workflow**
+   - Feature flags for gradual rollout
+   - A/B testing framework
+   - Automated PR previews
+   - Continuous deployment pipeline
 
 ## Current Session Progress
 
