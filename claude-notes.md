@@ -140,18 +140,18 @@ export const getMarkets = query({
 
 2. **Dashboard Features**
 
-   - Create/edit/delete dashboards
+   - Create/edit/delete personal dashboards
    - Drag-and-drop prediction cards
-   - Share via unique URL (e.g., /d/middle-east-tensions)
-   - Clone popular dashboards
-   - Dashboard templates (e.g., "High Stakes", "Trending Now")
+   - Save custom layouts and sort preferences
+   - Name and organize dashboards
+   - Set dashboard as default view
 
-3. **Dashboard Discovery**
-   - Browse public dashboards
-   - Sort by popularity/recent/curated
-   - Dashboard voting system
-   - Featured dashboards section
-   - RSS/JSON feeds per dashboard
+3. **Dashboard Management**
+   - List user's dashboards
+   - Switch between dashboards
+   - Rename or reorganize dashboards
+   - Export dashboard data (CSV/JSON)
+   - Dashboard-specific filters
 
 ### Phase 4: Real-time Data Updates (4-6 weeks) 🔄
 
@@ -182,12 +182,12 @@ export const getMarkets = query({
    - Update batching to reduce API calls
    - Fallback sources when primary fails
 
-3. **Feed Features**
-   - Real-time WebSocket updates for active viewers
-   - Push notifications for major swings (>10% change)
-   - Update history timeline per prediction
-   - Data quality indicators (freshness, source reliability)
-   - Export data feeds (CSV, JSON, RSS)
+3. **Multi-Source Integration**
+   - Primary sources: Metaculus, Kalshi, Polymarket, Manifold
+   - Standardized data format across all sources
+   - Source reliability tracking
+   - Fallback to other sources if one fails
+   - Display source icons/logos on prediction cards
 
 ### Technical Best Practices Throughout 🛠️
 
