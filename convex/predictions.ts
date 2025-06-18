@@ -211,6 +211,28 @@ export const fetchPolymarketDirectMarkets = action({
           console.log(`✓ Updated: ${marketDetails.question} - ${probability}%`);
         }
         
+        // Fetch historical data using clobTokenIds
+        if (marketDetails.clobTokenIds) {
+          try {
+            const clobTokenIds = JSON.parse(marketDetails.clobTokenIds);
+            const clobTokenId = clobTokenIds[0]; // Use first token ID
+            
+            console.log(`[POLYMARKET] Fetching history for CLOB token: ${clobTokenId}`);
+            
+            const historyResult = await ctx.runAction(api.predictions.fetchMarketHistory, {
+              marketId: clobTokenId,
+              source: "polymarket",
+              days: 7
+            });
+            
+            if (historyResult.success) {
+              console.log(`✓ Fetched ${historyResult.stored || 0} historical points`);
+            }
+          } catch (historyError) {
+            console.error(`[POLYMARKET] Failed to fetch history: ${historyError}`);
+          }
+        }
+        
         updated++;
         
         // Small delay to avoid rate limiting
@@ -370,11 +392,20 @@ export const fetchMarketHistory = action({
     
     try {
       if (args.source === "polymarket") {
-        // Polymarket historical prices API
-        const url = `https://clob.polymarket.com/prices-history?market=${args.marketId}&startTs=${startTs}&endTs=${endTs}&interval=1h`;
+        // Polymarket historical prices API - using same params as H5N1 dashboard
+        const params = new URLSearchParams({
+          market: args.marketId,
+          fidelity: "60",
+          startTs: startTs.toString(),
+          endTs: endTs.toString()
+        });
+        
+        const url = `https://clob.polymarket.com/prices-history?${params.toString()}`;
         console.log(`Fetching from URL: ${url}`);
         
-        const response = await fetch(url);
+        const response = await fetch(url, {
+          headers: { 'Accept': 'application/json' }
+        });
         
         if (!response.ok) {
           const errorText = await response.text();
@@ -430,27 +461,43 @@ export const fetchAllMarketHistory = action({
         // which requires fetching from the Polymarket API first
         console.log(`Fetching history for: ${prediction.title}`);
         
+        // Extract clean slug (remove UUID if present)
+        const cleanSlug = slug.includes('-') && slug.match(/[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$/) 
+          ? slug.substring(0, slug.lastIndexOf('-'))
+          : slug;
+        
         // First, get the actual market ID from the event
-        const eventResponse = await fetch(`https://gamma-api.polymarket.com/events?slug=${slug}`);
+        const eventResponse = await fetch(`https://gamma-api.polymarket.com/events?slug=${cleanSlug}`);
         if (eventResponse.ok) {
           const events = await eventResponse.json();
           if (events && events.length > 0 && events[0].markets && events[0].markets.length > 0) {
-            const marketId = events[0].markets[0].id;
+            const market = events[0].markets[0];
             
-            const result: any = await ctx.runAction(api.predictions.fetchMarketHistory, {
-              marketId: marketId,
-              source: "polymarket",
-              days: 7 // Max allowed by Polymarket
-            });
-            
-            results.push({ 
-              marketId: marketId, 
-              slug: slug,
-              title: prediction.title,
-              ...result 
-            });
-            
-            console.log(`✓ Fetched ${result.stored || 0} history points for ${prediction.title}`);
+            // Fetch full market details to get clobTokenIds
+            const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${market.id}`);
+            if (marketResponse.ok) {
+              const marketDetails = await marketResponse.json();
+              
+              if (marketDetails.clobTokenIds) {
+                const clobTokenIds = JSON.parse(marketDetails.clobTokenIds);
+                const clobTokenId = clobTokenIds[0];
+                
+                const result: any = await ctx.runAction(api.predictions.fetchMarketHistory, {
+                  marketId: clobTokenId,
+                  source: "polymarket",
+                  days: 7 // Max allowed by Polymarket
+                });
+                
+                results.push({ 
+                  marketId: clobTokenId, 
+                  slug: slug,
+                  title: prediction.title,
+                  ...result 
+                });
+                
+                console.log(`✓ Fetched ${result.stored || 0} history points for ${prediction.title}`);
+              }
+            }
           }
         }
         
