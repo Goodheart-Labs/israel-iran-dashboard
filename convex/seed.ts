@@ -1,4 +1,4 @@
-import { seedData } from "./predictions";
+import { seedInitialMarkets } from "./predictions";
 
 // Re-export the seed function to make it easier to find
-export const seed = seedData;
+export const seed = seedInitialMarkets;

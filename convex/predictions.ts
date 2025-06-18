@@ -3,14 +3,13 @@ import { query, mutation, action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { predictionCategories, predictionSources } from "./schema";
 
-// Get all active predictions (approved only) - USED IN FRONTEND
+// Get all active predictions - USED IN FRONTEND
 export const getActive = query({
   args: {},
   handler: async (ctx) => {
     return await ctx.db
       .query("predictions")
       .withIndex("by_active", (q) => q.eq("isActive", true))
-      .filter(q => q.eq(q.field("isApproved"), true))
       .collect();
   },
 });
@@ -158,9 +157,15 @@ export const fetchPolymarketDirectMarkets = action({
     
     // Get all active Polymarket predictions from the database
     const activePredictions = await ctx.runQuery(api.predictions.getActive);
-    const polymarketPredictions = activePredictions.filter((p: any) => p.source === "polymarket");
+    console.log(`[POLYMARKET] Found ${activePredictions.length} active predictions total`);
     
-    console.log(`[POLYMARKET] Updating ${polymarketPredictions.length} markets from database...`);
+    const polymarketPredictions = activePredictions.filter((p: any) => p.source === "polymarket");
+    console.log(`[POLYMARKET] Found ${polymarketPredictions.length} Polymarket predictions`);
+    
+    if (polymarketPredictions.length === 0) {
+      console.log("[POLYMARKET] No Polymarket predictions found in database to update");
+      return { updated: 0, errors: [], message: "No Polymarket markets found in database" };
+    }
     
     let updated = 0;
     const errors: string[] = [];
@@ -269,7 +274,7 @@ export const fetchPolymarketDirectMarkets = action({
         await new Promise(resolve => setTimeout(resolve, 300));
         
       } catch (error) {
-        const errorMsg = `${prediction.title} (${slug}): ${String(error)}`;
+        const errorMsg = `${prediction.title}: ${String(error)}`;
         errors.push(errorMsg);
         console.error(`[POLYMARKET] Error: ${errorMsg}`);
       }
@@ -325,12 +330,11 @@ export const upsert = mutation({
       }
       return existing._id;
     } else {
-      // Create new prediction (pending approval by default)
+      // Create new prediction
       const predictionId = await ctx.db.insert("predictions", {
         ...args,
         lastUpdated: now,
         isActive: true,
-        isApproved: true, // Auto-approve for now
       });
       
       // Store initial history point

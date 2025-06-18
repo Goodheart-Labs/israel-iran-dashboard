@@ -311,18 +311,6 @@ function AdminDashboard() {
             </div>
           </div>
           
-          {/* Quick Stats */}
-          <div className="card bg-base-100 shadow-xl">
-            <div className="card-body">
-              <h2 className="card-title">Quick Stats</h2>
-              <div className="stats stats-vertical shadow">
-                <div className="stat">
-                  <div className="stat-title">Total Markets</div>
-                  <div className="stat-value">{markets.length}</div>
-                </div>
-              </div>
-            </div>
-          </div>
 
           {/* Historical Data */}
           <div className="card bg-base-100 shadow-xl">
