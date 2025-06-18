@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpx convex deploy --prod --cmd 'pnpm run build'",
+  "buildCommand": "pnpx convex deploy -y --cmd 'pnpm run build'",
   "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
