@@ -13,19 +13,18 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
-import type * as actions_syncHistoricalData from "../actions/syncHistoricalData.js";
-import type * as actions_updateCurrentPrices from "../actions/updateCurrentPrices.js";
 import type * as crons from "../crons.js";
 import type * as debug_checkHistory from "../debug/checkHistory.js";
 import type * as debug_checkMarketStatus from "../debug/checkMarketStatus.js";
+import type * as deployHook from "../deployHook.js";
 import type * as historyMutations from "../historyMutations.js";
-import type * as marketUpdater from "../marketUpdater.js";
 import type * as predictions from "../predictions.js";
 import type * as seed from "../seed.js";
 import type * as simple from "../simple.js";
 import type * as simpleUpdater from "../simpleUpdater.js";
 import type * as sync_syncData from "../sync/syncData.js";
-import type * as updateSystem from "../updateSystem.js";
+import type * as systemStatus from "../systemStatus.js";
+import type * as testData from "../testData.js";
 import type * as users from "../users.js";
 
 /**
@@ -37,19 +36,18 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  "actions/syncHistoricalData": typeof actions_syncHistoricalData;
-  "actions/updateCurrentPrices": typeof actions_updateCurrentPrices;
   crons: typeof crons;
   "debug/checkHistory": typeof debug_checkHistory;
   "debug/checkMarketStatus": typeof debug_checkMarketStatus;
+  deployHook: typeof deployHook;
   historyMutations: typeof historyMutations;
-  marketUpdater: typeof marketUpdater;
   predictions: typeof predictions;
   seed: typeof seed;
   simple: typeof simple;
   simpleUpdater: typeof simpleUpdater;
   "sync/syncData": typeof sync_syncData;
-  updateSystem: typeof updateSystem;
+  systemStatus: typeof systemStatus;
+  testData: typeof testData;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

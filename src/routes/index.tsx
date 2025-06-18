@@ -4,19 +4,25 @@ import { createFileRoute } from "@tanstack/react-router";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { MarketChart } from "@/components/MarketChart";
+import { formatDistanceToNow } from 'date-fns';
 
 // Use the simple query - no circular dependencies
 const simpleMarketsQuery = convexQuery(api.simple.getMarkets, {});
+const lastUpdateQuery = convexQuery(api.systemStatus.getLastUpdate, {});
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
-    await queryClient.ensureQueryData(simpleMarketsQuery);
+    await Promise.all([
+      queryClient.ensureQueryData(simpleMarketsQuery),
+      queryClient.ensureQueryData(lastUpdateQuery),
+    ]);
   },
   component: HomePage,
 });
 
 function HomePage() {
   const { data: markets } = useSuspenseQuery(simpleMarketsQuery);
+  const { data: lastUpdate } = useSuspenseQuery(lastUpdateQuery);
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -25,6 +31,12 @@ function HomePage() {
         <p className="text-lg opacity-80">
           Tracking prediction markets and forecasts on Iran's geopolitical developments
         </p>
+        {lastUpdate.timestamp && (
+          <p className="text-sm opacity-60 mt-2">
+            Last updated {formatDistanceToNow(new Date(lastUpdate.timestamp))} ago
+            {!lastUpdate.success && <span className="text-error"> (failed)</span>}
+          </p>
+        )}
       </div>
 
       {/* Simple Markets Grid */}

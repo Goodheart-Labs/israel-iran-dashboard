@@ -1,10 +1,12 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { useMutation, useQuery } from "convex/react";
+import { useMutation, useQuery, useAction } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { SignInButton } from "@clerk/clerk-react";
 import type { Id } from "../../convex/_generated/dataModel";
+import { RefreshCw, CheckCircle, XCircle, Clock } from "lucide-react";
+import { formatDistanceToNow } from 'date-fns';
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -46,10 +48,14 @@ function AdminDashboard() {
   const storeUser = useMutation(api.users.store);
   const isAdmin = useQuery(api.users.isAdmin);
   const updateClarificationText = useMutation(api.predictions.updateClarificationText);
+  const triggerUpdate = useAction(api.simpleUpdater.updatePredictions);
+  const lastUpdate = useQuery(api.systemStatus.getLastUpdate);
+  const updateHistory = useQuery(api.systemStatus.getUpdateHistory) || [];
   
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   
   // Store user when authenticated - but only when isAdmin query is ready
   useEffect(() => {
@@ -88,14 +94,26 @@ function AdminDashboard() {
     setEditText(market.clarificationText || "");
   };
 
+  const handleManualUpdate = async () => {
+    setIsUpdating(true);
+    try {
+      const result = await triggerUpdate();
+      console.log('Update result:', result);
+    } catch (error) {
+      console.error('Update failed:', error);
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const handleSaveClarification = async () => {
     if (!selectedMarket) return;
     
     setIsLoading(true);
     try {
       await updateClarificationText({
-        predictionId: selectedMarket as Id<"predictions">,
-        clarificationText: editText.trim() || undefined
+        id: selectedMarket as Id<"predictions">,
+        clarificationText: editText.trim()
       });
       setSelectedMarket(null);
       setEditText("");
@@ -164,8 +182,90 @@ function AdminDashboard() {
           </div>
         </div>
 
-        {/* Quick Stats */}
+        {/* Update Status */}
         <div className="space-y-6">
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">Update Status</h2>
+              
+              {/* Manual Update Button */}
+              <button 
+                className={`btn btn-primary w-full ${isUpdating ? 'loading' : ''}`}
+                onClick={handleManualUpdate}
+                disabled={isUpdating}
+              >
+                {isUpdating ? 'Updating...' : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Manual Update
+                  </>
+                )}
+              </button>
+              
+              {/* Last Update Status */}
+              {lastUpdate && lastUpdate.timestamp && (
+                <div className="mt-4 p-4 bg-base-200 rounded-lg">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold">Last Update</span>
+                    {lastUpdate.success ? (
+                      <CheckCircle className="w-5 h-5 text-success" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-error" />
+                    )}
+                  </div>
+                  <div className="text-sm space-y-1">
+                    <div className="flex justify-between">
+                      <span className="opacity-70">Time:</span>
+                      <span>{formatDistanceToNow(new Date(lastUpdate.timestamp))} ago</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="opacity-70">Markets:</span>
+                      <span>{lastUpdate.marketsUpdated || 0}</span>
+                    </div>
+                    {lastUpdate.duration && (
+                      <div className="flex justify-between">
+                        <span className="opacity-70">Duration:</span>
+                        <span>{lastUpdate.duration}ms</span>
+                      </div>
+                    )}
+                  </div>
+                  {lastUpdate.errors && lastUpdate.errors.length > 0 && (
+                    <div className="mt-2 text-xs text-error">
+                      {lastUpdate.errors[0]}
+                    </div>
+                  )}
+                </div>
+              )}
+              
+              {/* Recent Updates */}
+              {updateHistory.length > 0 && (
+                <div className="mt-4">
+                  <h3 className="font-semibold mb-2">Recent Updates</h3>
+                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                    {updateHistory.slice(0, 5).map((update: any, idx: number) => (
+                      <div key={idx} className="flex items-center justify-between text-sm p-2 bg-base-200 rounded">
+                        <div className="flex items-center gap-2">
+                          {update.success ? (
+                            <CheckCircle className="w-4 h-4 text-success" />
+                          ) : (
+                            <XCircle className="w-4 h-4 text-error" />
+                          )}
+                          <span className="opacity-70">
+                            {formatDistanceToNow(new Date(update.timestamp))} ago
+                          </span>
+                        </div>
+                        <span className="font-mono">
+                          {update.marketsUpdated} markets
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          
+          {/* Quick Stats */}
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">Quick Stats</h2>
@@ -174,16 +274,6 @@ function AdminDashboard() {
                   <div className="stat-title">Total Markets</div>
                   <div className="stat-value">{markets.length}</div>
                 </div>
-                <div className="stat">
-                  <div className="stat-title">Last Updated</div>
-                  <div className="stat-value text-lg">
-                    {markets.length > 0 
-                      ? new Date(Math.max(...markets.map((m: any) => m.lastUpdated))).toLocaleDateString()
-                      : 'N/A'
-                    }
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
 
