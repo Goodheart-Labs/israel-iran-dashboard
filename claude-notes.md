@@ -406,3 +406,64 @@ Combine elements from all three:
 - ✅ Graceful degradation when sources fail
 - ✅ No circular dependencies
 - ✅ Clear separation of actions/mutations/queries
+
+---
+
+## Current Feature: Update System Implementation
+
+### Status: In Progress - Fixing Polymarket Integration
+
+Working on implementing a robust update system for the Iran geopolitical dashboard.
+
+### Commits Made This Session:
+1. Initial commit - setting up update system architecture
+2. feat: implement simple cron job with health monitoring for Phase 1
+3. feat: add admin UI for manual updates and status tracking
+4. feat: complete Phase 1 update system with health monitoring and manual triggers
+
+### Progress:
+- ✅ Created simple cron job that runs every 30 minutes
+- ✅ Added health monitoring and status tracking
+- ✅ Stored update results in database
+- ✅ Added admin UI showing update status
+- ✅ Added manual update button in admin panel
+- ✅ Created deployment hook for automatic updates
+- ✅ Successfully deployed to Convex
+- 🔧 Fixing Polymarket API integration (discovered issue from H5N1 dashboard analysis)
+
+### Current Task: Polymarket Fix
+- Found that H5N1 dashboard uses clean slugs without UUID suffixes
+- They use a two-step process: fetch event → get market ID → fetch market details
+- Updated our slug list to match their approach
+- Need to complete the fetchPolymarketDirectMarkets function update
+
+### Deployment Issues Encountered:
+1. **"use node" directive placement**: Must be at the very top of action files
+2. **Internal mutations in action files**: Convex doesn't allow mutations in Node.js action files - must separate into dedicated mutation files
+3. **Circular type inference**: Avoid self-referential queries, use explicit typing
+4. **Missing dependencies**: Always check and add required packages (e.g., date-fns)
+5. **Unterminated JSX**: Double-check closing tags in React components
+6. **Convex deployment**: Use `pnpx convex deploy` and ensure all TypeScript errors are resolved first
+
+### Task List:
+1. Fix Polymarket API integration to match H5N1 dashboard approach (IN PROGRESS)
+2. Test Polymarket data fetching with corrected implementation
+3. Implement PostHog analytics (HIGH PRIORITY)
+4. Phase 2: Session-based voting system
+5. Phase 3: Dashboard organization system  
+6. Phase 4: Multi-source integration (Metaculus, Kalshi, Manifold)
+
+### Important Context:
+- User wants simple implementation, no complex reliability features
+- Removed clone/share dashboards and templates functionality
+- No user management features needed
+- Focus on getting data feeds working properly
+- PostHog analytics is a priority
+- User wants to test deployment before continuing with other features
+
+### Technical Decisions:
+- Using Convex actions for Node.js API calls
+- Separated internal mutations into statusMutations.ts (Convex requirement)
+- Tracking 24-hour update history
+- Using deployment hook to trigger updates after deploy
+- Following H5N1 dashboard's approach for Polymarket integration

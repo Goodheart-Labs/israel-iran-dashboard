@@ -15,6 +15,47 @@ export const getActive = query({
   },
 });
 
+// Get historical data for a prediction
+export const getHistory = query({
+  args: { predictionId: v.id("predictions") },
+  handler: async (ctx, args) => {
+    return await ctx.db
+      .query("predictionHistory")
+      .withIndex("by_prediction_time", (q) => q.eq("predictionId", args.predictionId))
+      .collect();
+  },
+});
+
+// Get historical data stats
+export const getHistoryStats = query({
+  args: {},
+  handler: async (ctx) => {
+    const predictions = await ctx.db
+      .query("predictions")
+      .withIndex("by_active", (q) => q.eq("isActive", true))
+      .collect();
+    
+    const stats = await Promise.all(
+      predictions.map(async (p) => {
+        const historyCount = await ctx.db
+          .query("predictionHistory")
+          .withIndex("by_prediction_time", (q) => q.eq("predictionId", p._id))
+          .collect();
+        
+        return {
+          title: p.title,
+          source: p.source,
+          historyPoints: historyCount.length,
+          oldestPoint: historyCount.length > 0 ? Math.min(...historyCount.map(h => h.timestamp)) : null,
+          newestPoint: historyCount.length > 0 ? Math.max(...historyCount.map(h => h.timestamp)) : null,
+        };
+      })
+    );
+    
+    return stats;
+  },
+});
+
 // Update clarification text for a prediction - USED IN ADMIN
 export const updateClarificationText = mutation({
   args: {
@@ -30,15 +71,16 @@ export const updateClarificationText = mutation({
 });
 
 // Featured Polymarket markets to track - USED BY UPDATER
+// Using clean slugs without UUID suffixes, matching H5N1 dashboard approach
 const FEATURED_POLYMARKET_MARKETS = [
-  { slug: "will-iran-carry-out-a-strike-on-israel-on-4d1fb6bc-d08f-4fcc-b913-c0c59ab7eff5", category: "military_action" as const },
-  { slug: "will-the-us-military-take-action-against-52e970f7-12f8-4b48-8c6f-9d03e6aa02d4", category: "military_action" as const },
-  { slug: "will-iran-develop-a-nuclear-weapon-before-e659dcc4-23fe-4bb7-8c79-f614bc3e9c02", category: "nuclear_program" as const },
+  { slug: "will-iran-carry-out-a-strike-on-israel-on", category: "military_action" as const },
+  { slug: "will-the-us-military-take-action-against", category: "military_action" as const },
+  { slug: "will-iran-develop-a-nuclear-weapon-before", category: "nuclear_program" as const },
   { slug: "will-the-us-iran-nuclear-deal-be-restored", category: "nuclear_program" as const },
   { slug: "will-iran-close-the-strait-of-hormuz-in", category: "military_action" as const },
-  { slug: "will-ali-khamenei-cease-to-be-the-supreme-cf30bc96-d95f-4d42-8f4b-c1b18bb088aa", category: "regime_stability" as const },
-  { slug: "will-a-nuclear-weapon-be-detonated-in-an-a005bfcc-9241-456f-a61f-6bb3c8b2c8bb", category: "nuclear_program" as const },
-  { slug: "will-benjamin-netanyahu-cease-to-be-the-49f9b891-e968-4fef-b93e-b91c3df92f14", category: "israel_relations" as const },
+  { slug: "will-ali-khamenei-cease-to-be-the-supreme", category: "regime_stability" as const },
+  { slug: "will-a-nuclear-weapon-be-detonated-in-an", category: "nuclear_program" as const },
+  { slug: "will-benjamin-netanyahu-cease-to-be-the", category: "israel_relations" as const },
 ];
 
 // Update market probability by source URL - USED BY UPDATER
@@ -99,57 +141,85 @@ export const fetchPolymarketDirectMarkets = action({
     
     for (const { slug, category } of FEATURED_POLYMARKET_MARKETS) {
       try {
-        // Extract the actual slug from the full URL slug
-        const cleanSlug = slug.split('-').slice(0, -5).join('-');
-        const marketUrl = `https://gamma-api.polymarket.com/events?slug=${slug}`;
+        // First, fetch the event data with the clean slug
+        const eventUrl = `https://gamma-api.polymarket.com/events?slug=${slug}`;
+        console.log(`[POLYMARKET] Fetching event: ${eventUrl}`);
         
-        const response = await fetch(marketUrl, {
+        const eventResponse = await fetch(eventUrl, {
           headers: { 'Accept': 'application/json' }
         });
         
-        if (!response.ok) {
-          throw new Error(`API returned ${response.status}`);
+        if (!eventResponse.ok) {
+          throw new Error(`Event API returned ${eventResponse.status}`);
         }
         
-        const events = await response.json();
+        const events = await eventResponse.json();
         
-        if (!events || events.length === 0 || !events[0].markets || events[0].markets.length === 0) {
-          throw new Error("No market data found");
+        if (!events || events.length === 0) {
+          throw new Error("No events found for this slug");
         }
         
-        const market = events[0].markets[0];
-        const probability = Math.round(parseFloat(market.outcomePrices[0]) * 100);
+        const event = events[0];
+        if (!event.markets || event.markets.length === 0) {
+          throw new Error("No markets found for this event");
+        }
         
-        // Create prediction if it doesn't exist
-        const sourceUrl = `https://polymarket.com/event/${slug}`;
+        // Get the first market and its ID
+        const market = event.markets[0];
+        const marketId = market.id;
+        
+        // Now fetch the detailed market data using the market ID
+        const marketDetailsUrl = `https://gamma-api.polymarket.com/markets/${marketId}`;
+        console.log(`[POLYMARKET] Fetching market details: ${marketDetailsUrl}`);
+        
+        const marketResponse = await fetch(marketDetailsUrl, {
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!marketResponse.ok) {
+          throw new Error(`Market API returned ${marketResponse.status}`);
+        }
+        
+        const marketDetails = await marketResponse.json();
+        
+        // Extract probability from outcomePrices
+        const probability = Math.round(parseFloat(marketDetails.outcomePrices[0]) * 100);
+        
+        // Create the source URL using the market slug
+        const sourceUrl = `https://polymarket.com/event/${marketDetails.slug}`;
+        
+        // Check if prediction exists
         const existing = await ctx.runQuery(api.predictions.getActive);
         const exists = existing.some((p: any) => p.sourceUrl === sourceUrl);
         
         if (!exists) {
           await ctx.runMutation(api.predictions.upsert, {
             category,
-            title: market.question,
-            description: market.description?.slice(0, 500),
+            title: marketDetails.question,
+            description: marketDetails.description?.slice(0, 500),
             probability,
             source: "polymarket",
             sourceUrl,
-            resolveDate: market.endDate ? new Date(market.endDate).getTime() : undefined,
+            resolveDate: marketDetails.endDate ? new Date(marketDetails.endDate).getTime() : undefined,
           });
+          console.log(`✓ Created: ${marketDetails.question} - ${probability}%`);
         } else {
           await ctx.runMutation(api.predictions.updateMarketProbability, {
             sourceUrl,
             probability,
           });
+          console.log(`✓ Updated: ${marketDetails.question} - ${probability}%`);
         }
         
         updated++;
-        console.log(`✓ Updated: ${market.question} - ${probability}%`);
         
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 300));
         
       } catch (error) {
-        errors.push(`Error fetching ${slug}: ${String(error)}`);
+        const errorMsg = `${slug}: ${String(error)}`;
+        errors.push(errorMsg);
+        console.error(`[POLYMARKET] Error: ${errorMsg}`);
       }
     }
     
@@ -221,6 +291,185 @@ export const upsert = mutation({
       
       return predictionId;
     }
+  },
+});
+
+// Store market history data
+export const storeMarketHistory = mutation({
+  args: {
+    marketId: v.string(),
+    historyData: v.array(v.object({
+      p: v.number(), // probability
+      t: v.number()  // timestamp
+    })),
+    source: v.union(v.literal("polymarket"), v.literal("kalshi"))
+  },
+  handler: async (ctx, args) => {
+    // Find prediction by market ID in source URL - try slug-based URLs
+    const predictions = await ctx.db
+      .query("predictions")
+      .collect();
+    
+    let prediction = null;
+    for (const p of predictions) {
+      if (p.sourceUrl && p.sourceUrl.includes(args.marketId)) {
+        prediction = p;
+        break;
+      }
+    }
+    
+    if (!prediction) {
+      return { success: false, error: "Prediction not found", stored: 0 };
+    }
+    
+    // Store historical data points
+    let stored = 0;
+    for (const point of args.historyData) {
+      try {
+        // Check if this data point already exists
+        const existing = await ctx.db
+          .query("predictionHistory")
+          .withIndex("by_prediction_time", (q) => 
+            q.eq("predictionId", prediction._id)
+          )
+          .filter(q => q.eq(q.field("timestamp"), point.t * 1000))
+          .first();
+        
+        if (!existing) {
+          await ctx.db.insert("predictionHistory", {
+            predictionId: prediction._id,
+            probability: Math.round(point.p * 100), // Convert to percentage
+            timestamp: point.t * 1000, // Convert to milliseconds
+            source: args.source,
+          });
+          stored++;
+        }
+      } catch (error) {
+        // Skip if error (likely duplicate)
+        console.log("Skipping history point:", error);
+      }
+    }
+    
+    return { success: true, stored };
+  },
+});
+
+// Fetch historical data for a specific market
+export const fetchMarketHistory = action({
+  args: { 
+    marketId: v.string(),
+    source: v.union(v.literal("polymarket"), v.literal("kalshi")),
+    days: v.optional(v.number()) // Days of history to fetch, max 7 for Polymarket
+  },
+  handler: async (ctx, args): Promise<{ success: boolean; stored?: number; totalPoints?: number; error?: string }> => {
+    "use node";
+    
+    const days = Math.min(args.days || 7, 7); // Polymarket has a 7-day max limit
+    const endTs = Math.floor(Date.now() / 1000);
+    const startTs = endTs - (days * 24 * 60 * 60);
+    
+    try {
+      if (args.source === "polymarket") {
+        // Polymarket historical prices API
+        const url = `https://clob.polymarket.com/prices-history?market=${args.marketId}&startTs=${startTs}&endTs=${endTs}&interval=1h`;
+        console.log(`Fetching from URL: ${url}`);
+        
+        const response = await fetch(url);
+        
+        if (!response.ok) {
+          const errorText = await response.text();
+          console.error(`Polymarket API error: ${response.status} - ${errorText}`);
+          return { success: false, error: `API error: ${response.status} - ${errorText}` };
+        }
+        
+        const data = await response.json();
+        
+        // Store historical data through mutation
+        const storeResult: { success: boolean; stored: number } = await ctx.runMutation(api.predictions.storeMarketHistory, {
+          marketId: args.marketId,
+          historyData: data.history || [],
+          source: args.source
+        });
+        
+        return { success: true, stored: storeResult.stored, totalPoints: data.history?.length || 0 };
+      }
+      
+      return { success: false, error: "Source not implemented yet" };
+      
+    } catch (error) {
+      console.error("Error fetching market history:", error);
+      return { success: false, error: String(error) };
+    }
+  },
+});
+
+// Fetch historical data for all featured markets
+export const fetchAllMarketHistory = action({
+  args: {},
+  handler: async (ctx): Promise<{ results: any[]; total: number }> => {
+    "use node";
+    
+    console.log("Starting to fetch historical data for all featured markets...");
+    
+    // Get all active predictions to find their market IDs
+    const predictions = await ctx.runQuery(api.predictions.getActive);
+    const polymarketPredictions = predictions.filter((p: any) => p.source === "polymarket");
+    
+    const results = [];
+    
+    for (const prediction of polymarketPredictions) {
+      try {
+        // Extract market ID from the source URL
+        // URLs are like: https://polymarket.com/event/will-iran-carry-out-a-strike-on-israel-on-4d1fb6bc-d08f-4fcc-b913-c0c59ab7eff5
+        if (!prediction.sourceUrl) continue;
+        
+        const urlParts = prediction.sourceUrl.split('/');
+        const slug = urlParts[urlParts.length - 1];
+        
+        // For now, we'll use the slug as the market ID since we need the actual numeric market ID
+        // which requires fetching from the Polymarket API first
+        console.log(`Fetching history for: ${prediction.title}`);
+        
+        // First, get the actual market ID from the event
+        const eventResponse = await fetch(`https://gamma-api.polymarket.com/events?slug=${slug}`);
+        if (eventResponse.ok) {
+          const events = await eventResponse.json();
+          if (events && events.length > 0 && events[0].markets && events[0].markets.length > 0) {
+            const marketId = events[0].markets[0].id;
+            
+            const result: any = await ctx.runAction(api.predictions.fetchMarketHistory, {
+              marketId: marketId,
+              source: "polymarket",
+              days: 7 // Max allowed by Polymarket
+            });
+            
+            results.push({ 
+              marketId: marketId, 
+              slug: slug,
+              title: prediction.title,
+              ...result 
+            });
+            
+            console.log(`✓ Fetched ${result.stored || 0} history points for ${prediction.title}`);
+          }
+        }
+        
+        // Small delay between requests to be respectful
+        await new Promise(resolve => setTimeout(resolve, 500));
+      } catch (error) {
+        console.error(`Error fetching history for ${prediction.title}:`, error);
+        results.push({ 
+          title: prediction.title,
+          success: false, 
+          error: String(error) 
+        });
+      }
+    }
+    
+    const successful = results.filter(r => r.success).length;
+    console.log(`Completed fetching history: ${successful}/${results.length} successful`);
+    
+    return { results, total: results.length };
   },
 });
 

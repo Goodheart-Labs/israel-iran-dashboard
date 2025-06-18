@@ -5,7 +5,7 @@ import { api } from "../../convex/_generated/api";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { SignInButton } from "@clerk/clerk-react";
 import type { Id } from "../../convex/_generated/dataModel";
-import { RefreshCw, CheckCircle, XCircle, Clock } from "lucide-react";
+import { RefreshCw, CheckCircle, XCircle, Clock, BarChart } from "lucide-react";
 import { formatDistanceToNow } from 'date-fns';
 
 export const Route = createFileRoute("/admin")({
@@ -51,11 +51,15 @@ function AdminDashboard() {
   const triggerUpdate = useAction(api.simpleUpdater.updatePredictions);
   const lastUpdate = useQuery(api.systemStatus.getLastUpdate);
   const updateHistory = useQuery(api.systemStatus.getUpdateHistory) || [];
+  const historyStats = useQuery(api.predictions.getHistoryStats) || [];
+  const fetchAllHistory = useAction(api.predictions.fetchAllMarketHistory);
   
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isFetchingHistory, setIsFetchingHistory] = useState(false);
+  const [historyResult, setHistoryResult] = useState<any>(null);
   
   // Store user when authenticated - but only when isAdmin query is ready
   useEffect(() => {
@@ -103,6 +107,21 @@ function AdminDashboard() {
       console.error('Update failed:', error);
     } finally {
       setIsUpdating(false);
+    }
+  };
+
+  const handleFetchHistory = async () => {
+    setIsFetchingHistory(true);
+    setHistoryResult(null);
+    try {
+      const result = await fetchAllHistory();
+      console.log('History fetch result:', result);
+      setHistoryResult(result);
+    } catch (error) {
+      console.error('History fetch failed:', error);
+      setHistoryResult({ error: String(error) });
+    } finally {
+      setIsFetchingHistory(false);
     }
   };
 
@@ -275,6 +294,61 @@ function AdminDashboard() {
                   <div className="stat-value">{markets.length}</div>
                 </div>
               </div>
+            </div>
+          </div>
+
+          {/* Historical Data */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">Historical Data</h2>
+              
+              <button 
+                className={`btn btn-secondary w-full ${isFetchingHistory ? 'loading' : ''}`}
+                onClick={handleFetchHistory}
+                disabled={isFetchingHistory}
+              >
+                {isFetchingHistory ? 'Fetching...' : (
+                  <>
+                    <BarChart className="w-4 h-4 mr-2" />
+                    Fetch 7-Day History
+                  </>
+                )}
+              </button>
+              
+              {historyResult && (
+                <div className="mt-4 p-4 bg-base-200 rounded-lg text-sm">
+                  {historyResult.error ? (
+                    <div className="text-error">Error: {historyResult.error}</div>
+                  ) : (
+                    <>
+                      <div className="font-semibold mb-2">
+                        Fetched {historyResult.results?.filter((r: any) => r.success).length || 0} of {historyResult.total || 0} markets
+                      </div>
+                      {historyResult.results?.map((r: any, idx: number) => (
+                        <div key={idx} className="text-xs opacity-70">
+                          {r.title ? `${r.title}: ` : ''}
+                          {r.success ? `✓ ${r.stored || 0} points` : `✗ ${r.error}`}
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
+              
+              {/* History Stats */}
+              {historyStats.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  <h3 className="font-semibold">Current History</h3>
+                  <div className="text-xs space-y-1 max-h-32 overflow-y-auto">
+                    {historyStats.map((stat: any, idx: number) => (
+                      <div key={idx} className="flex justify-between">
+                        <span className="truncate flex-1 opacity-70">{stat.title}</span>
+                        <span className="font-mono">{stat.historyPoints} pts</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
