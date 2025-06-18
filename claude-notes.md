@@ -222,6 +222,12 @@ export const getMarkets = query({
 3. `fix: add --prod flag to Convex deploy command for non-interactive deployment`
 4. `fix: use -y flag instead of --prod for Convex deploy`
 5. `docs: update roadmap with comprehensive voting system implementation plan`
+6. `docs: add practical features roadmap based on current site analysis`
+7. `docs: simplify dashboard and data source requirements`
+8. `docs: refocus phase 3-4 on dashboards and data feed improvements`
+9. `docs: add manual update instructions for live site data`
+10. `fix: move 'use node' directive to top of action files for Convex compatibility`
+11. `refactor: implement reliable update system with health monitoring and best practices`
 
 ### Production Status:
 
@@ -370,3 +376,31 @@ Combine elements from all three:
 1. **Base layer**: Resilient pipeline (Option 3) for reliability
 2. **Optimization**: Tiered updates (Option 2) for efficiency  
 3. **Enhancement**: Event triggers (Option 1) for responsiveness
+
+## Implemented Update System
+
+### Architecture Decisions:
+1. **Separated concerns**: Mutations in separate files from actions
+2. **Health tracking**: `sourceStatus` table tracks reliability
+3. **Smart retries**: Exponential backoff for failed sources
+4. **Update logging**: Track all significant changes
+5. **Simple cron**: One reliable function that handles errors gracefully
+
+### Key Files:
+- `convex/simpleUpdater.ts` - Main update orchestrator
+- `convex/updateSystem.ts` - Health tracking and monitoring
+- `convex/historyMutations.ts` - Database mutations
+- `convex/schema.ts` - Added sourceStatus and updateLog tables
+
+### How to Update Data:
+1. **Manual**: Run `simpleUpdater:updatePredictions` in Convex dashboard
+2. **Automatic**: Cron runs every 30 minutes
+3. **Monitor**: Run `simpleUpdater:getUpdateDashboard` to see health
+
+### Best Practices Applied:
+- ✅ Single responsibility per file
+- ✅ Proper error handling with recovery
+- ✅ Observable system with health metrics
+- ✅ Graceful degradation when sources fail
+- ✅ No circular dependencies
+- ✅ Clear separation of actions/mutations/queries
