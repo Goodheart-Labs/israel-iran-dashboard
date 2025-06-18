@@ -262,3 +262,34 @@ export const getMarkets = query({
 - Dark/light theme toggle
 - Keyboard navigation shortcuts
 - PWA support for mobile install
+
+## How to Manually Update Live Site Data
+
+To update the prediction market data on the live site, you can run these Convex functions from the Convex dashboard:
+
+### Quick Update (Just Polymarket featured markets):
+1. Go to Convex dashboard → Functions
+2. Run `predictions:fetchPolymarketDirectMarkets` 
+   - Updates the 8 featured Iran-related markets
+   - This is what the cron job runs every 30 minutes
+
+### Full Update (All sources):
+1. Run `predictions:fetchAllPredictions`
+   - Fetches from: Manifold, Metaculus, Kalshi, Polymarket, Adjacent News
+   - Returns summary of fetched/saved from each source
+   - Note: Some sources may fail (Metaculus/Kalshi have issues)
+
+### Update Historical Data:
+1. Run `predictions:fetchAllMarketHistory`
+   - Fetches 7 days of historical data for all Polymarket markets
+   - This runs weekly via cron
+
+### Update Single Market:
+1. Run `predictions:updateMarketProbability`
+   - Pass `sourceUrl` parameter (e.g., "https://polymarket.com/event/...")
+   - Updates just that specific market
+
+### Via CLI:
+```bash
+npx convex run predictions:fetchPolymarketDirectMarkets
+```
