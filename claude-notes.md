@@ -110,84 +110,72 @@ export const getMarkets = query({
 3. **Analytics & Insights**
    - Track vote patterns per session
 
-### Phase 3: Dashboard System (3-4 weeks) 📋
+### Phase 3: Core Features & Analytics (2-3 weeks) 🎯
 
-**Goal**: Enable users to create custom prediction dashboards
+**Goal**: Add essential missing features and analytics
 
-1. **Dashboard Schema Design**
+1. **PostHog Analytics Integration (PRIORITY)**
+   - Implement pageview tracking on route changes
+   - Track key events:
+     - Market card clicks (which market, position)
+     - Vote interactions (up/down, which prediction)
+     - Chart hover time
+     - External link clicks
+   - User session tracking
+   - A/B test different layouts
 
+2. **Essential UI Features**
+   - **Filtering & Search**:
+     - Filter by probability range (0-25%, 25-50%, etc.)
+     - Filter by category (existing in schema)
+     - Search predictions by keyword
+     - Hide/show resolved predictions
+   - **Data Freshness**:
+     - "Last updated" prominently displayed
+     - Manual refresh button
+     - Stale data indicator (>1hr old)
+   - **Mobile Improvements**:
+     - Swipe between predictions
+     - Collapsible charts on mobile
+     - Touch-friendly vote buttons
+
+3. **Data Export**
+   - Export current view as CSV
+   - Share prediction via URL with anchor
+   - Copy prediction data to clipboard
+   - RSS feed for new predictions
+
+### Phase 4: Multi-Source Reliability (3-4 weeks) 🔧
+
+**Goal**: Ensure reliable data from all sources
+
+1. **Fix Existing Sources**
+   - Debug and fix Metaculus integration
+   - Fix Kalshi API issues
+   - Ensure Manifold search works
+   - Add Polymarket support
+   - Remove/fix broken sources
+
+2. **Source Management**
    ```typescript
-   // convex/schema.ts - New dashboards table
-   dashboards: defineTable({
-     name: v.string(),
-     description: v.optional(v.string()),
-     slug: v.string(), // unique URL identifier
-     userId: v.optional(v.string()), // null for anonymous
-     sessionId: v.string(), // for anonymous dashboards
-     predictionIds: v.array(v.id("predictions")),
-     layout: v.optional(v.object({
-       columns: v.number(),
-       cardSize: v.union(v.literal("small"), v.literal("medium"), v.literal("large")),
-       sortBy: v.union(v.literal("votes"), v.literal("probability"), v.literal("recent")),
-     })),
-     isPublic: v.boolean(),
-     tags: v.optional(v.array(v.string())),
-   })
-     .index("by_slug", ["slug"])
-     .index("by_user", ["userId"])
-     .index("by_session", ["sessionId"]);
-   ```
-
-2. **Dashboard Features**
-
-   - Create/edit/delete personal dashboards
-   - Drag-and-drop prediction cards
-   - Save custom layouts and sort preferences
-   - Name and organize dashboards
-   - Set dashboard as default view
-
-3. **Dashboard Management**
-   - List user's dashboards
-   - Switch between dashboards
-   - Rename or reorganize dashboards
-   - Export dashboard data (CSV/JSON)
-   - Dashboard-specific filters
-
-### Phase 4: Real-time Data Updates (4-6 weeks) 🔄
-
-**Goal**: Keep predictions fresh with improved data pipeline
-
-1. **Enhanced Update System**
-
-   ```typescript
-   // convex/schema.ts - Update tracking
-   dataUpdates: defineTable({
-     predictionId: v.id("predictions"),
-     updateType: v.union(v.literal("price"), v.literal("volume"), v.literal("resolution")),
-     oldValue: v.number(),
-     newValue: v.number(),
-     timestamp: v.number(),
+   // Track source health
+   sourceStatus: defineTable({
      source: v.string(),
+     lastSuccess: v.number(),
+     lastError: v.optional(v.string()),
+     successRate: v.number(),
+     avgResponseTime: v.number(),
    })
-     .index("by_prediction", ["predictionId", "timestamp"])
-     .index("by_time", ["timestamp"]);
    ```
+   - Display source status on admin panel
+   - Auto-disable failing sources
+   - Email alerts for source failures
 
-2. **Smart Update Strategy**
-
-   - Variable update frequencies based on:
-     - Market volatility (more updates when prices swing)
-     - User interest (more updates for highly voted)
-     - Time to resolution (more updates as deadline approaches)
-   - Update batching to reduce API calls
-   - Fallback sources when primary fails
-
-3. **Multi-Source Integration**
-   - Primary sources: Metaculus, Kalshi, Polymarket, Manifold
-   - Standardized data format across all sources
-   - Source reliability tracking
-   - Fallback to other sources if one fails
-   - Display source icons/logos on prediction cards
+3. **Data Quality**
+   - Show confidence indicator per prediction
+   - Flag stale or suspicious data
+   - Historical accuracy tracking
+   - Source comparison view (same event, different sources)
 
 ### Technical Best Practices Throughout 🛠️
 
@@ -259,7 +247,18 @@ export const getMarkets = query({
 
 ### Next Session Priorities:
 
-1. Start Phase 1: Add votes table and mutations
-2. Create dashboard schema
-3. Keep all new features in isolated modules
-4. ALWAYS follow architecture best practices above
+1. **Implement PostHog pageview tracking** - Add to route changes
+2. **Start Phase 1 voting** - Session-based voting with localStorage
+3. **Add basic filtering** - Probability ranges and categories
+4. **Fix data source issues** - Debug Metaculus/Kalshi integration
+5. ALWAYS follow architecture best practices above
+
+### Additional Feature Ideas:
+- Embed widget for other websites
+- Email/SMS alerts for major probability swings
+- Historical event resolution tracking
+- Comparison view for similar predictions
+- "Trending now" section based on vote velocity
+- Dark/light theme toggle
+- Keyboard navigation shortcuts
+- PWA support for mobile install
