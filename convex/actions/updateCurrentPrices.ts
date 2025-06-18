@@ -1,3 +1,5 @@
+"use node";
+
 import { action, internalMutation } from "../_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "../_generated/api";
@@ -11,7 +13,6 @@ export const updateAllCurrentPrices = action({
     timestamp: string;
     message: string;
   }> => {
-    "use node";
     
     const startTime = Date.now();
     console.log(`[CRON] Starting price update at ${new Date().toISOString()}`);

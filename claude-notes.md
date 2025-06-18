@@ -293,3 +293,80 @@ To update the prediction market data on the live site, you can run these Convex 
 ```bash
 npx convex run predictions:fetchPolymarketDirectMarkets
 ```
+
+## Rethinking the Update Architecture
+
+### Three Key Considerations:
+
+1. **Reliability & Fault Tolerance**
+   - Current issue: Single cron job fails silently if API is down
+   - Need: Error recovery, fallback mechanisms, health monitoring
+   - Question: How do we know when updates fail and recover gracefully?
+
+2. **Update Frequency & Freshness**
+   - Current: Fixed 30-minute intervals regardless of market activity
+   - Need: Dynamic updates based on volatility, user interest, time to resolution
+   - Question: Should high-activity markets update more frequently?
+
+3. **Source Management & Priority**
+   - Current: Try all sources equally, some consistently fail
+   - Need: Prioritize reliable sources, track source health, fallback chains
+   - Question: How do we handle multiple sources for the same event?
+
+### Three Architectural Options:
+
+#### Option 1: Event-Driven Pull System
+```typescript
+// Triggered by user views, votes, or external webhooks
+interface UpdateTrigger {
+  type: 'user_view' | 'vote_threshold' | 'webhook' | 'scheduled';
+  priority: 'high' | 'normal' | 'low';
+  markets?: string[]; // Specific markets to update
+}
+```
+- **Pros**: Updates when needed, reduces API calls, responsive to user interest
+- **Cons**: Complex to implement, potential stampeding herd problem
+- **Implementation**: Queue system, rate limiting, coalescing requests
+
+#### Option 2: Tiered Update Strategy
+```typescript
+// Different update frequencies based on market characteristics
+interface UpdateTier {
+  tier: 'hot' | 'active' | 'stable' | 'stale';
+  frequency: number; // minutes
+  criteria: {
+    votesPerHour?: number;
+    volatility?: number;
+    daysToResolve?: number;
+    lastChangePercent?: number;
+  };
+}
+```
+- **Pros**: Efficient resource usage, focuses on important markets
+- **Cons**: Complex tier assignment logic, needs monitoring
+- **Implementation**: Background job to assign tiers, multiple cron schedules
+
+#### Option 3: Resilient Pipeline with Health Tracking
+```typescript
+// Self-healing system with source health monitoring
+interface UpdatePipeline {
+  stages: ['fetch', 'validate', 'transform', 'store', 'verify'];
+  retryPolicy: { attempts: number; backoff: 'linear' | 'exponential' };
+  healthCheck: {
+    source: string;
+    successRate: number;
+    avgResponseTime: number;
+    lastError?: string;
+    status: 'healthy' | 'degraded' | 'failed';
+  };
+}
+```
+- **Pros**: Self-healing, transparent monitoring, graceful degradation
+- **Cons**: More infrastructure, needs observability tools
+- **Implementation**: State machine, health dashboard, alert system
+
+### Recommended Approach: Hybrid Solution
+Combine elements from all three:
+1. **Base layer**: Resilient pipeline (Option 3) for reliability
+2. **Optimization**: Tiered updates (Option 2) for efficiency  
+3. **Enhancement**: Event triggers (Option 1) for responsiveness

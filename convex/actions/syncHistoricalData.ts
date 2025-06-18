@@ -1,3 +1,5 @@
+"use node";
+
 import { action, internalMutation } from "../_generated/server";
 import { v } from "convex/values";
 import { api, internal } from "../_generated/api";
@@ -5,7 +7,6 @@ import { api, internal } from "../_generated/api";
 // Fetch and store historical data for all active markets
 export const syncAllHistoricalData = action({
   handler: async (ctx) => {
-    "use node";
     
     console.log(`[CRON] Starting historical data sync at ${new Date().toISOString()}`);
     const startTime = Date.now();
