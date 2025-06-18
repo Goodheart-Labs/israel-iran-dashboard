@@ -21,6 +21,7 @@
     "@tanstack/react-router": "^1.119.0",
     "@tanstack/react-router-devtools": "^1.119.1",
     "convex": "^1.23.0",
+    "date-fns": "^4.1.0",
     "lucide-react": "^0.511.0",
     "posthog-js": "^1.252.0",
     "react": "^19.0.0",

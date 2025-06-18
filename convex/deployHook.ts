@@ -5,7 +5,7 @@ import { api } from "./_generated/api";
 
 // This function can be called after deployment to trigger an immediate update
 export const onDeploy = action({
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<{ success: boolean; message: string; marketsUpdated?: number; error?: string }> => {
     console.log("[DEPLOY] Running post-deployment update...");
     
     try {
@@ -17,7 +17,7 @@ export const onDeploy = action({
       return {
         success: true,
         message: `Deployment update completed: ${result.marketsUpdated} markets updated`,
-        ...result
+        marketsUpdated: result.marketsUpdated
       };
     } catch (error) {
       console.error("[DEPLOY] Update failed:", error);

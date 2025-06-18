@@ -228,6 +228,8 @@ export const getMarkets = query({
 9. `docs: add manual update instructions for live site data`
 10. `fix: move 'use node' directive to top of action files for Convex compatibility`
 11. `refactor: implement reliable update system with health monitoring and best practices`
+12. `docs: document update system architecture and best practices`
+13. `feat: add robust update system with manual trigger and deployment hook`
 
 ### Production Status:
 

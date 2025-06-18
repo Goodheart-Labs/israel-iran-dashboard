@@ -1,6 +1,6 @@
 "use node";
 
-import { action, mutation } from "./_generated/server";
+import { action, internalMutation } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { v } from "convex/values";
 
@@ -61,7 +61,7 @@ export const updatePredictions = action({
 });
 
 // Internal mutation to record update status
-export const recordUpdateStatus = mutation({
+export const recordUpdateStatus = internalMutation({
   args: {
     success: v.boolean(),
     marketsUpdated: v.number(),

@@ -274,6 +274,7 @@ function AdminDashboard() {
                   <div className="stat-title">Total Markets</div>
                   <div className="stat-value">{markets.length}</div>
                 </div>
+              </div>
             </div>
           </div>
 

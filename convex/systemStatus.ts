@@ -64,23 +64,36 @@ export const getUpdateHistory = query({
 // Get system health summary
 export const getSystemHealth = query({
   handler: async (ctx) => {
-    const [lastUpdate, history] = await Promise.all([
-      ctx.runQuery(api.systemStatus.getLastUpdate),
-      ctx.runQuery(api.systemStatus.getUpdateHistory),
-    ]);
+    // Get status directly instead of calling other queries
+    const lastUpdateStatus = await ctx.db
+      .query("systemStatus")
+      .withIndex("by_key", q => q.eq("key", "lastUpdate"))
+      .first();
+    
+    const historyRecord = await ctx.db
+      .query("systemStatus")
+      .withIndex("by_key", q => q.eq("key", "updateHistory"))
+      .first();
+    
+    const history = historyRecord?.value || [];
+    const lastUpdate = lastUpdateStatus?.value || { success: false, timestamp: null };
     
     // Calculate success rate from history
-    const recentUpdates = history.slice(0, 10); // Last 10 updates
-    const successCount = recentUpdates.filter(u => u.success).length;
+    const recentUpdates: any[] = history.slice(0, 10);
+    const successCount = recentUpdates.filter((u: any) => u.success).length;
     const successRate = recentUpdates.length > 0 
       ? Math.round((successCount / recentUpdates.length) * 100)
       : 0;
     
     // Check if updates are stale (> 1 hour old)
-    const isStale = lastUpdate.lastUpdatedAgo ? lastUpdate.lastUpdatedAgo > 60 * 60 * 1000 : true;
+    const lastUpdatedAgo = lastUpdate.timestamp ? Date.now() - lastUpdate.timestamp : null;
+    const isStale = lastUpdatedAgo ? lastUpdatedAgo > 60 * 60 * 1000 : true;
     
     return {
-      lastUpdate,
+      lastUpdate: {
+        ...lastUpdate,
+        lastUpdatedAgo
+      },
       successRate,
       totalUpdates24h: history.length,
       isStale,
