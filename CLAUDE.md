@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-- **Iran Geopolitical Dashboard**: A dashboard tracking prediction markets and forecasts related to Iran's geopolitical events and regional dynamics
+- **Geopolitical Risk Dashboard**: A dashboard tracking prediction markets and forecasts related to current geopolitical events
 - Full-stack TypeScript app: React + Vite + TanStack Router (frontend), Convex (backend), Clerk (auth)
 - Development: Use `mcp__shell-commands__launch-dev-all` to start servers, then monitor output streams for validation
 - Import alias: `@/` maps to `src/` directory
