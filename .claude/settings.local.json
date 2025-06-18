@@ -17,7 +17,8 @@
       "Bash(convex env:*)",
       "Bash(git push:*)",
       "Bash(mv:*)",
-      "Bash(npx convex run:*)"
+      "Bash(npx convex run:*)",
+      "Bash(npx convex deploy:*)"
     ]
   },
   "enableAllProjectMcpServers": true,
