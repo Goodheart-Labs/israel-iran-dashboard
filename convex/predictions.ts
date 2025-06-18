@@ -71,16 +71,16 @@ export const updateClarificationText = mutation({
 });
 
 // Featured Polymarket markets to track - USED BY UPDATER
-// Using clean slugs without UUID suffixes, matching H5N1 dashboard approach
+// Using full slugs (no UUIDs) - these are the actual Polymarket event slugs
 const FEATURED_POLYMARKET_MARKETS = [
-  { slug: "will-iran-carry-out-a-strike-on-israel-on", category: "military_action" as const },
-  { slug: "will-the-us-military-take-action-against", category: "military_action" as const },
-  { slug: "will-iran-develop-a-nuclear-weapon-before", category: "nuclear_program" as const },
-  { slug: "will-the-us-iran-nuclear-deal-be-restored", category: "nuclear_program" as const },
-  { slug: "will-iran-close-the-strait-of-hormuz-in", category: "military_action" as const },
-  { slug: "will-ali-khamenei-cease-to-be-the-supreme", category: "regime_stability" as const },
-  { slug: "will-a-nuclear-weapon-be-detonated-in-an", category: "nuclear_program" as const },
-  { slug: "will-benjamin-netanyahu-cease-to-be-the", category: "israel_relations" as const },
+  { slug: "will-iran-strike-israel-by-july-14", category: "military_action" as const },
+  { slug: "us-military-action-against-iran-in-2025", category: "military_action" as const },
+  { slug: "iran-nuclear-weapon-by-april-2025", category: "nuclear_program" as const },
+  { slug: "israel-strikes-iranian-nuclear-sites-in-2025", category: "israel_relations" as const },
+  { slug: "strait-of-hormuz-closure-in-2025", category: "military_action" as const },
+  { slug: "khamenei-out-as-supreme-leader-of-iran-by-june-30", category: "regime_stability" as const },
+  { slug: "nuclear-weapon-detonated-in-2025", category: "nuclear_program" as const },
+  { slug: "netanyahu-leaves-office-in-2025", category: "israel_relations" as const },
 ];
 
 // Update market probability by source URL - USED BY UPDATER

@@ -346,7 +346,7 @@ function AdminDashboard() {
                   setDebugResult(null);
                   try {
                     const result = await debugHistory({ 
-                      slug: "will-iran-carry-out-a-strike-on-israel-on" 
+                      slug: "khamenei-out-as-supreme-leader-of-iran-by-june-30" 
                     });
                     setDebugResult(result);
                     console.log('Debug result:', result);

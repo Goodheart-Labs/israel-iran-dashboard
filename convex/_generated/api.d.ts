@@ -18,6 +18,7 @@ import type * as debug_checkHistory from "../debug/checkHistory.js";
 import type * as debug_checkMarketStatus from "../debug/checkMarketStatus.js";
 import type * as debugHistorical from "../debugHistorical.js";
 import type * as deployHook from "../deployHook.js";
+import type * as findMarkets from "../findMarkets.js";
 import type * as historyMutations from "../historyMutations.js";
 import type * as predictions from "../predictions.js";
 import type * as seed from "../seed.js";
@@ -43,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   "debug/checkMarketStatus": typeof debug_checkMarketStatus;
   debugHistorical: typeof debugHistorical;
   deployHook: typeof deployHook;
+  findMarkets: typeof findMarkets;
   historyMutations: typeof historyMutations;
   predictions: typeof predictions;
   seed: typeof seed;
