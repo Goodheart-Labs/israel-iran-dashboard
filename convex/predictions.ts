@@ -150,20 +150,36 @@ export const updateMarketProbability = mutation({
   },
 });
 
-// Fetch and update Polymarket featured markets directly - USED BY CRON
+// Fetch and update Polymarket markets from database - USED BY CRON
 export const fetchPolymarketDirectMarkets = action({
   args: {},
   handler: async (ctx): Promise<{ updated: number; errors: string[]; message: string }> => {
     "use node";
     
-    console.log(`[POLYMARKET] Fetching ${FEATURED_POLYMARKET_MARKETS.length} featured markets...`);
+    // Get all active Polymarket predictions from the database
+    const activePredictions = await ctx.runQuery(api.predictions.getActive);
+    const polymarketPredictions = activePredictions.filter((p: any) => p.source === "polymarket");
+    
+    console.log(`[POLYMARKET] Updating ${polymarketPredictions.length} markets from database...`);
     
     let updated = 0;
     const errors: string[] = [];
     
-    for (const { slug, category } of FEATURED_POLYMARKET_MARKETS) {
+    for (const prediction of polymarketPredictions) {
       try {
-        // First, fetch the event data with the clean slug
+        // Extract slug from sourceUrl (format: https://polymarket.com/event/slug-here)
+        if (!prediction.sourceUrl) {
+          throw new Error("No source URL for prediction");
+        }
+        
+        const urlParts = prediction.sourceUrl.split('/');
+        const slug = urlParts[urlParts.length - 1];
+        
+        if (!slug) {
+          throw new Error("Could not extract slug from URL");
+        }
+        
+        // First, fetch the event data with the slug
         const eventUrl = `https://gamma-api.polymarket.com/events?slug=${slug}`;
         console.log(`[POLYMARKET] Fetching event: ${eventUrl}`);
         
@@ -215,16 +231,8 @@ export const fetchPolymarketDirectMarkets = action({
         const exists = existing.some((p: any) => p.sourceUrl === sourceUrl);
         
         if (!exists) {
-          await ctx.runMutation(api.predictions.upsert, {
-            category,
-            title: marketDetails.question,
-            description: marketDetails.description?.slice(0, 500),
-            probability,
-            source: "polymarket",
-            sourceUrl,
-            resolveDate: marketDetails.endDate ? new Date(marketDetails.endDate).getTime() : undefined,
-          });
-          console.log(`✓ Created: ${marketDetails.question} - ${probability}%`);
+          // This shouldn't happen since we're updating existing markets
+          console.log(`Warning: Market ${sourceUrl} not found in database, skipping creation`);
         } else {
           await ctx.runMutation(api.predictions.updateMarketProbability, {
             sourceUrl,
@@ -261,13 +269,13 @@ export const fetchPolymarketDirectMarkets = action({
         await new Promise(resolve => setTimeout(resolve, 300));
         
       } catch (error) {
-        const errorMsg = `${slug}: ${String(error)}`;
+        const errorMsg = `${prediction.title} (${slug}): ${String(error)}`;
         errors.push(errorMsg);
         console.error(`[POLYMARKET] Error: ${errorMsg}`);
       }
     }
     
-    return { updated, errors, message: `Updated ${updated} Polymarket markets directly` };
+    return { updated, errors, message: `Updated ${updated} Polymarket markets from database` };
   },
 });
 
@@ -542,18 +550,76 @@ export const fetchAllMarketHistory = action({
   },
 });
 
-// Seed initial data - KEEP FOR SETUP
-export const seedData = action({
+// Seed initial markets - ONLY FOR INITIAL SETUP
+export const seedInitialMarkets = action({
   args: {},
-  handler: async (ctx): Promise<{ message: string; updated: number; errors: string[] }> => {
+  handler: async (ctx): Promise<{ message: string; created: number; errors: string[] }> => {
     "use node";
     
-    // Run the Polymarket fetch to seed initial data
-    const result = await ctx.runAction(api.predictions.fetchPolymarketDirectMarkets, {});
+    console.log("[SEED] Adding initial Polymarket markets to database...");
+    
+    let created = 0;
+    const errors: string[] = [];
+    
+    // Only use hardcoded list for initial seeding
+    for (const { slug, category } of FEATURED_POLYMARKET_MARKETS) {
+      try {
+        const eventUrl = `https://gamma-api.polymarket.com/events?slug=${slug}`;
+        const eventResponse = await fetch(eventUrl, {
+          headers: { 'Accept': 'application/json' }
+        });
+        
+        if (!eventResponse.ok) {
+          throw new Error(`Event API returned ${eventResponse.status}`);
+        }
+        
+        const events = await eventResponse.json();
+        if (!events?.[0]?.markets?.[0]) {
+          throw new Error("No markets found");
+        }
+        
+        const market = events[0].markets[0];
+        const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${market.id}`);
+        
+        if (!marketResponse.ok) {
+          throw new Error(`Market API returned ${marketResponse.status}`);
+        }
+        
+        const marketDetails = await marketResponse.json();
+        const probability = Math.round(parseFloat(marketDetails.outcomePrices[0]) * 100);
+        const sourceUrl = `https://polymarket.com/event/${marketDetails.slug}`;
+        
+        // Check if already exists
+        const existing = await ctx.runQuery(api.predictions.getActive);
+        const exists = existing.some((p: any) => p.sourceUrl === sourceUrl);
+        
+        if (!exists) {
+          await ctx.runMutation(api.predictions.upsert, {
+            category,
+            title: marketDetails.question,
+            description: marketDetails.description?.slice(0, 500),
+            probability,
+            source: "polymarket",
+            sourceUrl,
+            resolveDate: marketDetails.endDate ? new Date(marketDetails.endDate).getTime() : undefined,
+          });
+          created++;
+          console.log(`✓ Created: ${marketDetails.question}`);
+        } else {
+          console.log(`- Skipped (exists): ${marketDetails.question}`);
+        }
+        
+        await new Promise(resolve => setTimeout(resolve, 300));
+      } catch (error) {
+        errors.push(`${slug}: ${String(error)}`);
+        console.error(`[SEED] Error: ${slug} - ${error}`);
+      }
+    }
     
     return {
-      ...result,
-      message: `Seeded database with Polymarket featured markets: ${result.message}`,
+      message: `Seeded ${created} new markets`,
+      created,
+      errors
     };
   },
 });
