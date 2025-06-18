@@ -16,6 +16,7 @@ import type {
 import type * as crons from "../crons.js";
 import type * as debug_checkHistory from "../debug/checkHistory.js";
 import type * as debug_checkMarketStatus from "../debug/checkMarketStatus.js";
+import type * as debugDataGaps from "../debugDataGaps.js";
 import type * as debugHistorical from "../debugHistorical.js";
 import type * as deployHook from "../deployHook.js";
 import type * as findMarkets from "../findMarkets.js";
@@ -28,6 +29,7 @@ import type * as statusMutations from "../statusMutations.js";
 import type * as sync_syncData from "../sync/syncData.js";
 import type * as systemStatus from "../systemStatus.js";
 import type * as testData from "../testData.js";
+import type * as testHistoricalFetch from "../testHistoricalFetch.js";
 import type * as users from "../users.js";
 
 /**
@@ -42,6 +44,7 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "debug/checkHistory": typeof debug_checkHistory;
   "debug/checkMarketStatus": typeof debug_checkMarketStatus;
+  debugDataGaps: typeof debugDataGaps;
   debugHistorical: typeof debugHistorical;
   deployHook: typeof deployHook;
   findMarkets: typeof findMarkets;
@@ -54,6 +57,7 @@ declare const fullApi: ApiFromModules<{
   "sync/syncData": typeof sync_syncData;
   systemStatus: typeof systemStatus;
   testData: typeof testData;
+  testHistoricalFetch: typeof testHistoricalFetch;
   users: typeof users;
 }>;
 export declare const api: FilterApi<

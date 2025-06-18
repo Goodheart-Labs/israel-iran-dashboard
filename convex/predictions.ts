@@ -256,6 +256,7 @@ export const fetchPolymarketDirectMarkets = action({
             
             const historyResult = await ctx.runAction(api.predictions.fetchMarketHistory, {
               marketId: clobTokenId,
+              marketSlug: marketDetails.slug, // Pass the slug for proper prediction lookup
               source: "polymarket",
               days: 7
             });
@@ -353,7 +354,8 @@ export const upsert = mutation({
 // Store market history data
 export const storeMarketHistory = mutation({
   args: {
-    marketId: v.string(),
+    marketId: v.string(), // This is actually the clobTokenId for Polymarket
+    marketSlug: v.optional(v.string()), // The actual market slug for finding the prediction
     historyData: v.array(v.object({
       p: v.number(), // probability
       t: v.number()  // timestamp
@@ -361,16 +363,28 @@ export const storeMarketHistory = mutation({
     source: v.union(v.literal("polymarket"), v.literal("kalshi"))
   },
   handler: async (ctx, args) => {
-    // Find prediction by market ID in source URL - try slug-based URLs
+    // Find prediction by market slug in source URL
     const predictions = await ctx.db
       .query("predictions")
       .collect();
     
     let prediction = null;
-    for (const p of predictions) {
-      if (p.sourceUrl && p.sourceUrl.includes(args.marketId)) {
-        prediction = p;
-        break;
+    
+    // If marketSlug provided, use that (more reliable)
+    if (args.marketSlug) {
+      for (const p of predictions) {
+        if (p.sourceUrl && p.sourceUrl.includes(args.marketSlug)) {
+          prediction = p;
+          break;
+        }
+      }
+    } else {
+      // Fallback to old behavior for backward compatibility
+      for (const p of predictions) {
+        if (p.sourceUrl && p.sourceUrl.includes(args.marketId)) {
+          prediction = p;
+          break;
+        }
       }
     }
     
@@ -414,6 +428,7 @@ export const storeMarketHistory = mutation({
 export const fetchMarketHistory = action({
   args: { 
     marketId: v.string(),
+    marketSlug: v.optional(v.string()), // Add marketSlug for better prediction lookup
     source: v.union(v.literal("polymarket"), v.literal("kalshi")),
     days: v.optional(v.number()) // Days of history to fetch, max 7 for Polymarket
   },
@@ -452,6 +467,7 @@ export const fetchMarketHistory = action({
         // Store historical data through mutation
         const storeResult: { success: boolean; stored: number } = await ctx.runMutation(api.predictions.storeMarketHistory, {
           marketId: args.marketId,
+          marketSlug: args.marketSlug, // Pass the slug for better lookup
           historyData: data.history || [],
           source: args.source
         });
@@ -518,6 +534,7 @@ export const fetchAllMarketHistory = action({
                 
                 const result: any = await ctx.runAction(api.predictions.fetchMarketHistory, {
                   marketId: clobTokenId,
+                  marketSlug: marketDetails.slug, // Pass the slug for proper lookup
                   source: "polymarket",
                   days: 7 // Max allowed by Polymarket
                 });

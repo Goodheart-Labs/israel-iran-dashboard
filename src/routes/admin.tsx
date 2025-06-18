@@ -55,6 +55,7 @@ function AdminDashboard() {
   const historyStats = useQuery(api.predictions.getHistoryStats) || [];
   const fetchAllHistory = useAction(api.predictions.fetchAllMarketHistory);
   const debugHistory = useAction(api.debugHistorical.debugPolymarketHistory);
+  const debugGaps = useAction(api.debugDataGaps.debugDataGaps);
   
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const [editText, setEditText] = useState("");

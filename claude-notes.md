@@ -107,14 +107,12 @@ export const getMarkets = query({
    - Trending algorithm: (votes / hours_since_creation)^gravity
    - Cache popular predictions in Redis/memory
 
-3. **Analytics & Insights**
-   - Track vote patterns per session
-
 ### Phase 3: Core Features & Analytics (2-3 weeks) 🎯
 
 **Goal**: Add essential missing features and analytics
 
 1. **PostHog Analytics Integration (PRIORITY)**
+
    - Implement pageview tracking on route changes
    - Track key events:
      - Market card clicks (which market, position)
@@ -125,31 +123,23 @@ export const getMarkets = query({
    - A/B test different layouts
 
 2. **Essential UI Features**
-   - **Filtering & Search**:
-     - Filter by probability range (0-25%, 25-50%, etc.)
-     - Filter by category (existing in schema)
-     - Search predictions by keyword
-     - Hide/show resolved predictions
+
    - **Data Freshness**:
      - "Last updated" prominently displayed
      - Manual refresh button
      - Stale data indicator (>1hr old)
    - **Mobile Improvements**:
-     - Swipe between predictions
-     - Collapsible charts on mobile
      - Touch-friendly vote buttons
 
 3. **Data Export**
-   - Export current view as CSV
    - Share prediction via URL with anchor
-   - Copy prediction data to clipboard
-   - RSS feed for new predictions
 
 ### Phase 4: Multi-Source Reliability (3-4 weeks) 🔧
 
 **Goal**: Ensure reliable data from all sources
 
 1. **Fix Existing Sources**
+
    - Debug and fix Metaculus integration
    - Fix Kalshi API issues
    - Ensure Manifold search works
@@ -157,6 +147,7 @@ export const getMarkets = query({
    - Remove/fix broken sources
 
 2. **Source Management**
+
    ```typescript
    // Track source health
    sourceStatus: defineTable({
@@ -165,8 +156,9 @@ export const getMarkets = query({
      lastError: v.optional(v.string()),
      successRate: v.number(),
      avgResponseTime: v.number(),
-   })
+   });
    ```
+
    - Display source status on admin panel
    - Auto-disable failing sources
    - Email alerts for source failures
@@ -262,6 +254,7 @@ export const getMarkets = query({
 5. ALWAYS follow architecture best practices above
 
 ### Additional Feature Ideas:
+
 - Embed widget for other websites
 - Email/SMS alerts for major probability swings
 - Historical event resolution tracking
@@ -276,28 +269,33 @@ export const getMarkets = query({
 To update the prediction market data on the live site, you can run these Convex functions from the Convex dashboard:
 
 ### Quick Update (Just Polymarket featured markets):
+
 1. Go to Convex dashboard → Functions
-2. Run `predictions:fetchPolymarketDirectMarkets` 
+2. Run `predictions:fetchPolymarketDirectMarkets`
    - Updates the 8 featured Iran-related markets
    - This is what the cron job runs every 30 minutes
 
 ### Full Update (All sources):
+
 1. Run `predictions:fetchAllPredictions`
    - Fetches from: Manifold, Metaculus, Kalshi, Polymarket, Adjacent News
    - Returns summary of fetched/saved from each source
    - Note: Some sources may fail (Metaculus/Kalshi have issues)
 
 ### Update Historical Data:
+
 1. Run `predictions:fetchAllMarketHistory`
    - Fetches 7 days of historical data for all Polymarket markets
    - This runs weekly via cron
 
 ### Update Single Market:
+
 1. Run `predictions:updateMarketProbability`
    - Pass `sourceUrl` parameter (e.g., "https://polymarket.com/event/...")
    - Updates just that specific market
 
 ### Via CLI:
+
 ```bash
 npx convex run predictions:fetchPolymarketDirectMarkets
 ```
@@ -307,11 +305,13 @@ npx convex run predictions:fetchPolymarketDirectMarkets
 ### Three Key Considerations:
 
 1. **Reliability & Fault Tolerance**
+
    - Current issue: Single cron job fails silently if API is down
    - Need: Error recovery, fallback mechanisms, health monitoring
    - Question: How do we know when updates fail and recover gracefully?
 
 2. **Update Frequency & Freshness**
+
    - Current: Fixed 30-minute intervals regardless of market activity
    - Need: Dynamic updates based on volatility, user interest, time to resolution
    - Question: Should high-activity markets update more frequently?
@@ -324,23 +324,26 @@ npx convex run predictions:fetchPolymarketDirectMarkets
 ### Three Architectural Options:
 
 #### Option 1: Event-Driven Pull System
+
 ```typescript
 // Triggered by user views, votes, or external webhooks
 interface UpdateTrigger {
-  type: 'user_view' | 'vote_threshold' | 'webhook' | 'scheduled';
-  priority: 'high' | 'normal' | 'low';
+  type: "user_view" | "vote_threshold" | "webhook" | "scheduled";
+  priority: "high" | "normal" | "low";
   markets?: string[]; // Specific markets to update
 }
 ```
+
 - **Pros**: Updates when needed, reduces API calls, responsive to user interest
 - **Cons**: Complex to implement, potential stampeding herd problem
 - **Implementation**: Queue system, rate limiting, coalescing requests
 
 #### Option 2: Tiered Update Strategy
+
 ```typescript
 // Different update frequencies based on market characteristics
 interface UpdateTier {
-  tier: 'hot' | 'active' | 'stable' | 'stale';
+  tier: "hot" | "active" | "stable" | "stale";
   frequency: number; // minutes
   criteria: {
     votesPerHour?: number;
@@ -350,38 +353,44 @@ interface UpdateTier {
   };
 }
 ```
+
 - **Pros**: Efficient resource usage, focuses on important markets
 - **Cons**: Complex tier assignment logic, needs monitoring
 - **Implementation**: Background job to assign tiers, multiple cron schedules
 
 #### Option 3: Resilient Pipeline with Health Tracking
+
 ```typescript
 // Self-healing system with source health monitoring
 interface UpdatePipeline {
-  stages: ['fetch', 'validate', 'transform', 'store', 'verify'];
-  retryPolicy: { attempts: number; backoff: 'linear' | 'exponential' };
+  stages: ["fetch", "validate", "transform", "store", "verify"];
+  retryPolicy: { attempts: number; backoff: "linear" | "exponential" };
   healthCheck: {
     source: string;
     successRate: number;
     avgResponseTime: number;
     lastError?: string;
-    status: 'healthy' | 'degraded' | 'failed';
+    status: "healthy" | "degraded" | "failed";
   };
 }
 ```
+
 - **Pros**: Self-healing, transparent monitoring, graceful degradation
 - **Cons**: More infrastructure, needs observability tools
 - **Implementation**: State machine, health dashboard, alert system
 
 ### Recommended Approach: Hybrid Solution
+
 Combine elements from all three:
+
 1. **Base layer**: Resilient pipeline (Option 3) for reliability
-2. **Optimization**: Tiered updates (Option 2) for efficiency  
+2. **Optimization**: Tiered updates (Option 2) for efficiency
 3. **Enhancement**: Event triggers (Option 1) for responsiveness
 
 ## Implemented Update System
 
 ### Architecture Decisions:
+
 1. **Separated concerns**: Mutations in separate files from actions
 2. **Health tracking**: `sourceStatus` table tracks reliability
 3. **Smart retries**: Exponential backoff for failed sources
@@ -389,17 +398,20 @@ Combine elements from all three:
 5. **Simple cron**: One reliable function that handles errors gracefully
 
 ### Key Files:
+
 - `convex/simpleUpdater.ts` - Main update orchestrator
 - `convex/updateSystem.ts` - Health tracking and monitoring
 - `convex/historyMutations.ts` - Database mutations
 - `convex/schema.ts` - Added sourceStatus and updateLog tables
 
 ### How to Update Data:
+
 1. **Manual**: Run `simpleUpdater:updatePredictions` in Convex dashboard
 2. **Automatic**: Cron runs every 30 minutes
 3. **Monitor**: Run `simpleUpdater:getUpdateDashboard` to see health
 
 ### Best Practices Applied:
+
 - ✅ Single responsibility per file
 - ✅ Proper error handling with recovery
 - ✅ Observable system with health metrics
@@ -416,12 +428,14 @@ Combine elements from all three:
 Working on implementing a robust update system for the Iran geopolitical dashboard.
 
 ### Commits Made This Session:
+
 1. Initial commit - setting up update system architecture
 2. feat: implement simple cron job with health monitoring for Phase 1
 3. feat: add admin UI for manual updates and status tracking
 4. feat: complete Phase 1 update system with health monitoring and manual triggers
 
 ### Progress:
+
 - ✅ Created simple cron job that runs every 30 minutes
 - ✅ Added health monitoring and status tracking
 - ✅ Stored update results in database
@@ -432,12 +446,14 @@ Working on implementing a robust update system for the Iran geopolitical dashboa
 - 🔧 Fixing Polymarket API integration (discovered issue from H5N1 dashboard analysis)
 
 ### Current Task: Polymarket Fix
+
 - Found that H5N1 dashboard uses clean slugs without UUID suffixes
 - They use a two-step process: fetch event → get market ID → fetch market details
 - Updated our slug list to match their approach
 - Need to complete the fetchPolymarketDirectMarkets function update
 
 ### Deployment Issues Encountered:
+
 1. **"use node" directive placement**: Must be at the very top of action files
 2. **Internal mutations in action files**: Convex doesn't allow mutations in Node.js action files - must separate into dedicated mutation files
 3. **Circular type inference**: Avoid self-referential queries, use explicit typing
@@ -446,14 +462,16 @@ Working on implementing a robust update system for the Iran geopolitical dashboa
 6. **Convex deployment**: Use `pnpx convex deploy` and ensure all TypeScript errors are resolved first
 
 ### Task List:
+
 1. Fix Polymarket API integration to match H5N1 dashboard approach (IN PROGRESS)
 2. Test Polymarket data fetching with corrected implementation
 3. Implement PostHog analytics (HIGH PRIORITY)
 4. Phase 2: Session-based voting system
-5. Phase 3: Dashboard organization system  
+5. Phase 3: Dashboard organization system
 6. Phase 4: Multi-source integration (Metaculus, Kalshi, Manifold)
 
 ### Important Context:
+
 - User wants simple implementation, no complex reliability features
 - Removed clone/share dashboards and templates functionality
 - No user management features needed
@@ -462,6 +480,7 @@ Working on implementing a robust update system for the Iran geopolitical dashboa
 - User wants to test deployment before continuing with other features
 
 ### Technical Decisions:
+
 - Using Convex actions for Node.js API calls
 - Separated internal mutations into statusMutations.ts (Convex requirement)
 - Tracking 24-hour update history
