@@ -103,4 +103,29 @@ export default defineSchema({
     .index("by_prediction", ["predictionId"])
     .index("by_prediction_time", ["predictionId", "timestamp"])
     .index("by_timestamp", ["timestamp"]),
+    
+  // Track source health and reliability
+  sourceStatus: defineTable({
+    source: v.string(),
+    lastAttempt: v.optional(v.number()),
+    lastSuccess: v.optional(v.number()),
+    lastError: v.optional(v.string()),
+    successRate: v.optional(v.number()), // 0-100
+    totalAttempts: v.optional(v.number()),
+    successCount: v.optional(v.number()),
+    avgResponseTime: v.optional(v.number()), // milliseconds
+    status: v.union(v.literal("healthy"), v.literal("degraded"), v.literal("failed")),
+  }).index("by_source", ["source"]),
+  
+  // Log significant prediction updates
+  updateLog: defineTable({
+    predictionId: v.id("predictions"),
+    timestamp: v.number(),
+    oldValue: v.number(),
+    newValue: v.number(),
+    changePercent: v.number(),
+    source: v.string(),
+  })
+    .index("by_prediction", ["predictionId"])
+    .index("by_time", ["timestamp"]),
 });

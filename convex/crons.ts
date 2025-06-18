@@ -3,11 +3,11 @@ import { api } from "./_generated/api";
 
 const crons = cronJobs();
 
-// Update market prices every 30 minutes
+// Update market prices every 30 minutes using reliable updater
 crons.interval(
   "update-prices",
   { minutes: 30 },
-  api.predictions.fetchPolymarketDirectMarkets
+  api.simpleUpdater.updatePredictions
 );
 
 // Sync historical data weekly (Sundays at 2 AM UTC)

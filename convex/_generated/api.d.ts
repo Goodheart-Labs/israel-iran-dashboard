@@ -18,11 +18,14 @@ import type * as actions_updateCurrentPrices from "../actions/updateCurrentPrice
 import type * as crons from "../crons.js";
 import type * as debug_checkHistory from "../debug/checkHistory.js";
 import type * as debug_checkMarketStatus from "../debug/checkMarketStatus.js";
+import type * as historyMutations from "../historyMutations.js";
 import type * as marketUpdater from "../marketUpdater.js";
 import type * as predictions from "../predictions.js";
 import type * as seed from "../seed.js";
 import type * as simple from "../simple.js";
+import type * as simpleUpdater from "../simpleUpdater.js";
 import type * as sync_syncData from "../sync/syncData.js";
+import type * as updateSystem from "../updateSystem.js";
 import type * as users from "../users.js";
 
 /**
@@ -39,11 +42,14 @@ declare const fullApi: ApiFromModules<{
   crons: typeof crons;
   "debug/checkHistory": typeof debug_checkHistory;
   "debug/checkMarketStatus": typeof debug_checkMarketStatus;
+  historyMutations: typeof historyMutations;
   marketUpdater: typeof marketUpdater;
   predictions: typeof predictions;
   seed: typeof seed;
   simple: typeof simple;
+  simpleUpdater: typeof simpleUpdater;
   "sync/syncData": typeof sync_syncData;
+  updateSystem: typeof updateSystem;
   users: typeof users;
 }>;
 export declare const api: FilterApi<
