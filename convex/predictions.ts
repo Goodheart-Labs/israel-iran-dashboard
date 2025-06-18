@@ -95,7 +95,7 @@ export const deletePrediction = mutation({
 // Featured Polymarket markets to track - USED BY UPDATER
 // Using full slugs (no UUIDs) - these are the actual Polymarket event slugs
 const FEATURED_POLYMARKET_MARKETS = [
-  { slug: "will-iran-strike-israel-by-july-14", category: "military_action" as const },
+  // Removed: will-iran-strike-israel-by-july-14 (market not found)
   { slug: "us-military-action-against-iran-in-2025", category: "military_action" as const },
   { slug: "iran-nuclear-weapon-by-april-2025", category: "nuclear_program" as const },
   { slug: "israel-strikes-iranian-nuclear-sites-in-2025", category: "israel_relations" as const },
