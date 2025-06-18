@@ -18,7 +18,8 @@
       "Bash(git push:*)",
       "Bash(mv:*)",
       "Bash(npx convex run:*)",
-      "Bash(npx convex deploy:*)"
+      "Bash(npx convex deploy:*)",
+      "Bash(pnpm convex logs:*)"
     ]
   },
   "enableAllProjectMcpServers": true,

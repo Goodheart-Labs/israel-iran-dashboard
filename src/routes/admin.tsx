@@ -53,6 +53,7 @@ function AdminDashboard() {
   const updateHistory = useQuery(api.systemStatus.getUpdateHistory) || [];
   const historyStats = useQuery(api.predictions.getHistoryStats) || [];
   const fetchAllHistory = useAction(api.predictions.fetchAllMarketHistory);
+  const debugHistory = useAction(api.debugHistorical.debugPolymarketHistory);
   
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
@@ -60,6 +61,8 @@ function AdminDashboard() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [isFetchingHistory, setIsFetchingHistory] = useState(false);
   const [historyResult, setHistoryResult] = useState<any>(null);
+  const [debugResult, setDebugResult] = useState<any>(null);
+  const [isDebugging, setIsDebugging] = useState(false);
   
   // Store user when authenticated - but only when isAdmin query is ready
   useEffect(() => {
@@ -332,6 +335,39 @@ function AdminDashboard() {
                       ))}
                     </>
                   )}
+                </div>
+              )}
+              
+              {/* Debug Button */}
+              <button 
+                className={`btn btn-outline btn-warning w-full mt-4 ${isDebugging ? 'loading' : ''}`}
+                onClick={async () => {
+                  setIsDebugging(true);
+                  setDebugResult(null);
+                  try {
+                    const result = await debugHistory({ 
+                      slug: "will-iran-carry-out-a-strike-on-israel-on" 
+                    });
+                    setDebugResult(result);
+                    console.log('Debug result:', result);
+                  } catch (error) {
+                    console.error('Debug failed:', error);
+                    setDebugResult({ error: String(error) });
+                  } finally {
+                    setIsDebugging(false);
+                  }
+                }}
+                disabled={isDebugging}
+              >
+                {isDebugging ? 'Debugging...' : 'Debug Historical Gaps'}
+              </button>
+              
+              {debugResult && (
+                <div className="mt-4 p-4 bg-base-200 rounded-lg text-xs">
+                  <div className="font-semibold mb-2">Debug Results:</div>
+                  <pre className="overflow-x-auto whitespace-pre-wrap">
+                    {JSON.stringify(debugResult.theories || debugResult, null, 2)}
+                  </pre>
                 </div>
               )}
               
