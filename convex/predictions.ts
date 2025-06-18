@@ -426,10 +426,10 @@ export const fetchMarketHistory = action({
     
     try {
       if (args.source === "polymarket") {
-        // Polymarket historical prices API - using same params as H5N1 dashboard
+        // Polymarket historical prices API - using higher granularity for better charts
         const params = new URLSearchParams({
           market: args.marketId,
-          fidelity: "60",
+          fidelity: "30", // 30 minutes gives us more data points for smoother charts
           startTs: startTs.toString(),
           endTs: endTs.toString()
         });
