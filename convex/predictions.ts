@@ -70,6 +70,28 @@ export const updateClarificationText = mutation({
   },
 });
 
+// Delete a prediction - USED IN ADMIN
+export const deletePrediction = mutation({
+  args: {
+    id: v.id("predictions"),
+  },
+  handler: async (ctx, args) => {
+    // TODO: Add auth check
+    // First delete all history for this prediction
+    const history = await ctx.db
+      .query("predictionHistory")
+      .withIndex("by_prediction_time", (q) => q.eq("predictionId", args.id))
+      .collect();
+    
+    for (const h of history) {
+      await ctx.db.delete(h._id);
+    }
+    
+    // Then delete the prediction itself
+    await ctx.db.delete(args.id);
+  },
+});
+
 // Featured Polymarket markets to track - USED BY UPDATER
 // Using full slugs (no UUIDs) - these are the actual Polymarket event slugs
 const FEATURED_POLYMARKET_MARKETS = [

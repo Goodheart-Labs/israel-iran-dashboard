@@ -48,6 +48,7 @@ function AdminDashboard() {
   const storeUser = useMutation(api.users.store);
   const isAdmin = useQuery(api.users.isAdmin);
   const updateClarificationText = useMutation(api.predictions.updateClarificationText);
+  const deletePrediction = useMutation(api.predictions.deletePrediction);
   const triggerUpdate = useAction(api.simpleUpdater.updatePredictions);
   const lastUpdate = useQuery(api.systemStatus.getLastUpdate);
   const updateHistory = useQuery(api.systemStatus.getUpdateHistory) || [];
@@ -147,6 +148,21 @@ function AdminDashboard() {
     }
   };
 
+  const handleDeleteMarket = async (marketId: string, marketTitle: string) => {
+    if (!confirm(`Are you sure you want to delete "${marketTitle}"? This will also delete all historical data.`)) {
+      return;
+    }
+    
+    try {
+      await deletePrediction({
+        id: marketId as Id<"predictions">
+      });
+    } catch (error) {
+      console.error("Failed to delete market:", error);
+      alert("Failed to delete market");
+    }
+  };
+
   return (
     <div className="max-w-7xl mx-auto p-6">
       <div className="flex justify-between items-center mb-8">
@@ -188,12 +204,20 @@ function AdminDashboard() {
                         <td>{market.probability}%</td>
                         <td className="capitalize">{market.source}</td>
                         <td>
-                          <button
-                            className="btn btn-xs btn-primary"
-                            onClick={() => handleEditMarket(market)}
-                          >
-                            Edit
-                          </button>
+                          <div className="flex gap-2">
+                            <button
+                              className="btn btn-xs btn-primary"
+                              onClick={() => handleEditMarket(market)}
+                            >
+                              Edit
+                            </button>
+                            <button
+                              className="btn btn-xs btn-error"
+                              onClick={() => handleDeleteMarket(market._id, market.title)}
+                            >
+                              Delete
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     ))}
