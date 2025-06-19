@@ -436,6 +436,7 @@ Working on implementing a robust update system for the Iran geopolitical dashboa
 5. fix: update Polymarket slugs to match correct format from live site
 6. fix: add marketSlug parameter to storeMarketHistory for proper prediction lookup
 7. feat: implement new update architecture with 30-day historical fetches and 1-minute price polling
+8. feat: add technical difficulties banner with GitHub link
 
 ### Progress:
 
@@ -460,17 +461,25 @@ Working on implementing a robust update system for the Iran geopolitical dashboa
    - Fetches 30 days of data for all markets
    - Replaces old data only if successful
    - Tracks update status in admin panel
+   - **STATUS**: Getting 400 errors from CLOB API - likely malformed clobTokenIds
 
 2. **Price Polling (1 min)**:
    - Quick current price check
    - Updates only if price changed
    - Minimal API load
+   - **STATUS**: Returning NaN values for prices
 
 3. **Admin Panel Features**:
    - Shows last historical update status
    - Manual update buttons for testing
    - Error tracking and reporting
    - Initial data load button for setup
+
+4. **Current Issues**:
+   - Polymarket CLOB API returning 400 errors for historical data requests
+   - Price polling showing NaN values
+   - Added technical difficulties banner to live site with GitHub link
+   - Need to debug API integration issues
 
 ### Deployment Issues Encountered:
 
