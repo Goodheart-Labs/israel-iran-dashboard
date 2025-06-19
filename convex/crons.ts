@@ -1,5 +1,5 @@
 import { cronJobs } from "convex/server";
-import { api, internal } from "./_generated/api";
+import { api } from "./_generated/api";
 
 const crons = cronJobs();
 
@@ -7,14 +7,14 @@ const crons = cronJobs();
 crons.interval(
   "poll-current-prices",
   { minutes: 1 },
-  api.pricePoller.pollCurrentPrices
+  api.pricePoller.pollCurrentPrices,
 );
 
 // Update historical data every 15 minutes
 crons.interval(
   "update-historical-data",
   { minutes: 15 },
-  api.historicalUpdater.updateHistoricalData
+  api.historicalUpdater.updateHistoricalData,
 );
 
 export default crons;

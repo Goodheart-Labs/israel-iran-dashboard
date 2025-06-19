@@ -6,7 +6,7 @@ import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { SignInButton } from "@clerk/clerk-react";
 import type { Id } from "../../convex/_generated/dataModel";
 import { RefreshCw, CheckCircle, XCircle, Clock, BarChart } from "lucide-react";
-import { formatDistanceToNow } from 'date-fns';
+import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/admin")({
   component: AdminPage,
@@ -23,19 +23,21 @@ function AdminPage() {
           </div>
         </div>
       </AuthLoading>
-      
+
       <Unauthenticated>
         <div className="flex items-center justify-center min-h-screen">
           <div className="text-center">
             <h1 className="text-2xl font-bold mb-4">Admin Access Required</h1>
-            <p className="text-lg opacity-70 mb-6">Please sign in to access the admin panel</p>
+            <p className="text-lg opacity-70 mb-6">
+              Please sign in to access the admin panel
+            </p>
             <SignInButton mode="modal">
               <button className="btn btn-primary">Sign In</button>
             </SignInButton>
           </div>
         </div>
       </Unauthenticated>
-      
+
       <Authenticated>
         <AdminDashboard />
       </Authenticated>
@@ -47,21 +49,27 @@ function AdminDashboard() {
   const markets = useQuery(api.simple.getMarkets) || [];
   const storeUser = useMutation(api.users.store);
   const isAdmin = useQuery(api.users.isAdmin);
-  const updateClarificationText = useMutation(api.predictions.updateClarificationText);
+  const updateClarificationText = useMutation(
+    api.predictions.updateClarificationText,
+  );
   const deletePrediction = useMutation(api.predictions.deletePrediction);
   const triggerUpdate = useAction(api.simpleUpdater.updatePredictions);
   const lastUpdate = useQuery(api.systemStatus.getLastUpdate);
   const updateHistory = useQuery(api.systemStatus.getUpdateHistory) || [];
-  const lastHistoricalUpdate = useQuery(api.systemStatus.getLastHistoricalUpdate);
-  const historicalUpdateHistory = useQuery(api.systemStatus.getHistoricalUpdateHistory) || [];
+  const lastHistoricalUpdate = useQuery(
+    api.systemStatus.getLastHistoricalUpdate,
+  );
   const historyStats = useQuery(api.predictions.getHistoryStats) || [];
   const fetchAllHistory = useAction(api.predictions.fetchAllMarketHistory);
   const debugHistory = useAction(api.debugHistorical.debugPolymarketHistory);
-  const debugGaps = useAction(api.debugDataGaps.debugDataGaps);
-  const updateHistoricalData = useAction(api.historicalUpdater.updateHistoricalData);
+  const updateHistoricalData = useAction(
+    api.historicalUpdater.updateHistoricalData,
+  );
   const pollCurrentPrices = useAction(api.pricePoller.pollCurrentPrices);
-  const loadInitialData = useAction(api.initialDataLoad.loadInitialHistoricalData);
-  
+  const loadInitialData = useAction(
+    api.initialDataLoad.loadInitialHistoricalData,
+  );
+
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -70,7 +78,7 @@ function AdminDashboard() {
   const [historyResult, setHistoryResult] = useState<any>(null);
   const [debugResult, setDebugResult] = useState<any>(null);
   const [isDebugging, setIsDebugging] = useState(false);
-  
+
   // Store user when authenticated - but only when isAdmin query is ready
   useEffect(() => {
     if (isAdmin !== undefined) {
@@ -96,8 +104,12 @@ function AdminDashboard() {
       <div className="flex items-center justify-center min-h-screen">
         <div className="text-center">
           <h1 className="text-2xl font-bold mb-4">Access Denied</h1>
-          <p className="text-lg opacity-70 mb-4">You don't have admin permissions</p>
-          <p className="text-sm opacity-50">Contact the site administrator if you should have access</p>
+          <p className="text-lg opacity-70 mb-4">
+            You don't have admin permissions
+          </p>
+          <p className="text-sm opacity-50">
+            Contact the site administrator if you should have access
+          </p>
         </div>
       </div>
     );
@@ -112,9 +124,9 @@ function AdminDashboard() {
     setIsUpdating(true);
     try {
       const result = await triggerUpdate();
-      console.log('Update result:', result);
+      console.log("Update result:", result);
     } catch (error) {
-      console.error('Update failed:', error);
+      console.error("Update failed:", error);
     } finally {
       setIsUpdating(false);
     }
@@ -125,10 +137,10 @@ function AdminDashboard() {
     setHistoryResult(null);
     try {
       const result = await fetchAllHistory();
-      console.log('History fetch result:', result);
+      console.log("History fetch result:", result);
       setHistoryResult(result);
     } catch (error) {
-      console.error('History fetch failed:', error);
+      console.error("History fetch failed:", error);
       setHistoryResult({ error: String(error) });
     } finally {
       setIsFetchingHistory(false);
@@ -137,12 +149,12 @@ function AdminDashboard() {
 
   const handleSaveClarification = async () => {
     if (!selectedMarket) return;
-    
+
     setIsLoading(true);
     try {
       await updateClarificationText({
         id: selectedMarket as Id<"predictions">,
-        clarificationText: editText.trim()
+        clarificationText: editText.trim(),
       });
       setSelectedMarket(null);
       setEditText("");
@@ -155,13 +167,17 @@ function AdminDashboard() {
   };
 
   const handleDeleteMarket = async (marketId: string, marketTitle: string) => {
-    if (!confirm(`Are you sure you want to delete "${marketTitle}"? This will also delete all historical data.`)) {
+    if (
+      !confirm(
+        `Are you sure you want to delete "${marketTitle}"? This will also delete all historical data.`,
+      )
+    ) {
       return;
     }
-    
+
     try {
       await deletePrediction({
-        id: marketId as Id<"predictions">
+        id: marketId as Id<"predictions">,
       });
     } catch (error) {
       console.error("Failed to delete market:", error);
@@ -199,7 +215,9 @@ function AdminDashboard() {
                       <tr key={market._id}>
                         <td>
                           <div className="max-w-xs">
-                            <div className="font-medium truncate">{market.title}</div>
+                            <div className="font-medium truncate">
+                              {market.title}
+                            </div>
                             {market.clarificationText && (
                               <div className="text-xs opacity-70 truncate">
                                 {market.clarificationText}
@@ -219,7 +237,9 @@ function AdminDashboard() {
                             </button>
                             <button
                               className="btn btn-xs btn-error"
-                              onClick={() => handleDeleteMarket(market._id, market.title)}
+                              onClick={() =>
+                                handleDeleteMarket(market._id, market.title)
+                              }
                             >
                               Delete
                             </button>
@@ -239,21 +259,23 @@ function AdminDashboard() {
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">Update Status</h2>
-              
+
               {/* Manual Update Button */}
-              <button 
-                className={`btn btn-primary w-full ${isUpdating ? 'loading' : ''}`}
+              <button
+                className={`btn btn-primary w-full ${isUpdating ? "loading" : ""}`}
                 onClick={handleManualUpdate}
                 disabled={isUpdating}
               >
-                {isUpdating ? 'Updating...' : (
+                {isUpdating ? (
+                  "Updating..."
+                ) : (
                   <>
                     <RefreshCw className="w-4 h-4 mr-2" />
                     Manual Update
                   </>
                 )}
               </button>
-              
+
               {/* Last Update Status */}
               {lastUpdate && lastUpdate.timestamp && (
                 <div className="mt-4 p-4 bg-base-200 rounded-lg">
@@ -268,7 +290,10 @@ function AdminDashboard() {
                   <div className="text-sm space-y-1">
                     <div className="flex justify-between">
                       <span className="opacity-70">Time:</span>
-                      <span>{formatDistanceToNow(new Date(lastUpdate.timestamp))} ago</span>
+                      <span>
+                        {formatDistanceToNow(new Date(lastUpdate.timestamp))}{" "}
+                        ago
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="opacity-70">Markets:</span>
@@ -288,47 +313,53 @@ function AdminDashboard() {
                   )}
                 </div>
               )}
-              
+
               {/* Recent Updates */}
               {updateHistory.length > 0 && (
                 <div className="mt-4">
                   <h3 className="font-semibold mb-2">Recent Updates</h3>
                   <div className="space-y-2 max-h-48 overflow-y-auto">
-                    {updateHistory.slice(0, 5).map((update: any, idx: number) => (
-                      <div key={idx} className="flex items-center justify-between text-sm p-2 bg-base-200 rounded">
-                        <div className="flex items-center gap-2">
-                          {update.success ? (
-                            <CheckCircle className="w-4 h-4 text-success" />
-                          ) : (
-                            <XCircle className="w-4 h-4 text-error" />
-                          )}
-                          <span className="opacity-70">
-                            {formatDistanceToNow(new Date(update.timestamp))} ago
+                    {updateHistory
+                      .slice(0, 5)
+                      .map((update: any, idx: number) => (
+                        <div
+                          key={idx}
+                          className="flex items-center justify-between text-sm p-2 bg-base-200 rounded"
+                        >
+                          <div className="flex items-center gap-2">
+                            {update.success ? (
+                              <CheckCircle className="w-4 h-4 text-success" />
+                            ) : (
+                              <XCircle className="w-4 h-4 text-error" />
+                            )}
+                            <span className="opacity-70">
+                              {formatDistanceToNow(new Date(update.timestamp))}{" "}
+                              ago
+                            </span>
+                          </div>
+                          <span className="font-mono">
+                            {update.marketsUpdated} markets
                           </span>
                         </div>
-                        <span className="font-mono">
-                          {update.marketsUpdated} markets
-                        </span>
-                      </div>
-                    ))}
+                      ))}
                   </div>
                 </div>
               )}
             </div>
           </div>
-          
 
           {/* Historical Data Updates */}
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">Historical Data Updates</h2>
-              
+
               {/* Last Historical Update Status */}
               {lastHistoricalUpdate && lastHistoricalUpdate.timestamp && (
                 <div className="p-4 bg-base-200 rounded-lg mb-4">
                   <div className="flex items-center justify-between mb-2">
                     <span className="font-semibold">Last 30-Day Update</span>
-                    {lastHistoricalUpdate.success && lastHistoricalUpdate.marketsFailed === 0 ? (
+                    {lastHistoricalUpdate.success &&
+                    lastHistoricalUpdate.marketsFailed === 0 ? (
                       <CheckCircle className="w-5 h-5 text-success" />
                     ) : (
                       <XCircle className="w-5 h-5 text-error" />
@@ -337,100 +368,125 @@ function AdminDashboard() {
                   <div className="text-sm space-y-1">
                     <div className="flex justify-between">
                       <span className="opacity-70">Time:</span>
-                      <span>{formatDistanceToNow(new Date(lastHistoricalUpdate.timestamp))} ago</span>
+                      <span>
+                        {formatDistanceToNow(
+                          new Date(lastHistoricalUpdate.timestamp),
+                        )}{" "}
+                        ago
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="opacity-70">Updated:</span>
-                      <span>{lastHistoricalUpdate.marketsUpdated || 0} markets</span>
+                      <span>
+                        {lastHistoricalUpdate.marketsUpdated || 0} markets
+                      </span>
                     </div>
                     {lastHistoricalUpdate.marketsFailed > 0 && (
                       <div className="flex justify-between">
                         <span className="opacity-70">Failed:</span>
-                        <span className="text-error">{lastHistoricalUpdate.marketsFailed}</span>
+                        <span className="text-error">
+                          {lastHistoricalUpdate.marketsFailed}
+                        </span>
                       </div>
                     )}
                     {lastHistoricalUpdate.duration && (
                       <div className="flex justify-between">
                         <span className="opacity-70">Duration:</span>
-                        <span>{(lastHistoricalUpdate.duration / 1000).toFixed(1)}s</span>
+                        <span>
+                          {(lastHistoricalUpdate.duration / 1000).toFixed(1)}s
+                        </span>
                       </div>
                     )}
                   </div>
-                  {lastHistoricalUpdate.errors && lastHistoricalUpdate.errors.length > 0 && (
-                    <details className="mt-2">
-                      <summary className="text-xs text-error cursor-pointer">
-                        {lastHistoricalUpdate.errors.length} error(s)
-                      </summary>
-                      <div className="mt-1 text-xs text-error max-h-20 overflow-y-auto">
-                        {lastHistoricalUpdate.errors.map((err, idx) => (
-                          <div key={idx}>{err}</div>
-                        ))}
-                      </div>
-                    </details>
-                  )}
+                  {lastHistoricalUpdate.errors &&
+                    lastHistoricalUpdate.errors.length > 0 && (
+                      <details className="mt-2">
+                        <summary className="text-xs text-error cursor-pointer">
+                          {lastHistoricalUpdate.errors.length} error(s)
+                        </summary>
+                        <div className="mt-1 text-xs text-error max-h-20 overflow-y-auto">
+                          {lastHistoricalUpdate.errors.map((err, idx) => (
+                            <div key={idx}>{err}</div>
+                          ))}
+                        </div>
+                      </details>
+                    )}
                 </div>
               )}
-              
+
               {/* Initial Data Load Button */}
               <div className="divider">Initial Setup</div>
-              <button 
+              <button
                 className="btn btn-warning w-full mb-4"
                 onClick={async () => {
-                  if (!confirm('This will load 30 days of historical data for all markets. Continue?')) return;
+                  if (
+                    !confirm(
+                      "This will load 30 days of historical data for all markets. Continue?",
+                    )
+                  )
+                    return;
                   setIsUpdating(true);
                   try {
                     const result = await loadInitialData();
-                    console.log('Initial data load result:', result);
-                    alert(`Initial load complete! Historical: ${result.historical?.marketsUpdated || 0} markets, Prices: ${result.prices?.updated || 0} updated`);
+                    console.log("Initial data load result:", result);
+                    alert(
+                      `Initial load complete! Historical: ${result.historical?.marketsUpdated || 0} markets, Prices: ${result.prices?.updated || 0} updated`,
+                    );
                   } catch (error) {
-                    console.error('Initial load failed:', error);
-                    alert('Initial load failed: ' + error);
+                    console.error("Initial load failed:", error);
+                    alert("Initial load failed: " + error);
                   } finally {
                     setIsUpdating(false);
                   }
                 }}
                 disabled={isUpdating}
               >
-                {isUpdating ? 'Loading Initial Data...' : 'Load Initial 30-Day History'}
+                {isUpdating
+                  ? "Loading Initial Data..."
+                  : "Load Initial 30-Day History"}
               </button>
-              
+
               <div className="divider">Manual Updates</div>
-              
+
               {/* Manual Historical Update Button */}
-              <button 
-                className={`btn btn-secondary w-full mb-4 ${isUpdating ? 'loading' : ''}`}
+              <button
+                className={`btn btn-secondary w-full mb-4 ${isUpdating ? "loading" : ""}`}
                 onClick={async () => {
                   setIsUpdating(true);
                   try {
                     const result = await updateHistoricalData();
-                    console.log('Historical update result:', result);
+                    console.log("Historical update result:", result);
                   } catch (error) {
-                    console.error('Historical update failed:', error);
+                    console.error("Historical update failed:", error);
                   } finally {
                     setIsUpdating(false);
                   }
                 }}
                 disabled={isUpdating}
               >
-                {isUpdating ? 'Updating Historical Data...' : (
+                {isUpdating ? (
+                  "Updating Historical Data..."
+                ) : (
                   <>
                     <Clock className="w-4 h-4 mr-2" />
                     Update 30-Day History
                   </>
                 )}
               </button>
-              
+
               {/* Test Price Polling Button */}
-              <button 
+              <button
                 className="btn btn-outline btn-primary w-full mb-4"
                 onClick={async () => {
                   try {
                     const result = await pollCurrentPrices();
-                    console.log('Price poll result:', result);
-                    alert(`Updated ${result.updated} prices, ${result.failed} failed`);
+                    console.log("Price poll result:", result);
+                    alert(
+                      `Updated ${result.updated} prices, ${result.failed} failed`,
+                    );
                   } catch (error) {
-                    console.error('Price poll failed:', error);
-                    alert('Price poll failed: ' + error);
+                    console.error("Price poll failed:", error);
+                    alert("Price poll failed: " + error);
                   }
                 }}
               >
@@ -444,54 +500,63 @@ function AdminDashboard() {
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
               <h2 className="card-title">Historical Data Debug</h2>
-              
-              <button 
-                className={`btn btn-secondary w-full ${isFetchingHistory ? 'loading' : ''}`}
+
+              <button
+                className={`btn btn-secondary w-full ${isFetchingHistory ? "loading" : ""}`}
                 onClick={handleFetchHistory}
                 disabled={isFetchingHistory}
               >
-                {isFetchingHistory ? 'Fetching...' : (
+                {isFetchingHistory ? (
+                  "Fetching..."
+                ) : (
                   <>
                     <BarChart className="w-4 h-4 mr-2" />
                     Fetch 7-Day History
                   </>
                 )}
               </button>
-              
+
               {historyResult && (
                 <div className="mt-4 p-4 bg-base-200 rounded-lg text-sm">
                   {historyResult.error ? (
-                    <div className="text-error">Error: {historyResult.error}</div>
+                    <div className="text-error">
+                      Error: {historyResult.error}
+                    </div>
                   ) : (
                     <>
                       <div className="font-semibold mb-2">
-                        Fetched {historyResult.results?.filter((r: any) => r.success).length || 0} of {historyResult.total || 0} markets
+                        Fetched{" "}
+                        {historyResult.results?.filter((r: any) => r.success)
+                          .length || 0}{" "}
+                        of {historyResult.total || 0} markets
                       </div>
                       {historyResult.results?.map((r: any, idx: number) => (
                         <div key={idx} className="text-xs opacity-70">
-                          {r.title ? `${r.title}: ` : ''}
-                          {r.success ? `✓ ${r.stored || 0} points` : `✗ ${r.error}`}
+                          {r.title ? `${r.title}: ` : ""}
+                          {r.success
+                            ? `✓ ${r.stored || 0} points`
+                            : `✗ ${r.error}`}
                         </div>
                       ))}
                     </>
                   )}
                 </div>
               )}
-              
+
               {/* Debug Button */}
-              <button 
-                className={`btn btn-outline btn-warning w-full mt-4 ${isDebugging ? 'loading' : ''}`}
+              <button
+                className={`btn btn-outline btn-warning w-full mt-4 ${isDebugging ? "loading" : ""}`}
                 onClick={async () => {
                   setIsDebugging(true);
                   setDebugResult(null);
                   try {
-                    const result = await debugHistory({ 
-                      slug: "khamenei-out-as-supreme-leader-of-iran-by-june-30" 
+                    const result = await debugHistory({
+                      slug: "khamenei-out-as-supreme-leader-of-iran-by-june-30",
                     });
                     setDebugResult(result);
-                    console.log('Debug result:', result);
+                    console.log("Debug result:", result);
                   } catch (error) {
-                    console.error('Debug failed:', error);
+                    console.error("Debug failed:", error);
                     setDebugResult({ error: String(error) });
                   } finally {
                     setIsDebugging(false);
@@ -499,18 +564,22 @@ function AdminDashboard() {
                 }}
                 disabled={isDebugging}
               >
-                {isDebugging ? 'Debugging...' : 'Debug Historical Gaps'}
+                {isDebugging ? "Debugging..." : "Debug Historical Gaps"}
               </button>
-              
+
               {debugResult && (
                 <div className="mt-4 p-4 bg-base-200 rounded-lg text-xs">
                   <div className="font-semibold mb-2">Debug Results:</div>
                   <pre className="overflow-x-auto whitespace-pre-wrap">
-                    {JSON.stringify(debugResult.theories || debugResult, null, 2)}
+                    {JSON.stringify(
+                      debugResult.theories || debugResult,
+                      null,
+                      2,
+                    )}
                   </pre>
                 </div>
               )}
-              
+
               {/* History Stats */}
               {historyStats.length > 0 && (
                 <div className="mt-4 space-y-2">
@@ -518,8 +587,12 @@ function AdminDashboard() {
                   <div className="text-xs space-y-1 max-h-32 overflow-y-auto">
                     {historyStats.map((stat: any, idx: number) => (
                       <div key={idx} className="flex justify-between">
-                        <span className="truncate flex-1 opacity-70">{stat.title}</span>
-                        <span className="font-mono">{stat.historyPoints} pts</span>
+                        <span className="truncate flex-1 opacity-70">
+                          {stat.title}
+                        </span>
+                        <span className="font-mono">
+                          {stat.historyPoints} pts
+                        </span>
                       </div>
                     ))}
                   </div>
@@ -559,15 +632,15 @@ function AdminDashboard() {
               disabled={isLoading}
             />
             <div className="modal-action">
-              <button 
+              <button
                 className="btn btn-primary"
                 onClick={handleSaveClarification}
                 disabled={isLoading}
               >
                 {isLoading ? "Saving..." : "Save"}
               </button>
-              <button 
-                className="btn" 
+              <button
+                className="btn"
                 onClick={() => setSelectedMarket(null)}
                 disabled={isLoading}
               >
