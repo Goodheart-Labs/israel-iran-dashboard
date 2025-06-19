@@ -26,7 +26,6 @@ export const updateCurrentPrice = internalMutation({
       previousProbability: prediction.probability,
       probability: args.probability,
       lastUpdated: args.timestamp,
-      lastPriceUpdate: args.timestamp,
     });
     
     return { success: true };

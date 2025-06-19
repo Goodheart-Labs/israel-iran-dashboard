@@ -7,14 +7,14 @@ const crons = cronJobs();
 crons.interval(
   "poll-current-prices",
   { minutes: 1 },
-  internal.pricePoller.pollCurrentPrices
+  api.pricePoller.pollCurrentPrices
 );
 
 // Update historical data every 15 minutes
 crons.interval(
   "update-historical-data",
   { minutes: 15 },
-  internal.historicalUpdater.updateHistoricalData
+  api.historicalUpdater.updateHistoricalData
 );
 
 export default crons;

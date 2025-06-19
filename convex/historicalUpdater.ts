@@ -28,7 +28,7 @@ export const updateHistoricalData = action({
       for (const prediction of polymarketPredictions) {
         try {
           // Extract slug from sourceUrl
-          const urlParts = prediction.sourceUrl.split('/');
+          const urlParts = (prediction.sourceUrl || '').split('/');
           const slug = urlParts[urlParts.length - 1];
           
           console.log(`[HISTORICAL] Processing ${prediction.title} (${slug})`);

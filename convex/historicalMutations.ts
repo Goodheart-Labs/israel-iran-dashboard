@@ -9,7 +9,15 @@ export const replaceHistory = internalMutation({
       timestamp: v.number(),
       probability: v.number(),
     })),
-    source: v.string(),
+    source: v.union(
+      v.literal("polymarket"),
+      v.literal("kalshi"),
+      v.literal("metaculus"),
+      v.literal("predictit"),
+      v.literal("manifold"),
+      v.literal("adjacent"),
+      v.literal("other")
+    ),
   },
   handler: async (ctx, args) => {
     // First, create a backup marker
@@ -41,10 +49,9 @@ export const replaceHistory = internalMutation({
         stored++;
       }
       
-      // Update prediction with last historical update time
+      // Update prediction with last update time
       await ctx.db.patch(args.predictionId, {
-        lastHistoricalUpdate: now,
-        historicalDataPoints: stored,
+        lastUpdated: now,
       });
       
       return { success: true, stored, replaced: currentHistory.length };

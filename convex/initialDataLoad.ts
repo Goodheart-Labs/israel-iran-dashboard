@@ -1,20 +1,25 @@
 "use node";
 
 import { action } from "./_generated/server";
-import { internal } from "./_generated/api";
+import { api } from "./_generated/api";
 
 export const loadInitialHistoricalData = action({
   args: {},
-  handler: async (ctx) => {
+  handler: async (ctx): Promise<{
+    success: boolean;
+    historical?: any;
+    prices?: any;
+    error?: string;
+  }> => {
     console.log("[INITIAL LOAD] Starting initial historical data load...");
     
     try {
       // First, load all historical data
-      const historicalResult = await ctx.runAction(internal.historicalUpdater.updateHistoricalData);
+      const historicalResult = await ctx.runAction(api.historicalUpdater.updateHistoricalData);
       console.log("[INITIAL LOAD] Historical data load complete:", historicalResult);
       
       // Then do a price poll to ensure current prices are up to date
-      const priceResult = await ctx.runAction(internal.pricePoller.pollCurrentPrices);
+      const priceResult = await ctx.runAction(api.pricePoller.pollCurrentPrices);
       console.log("[INITIAL LOAD] Current price poll complete:", priceResult);
       
       return {

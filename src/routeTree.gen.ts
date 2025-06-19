@@ -12,6 +12,7 @@
 
 import { Route as rootRoute } from './routes/__root'
 import { Route as StatusImport } from './routes/status'
+import { Route as MaintenanceImport } from './routes/maintenance'
 import { Route as DebugAuthImport } from './routes/debug-auth'
 import { Route as AdminImport } from './routes/admin'
 import { Route as IndexImport } from './routes/index'
@@ -21,6 +22,12 @@ import { Route as IndexImport } from './routes/index'
 const StatusRoute = StatusImport.update({
   id: '/status',
   path: '/status',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const MaintenanceRoute = MaintenanceImport.update({
+  id: '/maintenance',
+  path: '/maintenance',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -67,6 +74,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DebugAuthImport
       parentRoute: typeof rootRoute
     }
+    '/maintenance': {
+      id: '/maintenance'
+      path: '/maintenance'
+      fullPath: '/maintenance'
+      preLoaderRoute: typeof MaintenanceImport
+      parentRoute: typeof rootRoute
+    }
     '/status': {
       id: '/status'
       path: '/status'
@@ -83,6 +97,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/maintenance': typeof MaintenanceRoute
   '/status': typeof StatusRoute
 }
 
@@ -90,6 +105,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/maintenance': typeof MaintenanceRoute
   '/status': typeof StatusRoute
 }
 
@@ -98,15 +114,16 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/maintenance': typeof MaintenanceRoute
   '/status': typeof StatusRoute
 }
 
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/admin' | '/debug-auth' | '/status'
+  fullPaths: '/' | '/admin' | '/debug-auth' | '/maintenance' | '/status'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/debug-auth' | '/status'
-  id: '__root__' | '/' | '/admin' | '/debug-auth' | '/status'
+  to: '/' | '/admin' | '/debug-auth' | '/maintenance' | '/status'
+  id: '__root__' | '/' | '/admin' | '/debug-auth' | '/maintenance' | '/status'
   fileRoutesById: FileRoutesById
 }
 
@@ -114,6 +131,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   DebugAuthRoute: typeof DebugAuthRoute
+  MaintenanceRoute: typeof MaintenanceRoute
   StatusRoute: typeof StatusRoute
 }
 
@@ -121,6 +139,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   DebugAuthRoute: DebugAuthRoute,
+  MaintenanceRoute: MaintenanceRoute,
   StatusRoute: StatusRoute,
 }
 
@@ -137,6 +156,7 @@ export const routeTree = rootRoute
         "/",
         "/admin",
         "/debug-auth",
+        "/maintenance",
         "/status"
       ]
     },
@@ -148,6 +168,9 @@ export const routeTree = rootRoute
     },
     "/debug-auth": {
       "filePath": "debug-auth.tsx"
+    },
+    "/maintenance": {
+      "filePath": "maintenance.tsx"
     },
     "/status": {
       "filePath": "status.tsx"
