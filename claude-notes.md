@@ -433,6 +433,9 @@ Working on implementing a robust update system for the Iran geopolitical dashboa
 2. feat: implement simple cron job with health monitoring for Phase 1
 3. feat: add admin UI for manual updates and status tracking
 4. feat: complete Phase 1 update system with health monitoring and manual triggers
+5. fix: update Polymarket slugs to match correct format from live site
+6. fix: add marketSlug parameter to storeMarketHistory for proper prediction lookup
+7. feat: implement new update architecture with 30-day historical fetches and 1-minute price polling
 
 ### Progress:
 
@@ -443,14 +446,31 @@ Working on implementing a robust update system for the Iran geopolitical dashboa
 - ✅ Added manual update button in admin panel
 - ✅ Created deployment hook for automatic updates
 - ✅ Successfully deployed to Convex
-- 🔧 Fixing Polymarket API integration (discovered issue from H5N1 dashboard analysis)
+- ✅ Fixed Polymarket API integration (discovered issue from H5N1 dashboard analysis)
+- ✅ Debugged and fixed market slug format issues
+- ✅ Fixed storeMarketHistory to properly find predictions by slug
+- ✅ Implemented new update architecture:
+  - 30-day historical data fetch every 15 minutes
+  - Current price polling every minute
+  - Failure protection (don't delete old data if update fails)
 
-### Current Task: Polymarket Fix
+### New Update Architecture:
 
-- Found that H5N1 dashboard uses clean slugs without UUID suffixes
-- They use a two-step process: fetch event → get market ID → fetch market details
-- Updated our slug list to match their approach
-- Need to complete the fetchPolymarketDirectMarkets function update
+1. **Historical Updates (15 min)**: 
+   - Fetches 30 days of data for all markets
+   - Replaces old data only if successful
+   - Tracks update status in admin panel
+
+2. **Price Polling (1 min)**:
+   - Quick current price check
+   - Updates only if price changed
+   - Minimal API load
+
+3. **Admin Panel Features**:
+   - Shows last historical update status
+   - Manual update buttons for testing
+   - Error tracking and reporting
+   - Initial data load button for setup
 
 ### Deployment Issues Encountered:
 
@@ -463,12 +483,13 @@ Working on implementing a robust update system for the Iran geopolitical dashboa
 
 ### Task List:
 
-1. Fix Polymarket API integration to match H5N1 dashboard approach (IN PROGRESS)
-2. Test Polymarket data fetching with corrected implementation
-3. Implement PostHog analytics (HIGH PRIORITY)
-4. Phase 2: Session-based voting system
-5. Phase 3: Dashboard organization system
-6. Phase 4: Multi-source integration (Metaculus, Kalshi, Manifold)
+1. ✅ Fix Polymarket API integration to match H5N1 dashboard approach
+2. ✅ Test Polymarket data fetching with corrected implementation
+3. ✅ Debug why historical data has gaps - test theories
+4. Implement PostHog analytics (HIGH PRIORITY)
+5. Phase 2: Session-based voting system
+6. Phase 3: Dashboard organization system
+7. Phase 4: Multi-source integration (Metaculus, Kalshi, Manifold)
 
 ### Important Context:
 

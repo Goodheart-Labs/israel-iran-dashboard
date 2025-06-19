@@ -52,10 +52,15 @@ function AdminDashboard() {
   const triggerUpdate = useAction(api.simpleUpdater.updatePredictions);
   const lastUpdate = useQuery(api.systemStatus.getLastUpdate);
   const updateHistory = useQuery(api.systemStatus.getUpdateHistory) || [];
+  const lastHistoricalUpdate = useQuery(api.systemStatus.getLastHistoricalUpdate);
+  const historicalUpdateHistory = useQuery(api.systemStatus.getHistoricalUpdateHistory) || [];
   const historyStats = useQuery(api.predictions.getHistoryStats) || [];
   const fetchAllHistory = useAction(api.predictions.fetchAllMarketHistory);
   const debugHistory = useAction(api.debugHistorical.debugPolymarketHistory);
   const debugGaps = useAction(api.debugDataGaps.debugDataGaps);
+  const updateHistoricalData = useAction(api.historicalUpdater.updateHistoricalData);
+  const pollCurrentPrices = useAction(api.pricePoller.pollCurrentPrices);
+  const loadInitialData = useAction(api.initialDataLoad.loadInitialHistoricalData);
   
   const [selectedMarket, setSelectedMarket] = useState<string | null>(null);
   const [editText, setEditText] = useState("");
@@ -313,10 +318,132 @@ function AdminDashboard() {
           </div>
           
 
-          {/* Historical Data */}
+          {/* Historical Data Updates */}
           <div className="card bg-base-100 shadow-xl">
             <div className="card-body">
-              <h2 className="card-title">Historical Data</h2>
+              <h2 className="card-title">Historical Data Updates</h2>
+              
+              {/* Last Historical Update Status */}
+              {lastHistoricalUpdate && lastHistoricalUpdate.timestamp && (
+                <div className="p-4 bg-base-200 rounded-lg mb-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="font-semibold">Last 30-Day Update</span>
+                    {lastHistoricalUpdate.success && lastHistoricalUpdate.marketsFailed === 0 ? (
+                      <CheckCircle className="w-5 h-5 text-success" />
+                    ) : (
+                      <XCircle className="w-5 h-5 text-error" />
+                    )}
+                  </div>
+                  <div className="text-sm space-y-1">
+                    <div className="flex justify-between">
+                      <span className="opacity-70">Time:</span>
+                      <span>{formatDistanceToNow(new Date(lastHistoricalUpdate.timestamp))} ago</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="opacity-70">Updated:</span>
+                      <span>{lastHistoricalUpdate.marketsUpdated || 0} markets</span>
+                    </div>
+                    {lastHistoricalUpdate.marketsFailed > 0 && (
+                      <div className="flex justify-between">
+                        <span className="opacity-70">Failed:</span>
+                        <span className="text-error">{lastHistoricalUpdate.marketsFailed}</span>
+                      </div>
+                    )}
+                    {lastHistoricalUpdate.duration && (
+                      <div className="flex justify-between">
+                        <span className="opacity-70">Duration:</span>
+                        <span>{(lastHistoricalUpdate.duration / 1000).toFixed(1)}s</span>
+                      </div>
+                    )}
+                  </div>
+                  {lastHistoricalUpdate.errors && lastHistoricalUpdate.errors.length > 0 && (
+                    <details className="mt-2">
+                      <summary className="text-xs text-error cursor-pointer">
+                        {lastHistoricalUpdate.errors.length} error(s)
+                      </summary>
+                      <div className="mt-1 text-xs text-error max-h-20 overflow-y-auto">
+                        {lastHistoricalUpdate.errors.map((err, idx) => (
+                          <div key={idx}>{err}</div>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+                </div>
+              )}
+              
+              {/* Initial Data Load Button */}
+              <div className="divider">Initial Setup</div>
+              <button 
+                className="btn btn-warning w-full mb-4"
+                onClick={async () => {
+                  if (!confirm('This will load 30 days of historical data for all markets. Continue?')) return;
+                  setIsUpdating(true);
+                  try {
+                    const result = await loadInitialData();
+                    console.log('Initial data load result:', result);
+                    alert(`Initial load complete! Historical: ${result.historical?.marketsUpdated || 0} markets, Prices: ${result.prices?.updated || 0} updated`);
+                  } catch (error) {
+                    console.error('Initial load failed:', error);
+                    alert('Initial load failed: ' + error);
+                  } finally {
+                    setIsUpdating(false);
+                  }
+                }}
+                disabled={isUpdating}
+              >
+                {isUpdating ? 'Loading Initial Data...' : 'Load Initial 30-Day History'}
+              </button>
+              
+              <div className="divider">Manual Updates</div>
+              
+              {/* Manual Historical Update Button */}
+              <button 
+                className={`btn btn-secondary w-full mb-4 ${isUpdating ? 'loading' : ''}`}
+                onClick={async () => {
+                  setIsUpdating(true);
+                  try {
+                    const result = await updateHistoricalData();
+                    console.log('Historical update result:', result);
+                  } catch (error) {
+                    console.error('Historical update failed:', error);
+                  } finally {
+                    setIsUpdating(false);
+                  }
+                }}
+                disabled={isUpdating}
+              >
+                {isUpdating ? 'Updating Historical Data...' : (
+                  <>
+                    <Clock className="w-4 h-4 mr-2" />
+                    Update 30-Day History
+                  </>
+                )}
+              </button>
+              
+              {/* Test Price Polling Button */}
+              <button 
+                className="btn btn-outline btn-primary w-full mb-4"
+                onClick={async () => {
+                  try {
+                    const result = await pollCurrentPrices();
+                    console.log('Price poll result:', result);
+                    alert(`Updated ${result.updated} prices, ${result.failed} failed`);
+                  } catch (error) {
+                    console.error('Price poll failed:', error);
+                    alert('Price poll failed: ' + error);
+                  }
+                }}
+              >
+                <RefreshCw className="w-4 h-4 mr-2" />
+                Test Price Polling
+              </button>
+            </div>
+          </div>
+
+          {/* Old Historical Data Section */}
+          <div className="card bg-base-100 shadow-xl">
+            <div className="card-body">
+              <h2 className="card-title">Historical Data Debug</h2>
               
               <button 
                 className={`btn btn-secondary w-full ${isFetchingHistory ? 'loading' : ''}`}

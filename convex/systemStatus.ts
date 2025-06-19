@@ -101,3 +101,66 @@ export const getSystemHealth = query({
     };
   },
 });
+
+// Get the last historical update status
+export const getLastHistoricalUpdate = query({
+  handler: async (ctx) => {
+    const status = await ctx.db
+      .query("systemStatus")
+      .withIndex("by_key", q => q.eq("key", "lastHistoricalUpdate"))
+      .first();
+    
+    if (!status) {
+      return {
+        success: false,
+        message: "No historical updates yet",
+        timestamp: null,
+      };
+    }
+    
+    const data = status.value as {
+      success: boolean;
+      marketsUpdated: number;
+      marketsFailed: number;
+      duration: number;
+      timestamp: number;
+      errors: string[];
+    };
+    
+    return {
+      success: data.success,
+      marketsUpdated: data.marketsUpdated,
+      marketsFailed: data.marketsFailed,
+      duration: data.duration,
+      timestamp: data.timestamp,
+      errors: data.errors,
+      lastUpdatedAgo: Date.now() - data.timestamp,
+    };
+  },
+});
+
+// Get historical update history
+export const getHistoricalUpdateHistory = query({
+  handler: async (ctx) => {
+    const history = await ctx.db
+      .query("systemStatus")
+      .withIndex("by_key", q => q.eq("key", "historicalUpdateHistory"))
+      .first();
+    
+    if (!history) {
+      return [];
+    }
+    
+    // Return sorted by timestamp, newest first
+    const updates = history.value as Array<{
+      success: boolean;
+      marketsUpdated: number;
+      marketsFailed: number;
+      duration: number;
+      timestamp: number;
+      errors: string[];
+    }>;
+    
+    return updates.sort((a, b) => b.timestamp - a.timestamp);
+  },
+});
