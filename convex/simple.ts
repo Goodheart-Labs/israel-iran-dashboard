@@ -7,26 +7,28 @@ export const getMarkets = query({
     // Get all active predictions
     const predictions = await ctx.db
       .query("predictions")
-      .filter(q => q.eq(q.field("isActive"), true))
+      .withIndex("by_active", (q) => q.eq("isActive", true))
       .collect();
     
-    // Sort by creation time, newest first
-    predictions.sort((a, b) => b._creationTime - a._creationTime);
+    // Sort by sortOrder then creation time
+    predictions.sort((a, b) => {
+      const orderA = a.sortOrder ?? 999;
+      const orderB = b.sortOrder ?? 999;
+      if (orderA !== orderB) return orderA - orderB;
+      return b._creationTime - a._creationTime;
+    });
     
     // For each prediction, get its history
     const predictionsWithHistory = await Promise.all(
       predictions.map(async (p) => {
-        // Get historical data from predictionHistory table
-        const history = await ctx.db
+        // Get most recent 50 history points using index order + take
+        const recentHistory = await ctx.db
           .query("predictionHistory")
-          .withIndex("by_prediction_time", (q) => 
+          .withIndex("by_prediction_time", (q) =>
             q.eq("predictionId", p._id)
           )
-          .collect();
-        
-        // Sort by timestamp descending and take last 50 points
-        history.sort((a, b) => b.timestamp - a.timestamp);
-        const recentHistory = history.slice(0, 50);
+          .order("desc")
+          .take(50);
         
         return {
           _id: p._id,
@@ -37,7 +39,9 @@ export const getMarkets = query({
           sourceUrl: p.sourceUrl,
           lastUpdated: p.lastUpdated,
           clarificationText: p.clarificationText,
-          // Add the historical data (reverse to show oldest first)
+          chartGroup: p.chartGroup,
+          chartColor: p.chartColor,
+          sortOrder: p.sortOrder,
           history: recentHistory.reverse().map(h => ({
             timestamp: h.timestamp,
             probability: h.probability

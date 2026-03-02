@@ -74,7 +74,8 @@ export const updateHistoricalData = action({
 
           const historyResponse = await fetch(historyUrl);
           if (!historyResponse.ok) {
-            throw new Error(`History API returned ${historyResponse.status}`);
+            const errorBody = await historyResponse.text();
+            throw new Error(`History API returned ${historyResponse.status}: ${errorBody}`);
           }
 
           const historyData = await historyResponse.json();

@@ -79,6 +79,9 @@ export default defineSchema({
     isActive: v.boolean(),
     isApproved: v.optional(v.boolean()), // Admin approval
     isRejected: v.optional(v.boolean()), // Admin rejection
+    chartGroup: v.optional(v.string()), // Group markets on same chart (e.g. "nuclear_deal", "hormuz")
+    chartColor: v.optional(v.string()), // Hex color for this series on combined charts
+    sortOrder: v.optional(v.number()), // Display order on dashboard
   })
     .index("by_category", ["category"])
     .index("by_source", ["source"])

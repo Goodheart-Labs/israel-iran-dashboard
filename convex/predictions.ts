@@ -3,6 +3,21 @@ import { query, mutation, action } from "./_generated/server";
 import { api } from "./_generated/api";
 import { predictionCategories, predictionSources } from "./schema";
 
+// Deactivate all current predictions - used before re-seeding
+export const deactivateAll = mutation({
+  args: {},
+  handler: async (ctx) => {
+    const active = await ctx.db
+      .query("predictions")
+      .withIndex("by_active", (q) => q.eq("isActive", true))
+      .collect();
+    for (const p of active) {
+      await ctx.db.patch(p._id, { isActive: false });
+    }
+    return { deactivated: active.length };
+  },
+});
+
 // Get all active predictions - USED IN FRONTEND
 export const getActive = query({
   args: {},
@@ -91,17 +106,97 @@ export const deletePrediction = mutation({
   },
 });
 
-// Featured Polymarket markets to track - USED BY UPDATER
-// Using full slugs (no UUIDs) - these are the actual Polymarket event slugs
-const FEATURED_POLYMARKET_MARKETS = [
-  // Removed: will-iran-strike-israel-by-july-14 (market not found)
-  { slug: "us-military-action-against-iran-in-2025", category: "military_action" as const },
-  { slug: "iran-nuclear-weapon-by-april-2025", category: "nuclear_program" as const },
-  { slug: "israel-strikes-iranian-nuclear-sites-in-2025", category: "israel_relations" as const },
-  { slug: "strait-of-hormuz-closure-in-2025", category: "military_action" as const },
-  { slug: "khamenei-out-as-supreme-leader-of-iran-by-june-30", category: "regime_stability" as const },
-  { slug: "nuclear-weapon-detonated-in-2025", category: "nuclear_program" as const },
-  { slug: "netanyahu-leaves-office-in-2025", category: "israel_relations" as const },
+// Helper: parse outcomePrices which may be a JSON string or native array
+function parseOutcomePrices(outcomePrices: unknown): number[] {
+  let prices: string[];
+  if (typeof outcomePrices === "string") {
+    prices = JSON.parse(outcomePrices);
+  } else if (Array.isArray(outcomePrices)) {
+    prices = outcomePrices;
+  } else {
+    throw new Error("Unexpected outcomePrices format: " + String(typeof outcomePrices));
+  }
+  return prices.map((p) => parseFloat(p));
+}
+
+// ============================================================
+// DASHBOARD MARKET CONFIG — the single source of truth
+// ============================================================
+
+type MarketConfig = {
+  source: "polymarket" | "kalshi" | "metaculus";
+  category: "military_action" | "nuclear_program" | "regime_stability" | "sanctions" | "regional_conflict" | "israel_relations" | "protests";
+  chartGroup: string; // Markets with same chartGroup render on one chart
+  chartColor: string; // Hex color for this line
+  sortOrder: number;  // Display order
+  // Source-specific identifiers
+  slug?: string;           // Polymarket slug
+  kalshiTicker?: string;   // Kalshi ticker
+  metaculusId?: number;    // Metaculus question ID
+};
+
+const DASHBOARD_MARKETS: MarketConfig[] = [
+  // --- Combined chart: Nuclear Deal (Polymarket + Kalshi) ---
+  {
+    source: "polymarket", slug: "us-iran-nuclear-deal-by-june-30",
+    category: "nuclear_program", chartGroup: "nuclear_deal",
+    chartColor: "#3B82F6", sortOrder: 1,
+  },
+  {
+    source: "kalshi", kalshiTicker: "KXUSAIRANAGREEMENT-27",
+    category: "nuclear_program", chartGroup: "nuclear_deal",
+    chartColor: "#F59E0B", sortOrder: 1,
+  },
+
+  // --- Combined chart: Strait of Hormuz (Polymarket + Kalshi) ---
+  {
+    source: "polymarket", slug: "will-iran-close-the-strait-of-hormuz-by-2027",
+    category: "military_action", chartGroup: "hormuz",
+    chartColor: "#3B82F6", sortOrder: 2,
+  },
+  {
+    source: "kalshi", kalshiTicker: "KXCLOSEHORMUZ-27JAN",
+    category: "military_action", chartGroup: "hormuz",
+    chartColor: "#F59E0B", sortOrder: 2,
+  },
+
+  // --- Combined chart: Ceasefire vs Conflict Ends ---
+  {
+    source: "polymarket", slug: "us-x-iran-ceasefire-by",
+    category: "military_action", chartGroup: "ceasefire_conflict",
+    chartColor: "#10B981", sortOrder: 3,
+  },
+  {
+    source: "polymarket", slug: "iran-x-israelus-conflict-ends-by",
+    category: "military_action", chartGroup: "ceasefire_conflict",
+    chartColor: "#EF4444", sortOrder: 3,
+  },
+
+  // --- Standalone: US Invasion ---
+  {
+    source: "polymarket", slug: "will-the-us-invade-iran-before-2027",
+    category: "military_action", chartGroup: "us_invasion",
+    chartColor: "#3B82F6", sortOrder: 4,
+  },
+  {
+    source: "metaculus", metaculusId: 38768,
+    category: "military_action", chartGroup: "us_invasion",
+    chartColor: "#8B5CF6", sortOrder: 4,
+  },
+
+  // --- Standalone: Nuclear Weapon (Metaculus only) ---
+  {
+    source: "metaculus", metaculusId: 5253,
+    category: "nuclear_program", chartGroup: "nuclear_weapon",
+    chartColor: "#8B5CF6", sortOrder: 5,
+  },
+
+  // --- Standalone: Iran ceases to be Islamic Republic (Metaculus) ---
+  {
+    source: "metaculus", metaculusId: 7770,
+    category: "regime_stability", chartGroup: "islamic_republic",
+    chartColor: "#8B5CF6", sortOrder: 6,
+  },
 ];
 
 // Update market probability by source URL - USED BY UPDATER
@@ -226,7 +321,7 @@ export const fetchPolymarketDirectMarkets = action({
         const marketDetails = await marketResponse.json();
         
         // Extract probability from outcomePrices
-        const probability = Math.round(parseFloat(marketDetails.outcomePrices[0]) * 100);
+        const probability = Math.round(parseOutcomePrices(marketDetails.outcomePrices)[0] * 100);
         
         // Create the source URL using the market slug
         const sourceUrl = `https://polymarket.com/event/${marketDetails.slug}`;
@@ -265,7 +360,7 @@ export const fetchPolymarketDirectMarkets = action({
               console.log(`✓ Fetched ${historyResult.stored || 0} historical points`);
             }
           } catch (historyError) {
-            console.error(`[POLYMARKET] Failed to fetch history: ${historyError}`);
+            console.error(`[POLYMARKET] Failed to fetch history: ${String(historyError)}`);
           }
         }
         
@@ -348,6 +443,85 @@ export const upsert = mutation({
       
       return predictionId;
     }
+  },
+});
+
+// Upsert prediction with chart group info
+export const upsertWithGroup = mutation({
+  args: {
+    category: v.union(...predictionCategories.map(c => v.literal(c))),
+    title: v.string(),
+    description: v.optional(v.string()),
+    probability: v.number(),
+    source: v.union(...predictionSources.map(s => v.literal(s))),
+    sourceUrl: v.string(),
+    resolveDate: v.optional(v.number()),
+    chartGroup: v.optional(v.string()),
+    chartColor: v.optional(v.string()),
+    sortOrder: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    const now = Date.now();
+    const existing = await ctx.db
+      .query("predictions")
+      .withIndex("by_source_url")
+      .filter(q => q.eq(q.field("sourceUrl"), args.sourceUrl))
+      .first();
+
+    if (existing) {
+      await ctx.db.patch(existing._id, {
+        probability: args.probability,
+        previousProbability: existing.probability,
+        lastUpdated: now,
+        isActive: true,
+        chartGroup: args.chartGroup,
+        chartColor: args.chartColor,
+        sortOrder: args.sortOrder,
+      });
+      return existing._id;
+    }
+
+    const id = await ctx.db.insert("predictions", {
+      category: args.category,
+      title: args.title,
+      description: args.description,
+      probability: args.probability,
+      source: args.source,
+      sourceUrl: args.sourceUrl,
+      lastUpdated: now,
+      resolveDate: args.resolveDate,
+      isActive: true,
+      chartGroup: args.chartGroup,
+      chartColor: args.chartColor,
+      sortOrder: args.sortOrder,
+    });
+
+    // Initial history point
+    await ctx.db.insert("predictionHistory", {
+      predictionId: id,
+      probability: args.probability,
+      timestamp: now,
+      source: args.source,
+    });
+
+    return id;
+  },
+});
+
+// Patch chart group info on existing prediction
+export const patchGroupInfo = mutation({
+  args: {
+    id: v.id("predictions"),
+    chartGroup: v.optional(v.string()),
+    chartColor: v.optional(v.string()),
+    sortOrder: v.optional(v.number()),
+  },
+  handler: async (ctx, args) => {
+    await ctx.db.patch(args.id, {
+      chartGroup: args.chartGroup,
+      chartColor: args.chartColor,
+      sortOrder: args.sortOrder,
+    });
   },
 });
 
@@ -571,76 +745,133 @@ export const fetchAllMarketHistory = action({
   },
 });
 
-// Seed initial markets - ONLY FOR INITIAL SETUP
+// Seed all dashboard markets (Polymarket + Kalshi + Metaculus)
 export const seedInitialMarkets = action({
   args: {},
   handler: async (ctx): Promise<{ message: string; created: number; errors: string[] }> => {
     "use node";
-    
-    console.log("[SEED] Adding initial Polymarket markets to database...");
-    
+
+    console.log("[SEED] Seeding all dashboard markets...");
+
     let created = 0;
     const errors: string[] = [];
-    
-    // Only use hardcoded list for initial seeding
-    for (const { slug, category } of FEATURED_POLYMARKET_MARKETS) {
+    const existing = await ctx.runQuery(api.predictions.getActive);
+
+    for (const config of DASHBOARD_MARKETS) {
       try {
-        const eventUrl = `https://gamma-api.polymarket.com/events?slug=${slug}`;
-        const eventResponse = await fetch(eventUrl, {
-          headers: { 'Accept': 'application/json' }
-        });
-        
-        if (!eventResponse.ok) {
-          throw new Error(`Event API returned ${eventResponse.status}`);
+        let title = "";
+        let description = "";
+        let probability = 0;
+        let sourceUrl = "";
+        let resolveDate: number | undefined;
+
+        if (config.source === "polymarket" && config.slug) {
+          const eventResponse = await fetch(
+            `https://gamma-api.polymarket.com/events?slug=${config.slug}`,
+            { headers: { 'Accept': 'application/json' } }
+          );
+          if (!eventResponse.ok) throw new Error(`Polymarket API ${eventResponse.status}`);
+
+          const events = await eventResponse.json();
+          if (!events?.[0]?.markets?.[0]) throw new Error("No markets found");
+
+          const market = events[0].markets[0];
+          const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${market.id}`);
+          if (!marketResponse.ok) throw new Error(`Market API ${marketResponse.status}`);
+
+          const md = await marketResponse.json();
+          probability = Math.round(parseOutcomePrices(md.outcomePrices)[0] * 100);
+          title = md.question;
+          description = md.description?.slice(0, 500);
+          sourceUrl = `https://polymarket.com/event/${md.slug}`;
+          resolveDate = md.endDate ? new Date(md.endDate).getTime() : undefined;
+
+        } else if (config.source === "kalshi" && config.kalshiTicker) {
+          const resp = await fetch(
+            `https://api.elections.kalshi.com/trade-api/v2/markets/${config.kalshiTicker}`
+          );
+          if (!resp.ok) throw new Error(`Kalshi API ${resp.status}`);
+
+          const data = await resp.json();
+          const m = data.market;
+          probability = m.last_price; // Kalshi prices are already 0-100 (cents)
+          title = m.title;
+          description = m.rules_primary?.slice(0, 500);
+          sourceUrl = `https://kalshi.com/markets/${m.ticker.split('-')[0].toLowerCase()}`;
+          resolveDate = m.expiration_time ? new Date(m.expiration_time).getTime() : undefined;
+
+        } else if (config.source === "metaculus" && config.metaculusId) {
+          const metaculusToken = process.env.METACULUS_API_KEY || "";
+          const mcHeaders: Record<string, string> = { Accept: "application/json" };
+          if (metaculusToken) mcHeaders["Authorization"] = `Token ${metaculusToken}`;
+          const resp = await fetch(
+            `https://www.metaculus.com/api/posts/${config.metaculusId}/`,
+            { headers: mcHeaders }
+          );
+          if (!resp.ok) throw new Error(`Metaculus API ${resp.status}`);
+
+          const data = await resp.json();
+          title = data.title;
+          description = data.question?.description?.slice(0, 500) || "";
+          sourceUrl = `https://www.metaculus.com/questions/${config.metaculusId}/`;
+
+          // Extract community prediction
+          const q = data.question;
+          if (q?.aggregations?.recency_weighted?.latest?.centers?.[0] !== undefined) {
+            probability = Math.round(q.aggregations.recency_weighted.latest.centers[0] * 100);
+          } else if (q?.my_forecasts?.latest?.forecast_values?.[1] !== undefined) {
+            probability = Math.round(q.my_forecasts.latest.forecast_values[1] * 100);
+          } else {
+            probability = 0; // No community prediction yet
+          }
+
+          resolveDate = data.scheduled_close_time ? new Date(data.scheduled_close_time).getTime() : undefined;
         }
-        
-        const events = await eventResponse.json();
-        if (!events?.[0]?.markets?.[0]) {
-          throw new Error("No markets found");
+
+        if (!title) {
+          throw new Error("Could not fetch market data");
         }
-        
-        const market = events[0].markets[0];
-        const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${market.id}`);
-        
-        if (!marketResponse.ok) {
-          throw new Error(`Market API returned ${marketResponse.status}`);
-        }
-        
-        const marketDetails = await marketResponse.json();
-        const probability = Math.round(parseFloat(marketDetails.outcomePrices[0]) * 100);
-        const sourceUrl = `https://polymarket.com/event/${marketDetails.slug}`;
-        
+
         // Check if already exists
-        const existing = await ctx.runQuery(api.predictions.getActive);
         const exists = existing.some((p: any) => p.sourceUrl === sourceUrl);
-        
+
         if (!exists) {
-          await ctx.runMutation(api.predictions.upsert, {
-            category,
-            title: marketDetails.question,
-            description: marketDetails.description?.slice(0, 500),
+          await ctx.runMutation(api.predictions.upsertWithGroup, {
+            category: config.category,
+            title,
+            description,
             probability,
-            source: "polymarket",
+            source: config.source,
             sourceUrl,
-            resolveDate: marketDetails.endDate ? new Date(marketDetails.endDate).getTime() : undefined,
+            resolveDate,
+            chartGroup: config.chartGroup,
+            chartColor: config.chartColor,
+            sortOrder: config.sortOrder,
           });
           created++;
-          console.log(`✓ Created: ${marketDetails.question}`);
+          console.log(`✓ ${config.source}: ${title} (${probability}%)`);
         } else {
-          console.log(`- Skipped (exists): ${marketDetails.question}`);
+          // Update chartGroup/color/sortOrder on existing
+          const match = existing.find((p: any) => p.sourceUrl === sourceUrl);
+          if (match) {
+            await ctx.runMutation(api.predictions.patchGroupInfo, {
+              id: match._id,
+              chartGroup: config.chartGroup,
+              chartColor: config.chartColor,
+              sortOrder: config.sortOrder,
+            });
+            console.log(`- Updated group info: ${title}`);
+          }
         }
-        
+
         await new Promise(resolve => setTimeout(resolve, 300));
       } catch (error) {
-        errors.push(`${slug}: ${String(error)}`);
-        console.error(`[SEED] Error: ${slug} - ${error}`);
+        const label = config.slug || config.kalshiTicker || String(config.metaculusId);
+        errors.push(`${label}: ${String(error)}`);
+        console.error(`[SEED] Error: ${label} - ${String(error)}`);
       }
     }
-    
-    return {
-      message: `Seeded ${created} new markets`,
-      created,
-      errors
-    };
+
+    return { message: `Seeded ${created} new markets`, created, errors };
   },
 });

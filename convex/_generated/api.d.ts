@@ -24,6 +24,8 @@ import type * as historicalMutations from "../historicalMutations.js";
 import type * as historicalUpdater from "../historicalUpdater.js";
 import type * as historyMutations from "../historyMutations.js";
 import type * as initialDataLoad from "../initialDataLoad.js";
+import type * as kalshiPoller from "../kalshiPoller.js";
+import type * as metaculusPoller from "../metaculusPoller.js";
 import type * as predictions from "../predictions.js";
 import type * as priceMutations from "../priceMutations.js";
 import type * as pricePoller from "../pricePoller.js";
@@ -58,6 +60,8 @@ declare const fullApi: ApiFromModules<{
   historicalUpdater: typeof historicalUpdater;
   historyMutations: typeof historyMutations;
   initialDataLoad: typeof initialDataLoad;
+  kalshiPoller: typeof kalshiPoller;
+  metaculusPoller: typeof metaculusPoller;
   predictions: typeof predictions;
   priceMutations: typeof priceMutations;
   pricePoller: typeof pricePoller;

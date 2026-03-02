@@ -21,3 +21,5 @@ CLAUDE.local.md
 *.njsproj
 *.sln
 *.sw?
+.playwright-mcp/
+dashboard-v1.png
