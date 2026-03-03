@@ -65,11 +65,8 @@ export const updateHistoricalData = action({
           const clobTokenIds = JSON.parse(marketDetails.clobTokenIds);
           const clobTokenId = clobTokenIds[0];
 
-          // Fetch 30 days of historical data
-          const endTs = Math.floor(Date.now() / 1000);
-          const startTs = endTs - 30 * 24 * 60 * 60; // 30 days ago
-
-          const historyUrl = `https://clob.polymarket.com/prices-history?market=${clobTokenId}&fidelity=30&startTs=${startTs}&endTs=${endTs}`;
+          // Fetch full historical data (high fidelity for smooth charts)
+          const historyUrl = `https://clob.polymarket.com/prices-history?market=${clobTokenId}&interval=1m&fidelity=60`;
           console.log(`[HISTORICAL] Fetching history from: ${historyUrl}`);
 
           const historyResponse = await fetch(historyUrl);
@@ -85,13 +82,11 @@ export const updateHistoricalData = action({
             `[HISTORICAL] Fetched ${points.length} data points for ${prediction.title}`,
           );
 
-          // Store the new history (this will handle the replacement logic)
-          await ctx.runMutation(internal.historicalMutations.replaceHistory, {
-            predictionId: prediction._id,
-            historyData: points.map((p: any) => ({
-              timestamp: p.t * 1000, // Convert to milliseconds
-              probability: Math.round(p.p * 100), // Convert to percentage
-            })),
+          // Store additively (only inserts new points, preserves existing granular data)
+          await ctx.runMutation(api.predictions.storeMarketHistory, {
+            marketId: clobTokenId,
+            marketSlug: slug,
+            historyData: points,
             source: "polymarket",
           });
 

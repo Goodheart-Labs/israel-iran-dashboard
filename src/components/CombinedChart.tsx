@@ -4,7 +4,6 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   ResponsiveContainer,
   CartesianGrid,
 } from "recharts";
@@ -21,46 +20,68 @@ export type ChartSeries = {
 
 interface CombinedChartProps {
   series: ChartSeries[];
+  daysToShow?: number; // Limit chart to last N days
 }
 
-// Merge multiple series into a single dataset keyed by date
-function mergeSeriesData(series: ChartSeries[]) {
-  const dateMap = new Map<
-    string,
-    { date: string; timestamp: number; [key: string]: number | string }
-  >();
+function formatDate(ts: number): string {
+  return new Date(ts).toLocaleDateString("en-US", {
+    month: "short",
+    day: "numeric",
+  });
+}
 
-  for (let i = 0; i < series.length; i++) {
-    const s = series[i];
-    const key = `series_${i}`;
-    for (const point of s.history) {
-      const dateStr = new Date(point.timestamp).toLocaleDateString("en-US", {
-        month: "short",
-        day: "numeric",
-      });
-      if (!dateMap.has(dateStr)) {
-        dateMap.set(dateStr, { date: dateStr, timestamp: point.timestamp } as any);
-      }
-      const entry = dateMap.get(dateStr)!;
-      // If multiple points on same day, take the latest
-      entry[key] = point.probability;
+// Merge multiple series into a single dataset keyed by timestamp.
+// Each series keeps its own timestamps; we collect all unique timestamps
+// and for each series carry forward the last known value.
+function mergeSeriesData(series: ChartSeries[]) {
+  // Collect all unique timestamps across all series
+  const allTimestamps = new Set<number>();
+  for (const s of series) {
+    for (const p of s.history) {
+      allTimestamps.add(p.timestamp);
     }
   }
 
-  // Sort by timestamp
-  return Array.from(dateMap.values()).sort(
-    (a, b) => (a.timestamp as number) - (b.timestamp as number)
-  );
+  const sorted = Array.from(allTimestamps).sort((a, b) => a - b);
+
+  // Build lookup per series: sorted arrays for carry-forward
+  const seriesData = series.map((s) => {
+    const sorted = [...s.history].sort((a, b) => a.timestamp - b.timestamp);
+    return sorted;
+  });
+
+  const result: Array<Record<string, number | null>> = [];
+
+  // Track current index into each series for carry-forward
+  const indices = new Array(series.length).fill(0);
+
+  for (const ts of sorted) {
+    const row: Record<string, number | null> = { timestamp: ts };
+
+    for (let i = 0; i < series.length; i++) {
+      const data = seriesData[i];
+      // Advance index to the latest point at or before this timestamp
+      while (
+        indices[i] < data.length - 1 &&
+        data[indices[i] + 1].timestamp <= ts
+      ) {
+        indices[i]++;
+      }
+
+      if (data.length === 0 || data[indices[i]].timestamp > ts) {
+        row[`series_${i}`] = null;
+      } else {
+        row[`series_${i}`] = data[indices[i]].probability;
+      }
+    }
+
+    result.push(row);
+  }
+
+  return result;
 }
 
-// Source badge colors
-const SOURCE_BADGES: Record<string, { bg: string; text: string }> = {
-  polymarket: { bg: "bg-blue-900/50", text: "text-blue-300" },
-  kalshi: { bg: "bg-amber-900/50", text: "text-amber-300" },
-  metaculus: { bg: "bg-purple-900/50", text: "text-purple-300" },
-};
-
-export function CombinedChart({ series }: CombinedChartProps) {
+export function CombinedChart({ series, daysToShow }: CombinedChartProps) {
   const hasHistory = series.some((s) => s.history.length > 0);
 
   if (!hasHistory) {
@@ -75,9 +96,6 @@ export function CombinedChart({ series }: CombinedChartProps) {
                 style={{ backgroundColor: s.color }}
               />
               <span className="text-sm">{s.probability}%</span>
-              <span className={`text-xs px-1.5 py-0.5 rounded ${SOURCE_BADGES[s.source]?.bg} ${SOURCE_BADGES[s.source]?.text}`}>
-                {s.source}
-              </span>
             </div>
           ))}
         </div>
@@ -85,7 +103,15 @@ export function CombinedChart({ series }: CombinedChartProps) {
     );
   }
 
-  const chartData = mergeSeriesData(series);
+  // Optionally limit to last N days
+  const displaySeries = daysToShow
+    ? series.map((s) => {
+        const cutoff = Date.now() - daysToShow * 24 * 60 * 60 * 1000;
+        return { ...s, history: s.history.filter((p) => p.timestamp >= cutoff) };
+      })
+    : series;
+
+  const chartData = mergeSeriesData(displaySeries);
 
   return (
     <div className="bg-base-200 rounded-lg p-2" style={{ height: "260px" }}>
@@ -100,10 +126,13 @@ export function CombinedChart({ series }: CombinedChartProps) {
             opacity={0.08}
           />
           <XAxis
-            dataKey="date"
+            dataKey="timestamp"
+            type="number"
+            domain={["dataMin", "dataMax"]}
+            scale="time"
+            tickFormatter={formatDate}
             tick={{ fontSize: 10 }}
             stroke="#9CA3AF"
-            interval="preserveStartEnd"
             angle={-45}
             textAnchor="end"
             height={40}
@@ -119,28 +148,17 @@ export function CombinedChart({ series }: CombinedChartProps) {
           />
           <Tooltip
             contentStyle={{
-              backgroundColor: "#1F2937",
-              border: "1px solid #374151",
+              backgroundColor: "var(--chart-tooltip-bg, #1F2937)",
+              border: "1px solid var(--chart-tooltip-border, #374151)",
               borderRadius: "8px",
-              color: "#F9FAFB",
+              color: "var(--chart-tooltip-text, #F9FAFB)",
             }}
+            labelFormatter={(ts) => new Date(ts as number).toLocaleString()}
             formatter={(value: number, name: string) => {
-              // name is like "series_0" — map to label
               const idx = parseInt(name.replace("series_", ""));
               const s = series[idx];
-              return [`${value}%`, s?.label || name];
+              return [`${value}%`, s?.source || name];
             }}
-          />
-          <Legend
-            verticalAlign="top"
-            height={30}
-            formatter={(value: string) => {
-              const idx = parseInt(value.replace("series_", ""));
-              const s = series[idx];
-              if (!s) return value;
-              return `${s.label} (${s.source})`;
-            }}
-            wrapperStyle={{ fontSize: "0.75rem" }}
           />
           {series.map((s, i) => (
             <Line

@@ -1,41 +1,41 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { ExternalLink, Sun, Moon } from "lucide-react";
 import { api } from "../../convex/_generated/api";
 import { MarketChart } from "@/components/MarketChart";
 import { CombinedChart, type ChartSeries } from "@/components/CombinedChart";
+import { TimelineChart } from "@/components/TimelineChart";
 import { formatDistanceToNow } from "date-fns";
+import { useState, useEffect } from "react";
 
 const simpleMarketsQuery = convexQuery(api.simple.getMarkets, {});
-const lastUpdateQuery = convexQuery(api.systemStatus.getLastUpdate, {});
 
 export const Route = createFileRoute("/")({
   loader: async ({ context: { queryClient } }) => {
-    await Promise.all([
-      queryClient.ensureQueryData(simpleMarketsQuery),
-      queryClient.ensureQueryData(lastUpdateQuery),
-    ]);
+    await queryClient.ensureQueryData(simpleMarketsQuery);
   },
   component: HomePage,
 });
 
 // Group titles for combined charts
 const GROUP_TITLES: Record<string, string> = {
-  nuclear_deal: "Nuclear Deal",
-  hormuz: "Strait of Hormuz Closure",
-  ceasefire_conflict: "Ceasefire vs. Conflict Ends",
-  us_invasion: "US Ground Invasion of Iran",
-  nuclear_weapon: "Iran Nuclear Weapon",
+  nuclear_deal: "Nuclear Deal Before 2027",
+  hormuz: "Strait of Hormuz Closure Before 2027",
+  ceasefire: "US/Iran Ceasefire Before April",
+  us_invasion: "US Ground Invasion of Iran Before 2027",
+  nuclear_weapon: "Iran Nuclear Weapon Before 2030",
   islamic_republic: "Iran Ceases to be Islamic Republic",
 };
 
-// Source badge styling
-const SOURCE_BADGE: Record<string, string> = {
-  polymarket: "badge-info",
-  kalshi: "badge-warning",
-  metaculus: "badge-secondary",
+// Per-group chart config
+const GROUP_DAYS_TO_SHOW: Record<string, number> = {
+  us_invasion: 7,
 };
+
+const LIGHT_THEME = "minimal";
+const DARK_THEME = "dark-analyst";
+
 
 type Market = {
   _id: string;
@@ -48,13 +48,58 @@ type Market = {
   clarificationText?: string;
   chartGroup?: string;
   chartColor?: string;
+  shortLabel?: string;
   sortOrder?: number;
-  history: Array<{ timestamp: number; probability: number }>;
+  questionType?: "binary" | "date";
+  scalingRangeMin?: number;
+  scalingRangeMax?: number;
+  scalingZeroPoint?: number;
+  history: Array<{
+    timestamp: number;
+    probability: number;
+    lowerBound?: number;
+    upperBound?: number;
+  }>;
 };
 
 function HomePage() {
   const { data: markets } = useSuspenseQuery(simpleMarketsQuery);
-  const { data: lastUpdate } = useSuspenseQuery(lastUpdateQuery);
+  // null = follow system, true/false = manual override
+  const [manualDark, setManualDark] = useState<boolean | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("dashboard-theme-override");
+      if (saved === "dark") return true;
+      if (saved === "light") return false;
+    }
+    return null;
+  });
+
+  const [systemDark, setSystemDark] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia("(prefers-color-scheme: dark)").matches
+      : false
+  );
+
+  // Listen for OS theme changes
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => setSystemDark(e.matches);
+    mq.addEventListener("change", handler);
+    return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  const isDark = manualDark ?? systemDark;
+
+  useEffect(() => {
+    const theme = isDark ? DARK_THEME : LIGHT_THEME;
+    document.documentElement.setAttribute("data-theme", theme);
+  }, [isDark]);
+
+  const toggleTheme = () => {
+    const next = !isDark;
+    setManualDark(next);
+    localStorage.setItem("dashboard-theme-override", next ? "dark" : "light");
+  };
 
   // Group markets by chartGroup
   const groups = new Map<string, Market[]>();
@@ -78,43 +123,66 @@ function HomePage() {
     return orderA - orderB;
   });
 
+  const mostRecent =
+    (markets as Market[]).length > 0
+      ? Math.max(...(markets as Market[]).map((m) => m.lastUpdated))
+      : null;
+
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold mb-4">
-          Iran Geopolitical Risk Dashboard
-        </h1>
-        <p className="text-lg opacity-80">
-          Tracking prediction markets and forecasts on Iran
-        </p>
-        {lastUpdate.timestamp && (
-          <p className="text-sm opacity-60 mt-2">
-            Last updated{" "}
-            {formatDistanceToNow(new Date(lastUpdate.timestamp))} ago
-            {!lastUpdate.success && (
-              <span className="text-error"> (failed)</span>
-            )}
-          </p>
-        )}
+      {/* Day/night toggle */}
+      <div className="flex justify-end mb-4">
+        <button
+          onClick={toggleTheme}
+          className="btn btn-ghost btn-sm btn-square"
+          aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        >
+          {isDark ? <Sun className="w-4 h-4" /> : <Moon className="w-4 h-4" />}
+        </button>
       </div>
 
-      <div className="not-prose grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold tracking-tight mb-1">
+          Iran Geopolitical Risk Dashboard
+        </h1>
+        <p className="text-sm opacity-50">
+          Forecasting data from Polymarket, Kalshi, and Metaculus
+          {mostRecent && (
+            <span>
+              {" "}
+              &middot; Updated {formatDistanceToNow(new Date(mostRecent))} ago
+            </span>
+          )}
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {sortedGroups.map(([groupKey, groupMarkets]) => {
-          const isCombined = groupMarkets.length > 1;
           const title = GROUP_TITLES[groupKey] || groupKey;
 
-          if (isCombined) {
+          // Date question groups get a timeline chart
+          const isDateGroup = groupMarkets.some(
+            (m) => m.questionType === "date"
+          );
+          if (isDateGroup) {
             return (
-              <CombinedCard
+              <TimelineCard
                 key={groupKey}
                 title={title}
-                markets={groupMarkets}
+                market={groupMarkets[0]}
               />
             );
           }
 
-          // Single market in group — render as standalone
-          return <SingleCard key={groupKey} market={groupMarkets[0]} />;
+          return (
+            <CombinedCard
+              key={groupKey}
+              title={title}
+              markets={groupMarkets}
+              daysToShow={GROUP_DAYS_TO_SHOW[groupKey]}
+            />
+          );
         })}
 
         {/* Ungrouped markets (legacy) */}
@@ -123,29 +191,24 @@ function HomePage() {
         ))}
       </div>
 
-      {/* Data Sources */}
-      <div className="not-prose mt-12 text-center opacity-70">
-        <p>Data from: Polymarket • Kalshi • Metaculus</p>
-      </div>
-
-      {/* Support Link */}
-      <div className="not-prose mt-8 text-center pb-4">
-        <p className="text-lg">
+      {/* Footer */}
+      <div className="mt-12 pb-8 text-center text-sm opacity-50">
+        <p>
           Built by{" "}
           <a
             href="https://goodheartlabs.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="link link-primary"
+            className="underline hover:opacity-80"
           >
             Goodheart Labs
-          </a>{" "}
-          — support this project via{" "}
+          </a>
+          {" "}&middot; Support this project by buying a subscription on{" "}
           <a
             href="https://nathanpmyoung.substack.com"
             target="_blank"
             rel="noopener noreferrer"
-            className="link link-primary"
+            className="underline hover:opacity-80"
           >
             Substack
           </a>
@@ -159,9 +222,11 @@ function HomePage() {
 function CombinedCard({
   title,
   markets,
+  daysToShow,
 }: {
   title: string;
   markets: Market[];
+  daysToShow?: number;
 }) {
   const series: ChartSeries[] = markets.map((m) => ({
     label: m.title,
@@ -172,47 +237,95 @@ function CombinedCard({
   }));
 
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100">
       <div className="card-body">
         <h3 className="card-title text-lg mb-1">{title}</h3>
 
-        {/* Probability badges for each market */}
+        {/* Market names with probabilities */}
         <div className="flex flex-wrap gap-3 mb-3">
-          {markets.map((m) => (
-            <div key={m._id} className="flex items-center gap-2">
-              <div
-                className="w-2.5 h-2.5 rounded-full"
-                style={{ backgroundColor: m.chartColor || "#3B82F6" }}
-              />
-              <span className="text-lg font-bold">{m.probability}%</span>
-              <ProbTrend market={m} />
-              <span
-                className={`badge badge-xs ${SOURCE_BADGE[m.source] || "badge-ghost"}`}
-              >
-                {m.source}
-              </span>
-            </div>
-          ))}
+          {markets.map((m) => {
+            const label = m.shortLabel || m.source;
+
+            return (
+              <div key={m._id} className="flex items-center gap-2">
+                <span className="text-lg font-bold">{m.probability}%</span>
+
+                {m.sourceUrl ? (
+                  <a
+                    href={m.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm font-medium hover:underline inline-flex items-center gap-1"
+                    style={{ color: m.chartColor || "#3B82F6" }}
+                  >
+                    {label}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                ) : (
+                  <span
+                    className="text-sm font-medium"
+                    style={{ color: m.chartColor || "#3B82F6" }}
+                  >
+                    {label}
+                  </span>
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <CombinedChart series={series} />
+        <CombinedChart series={series} daysToShow={daysToShow} />
+      </div>
+    </div>
+  );
+}
 
-        {/* Links row */}
-        <div className="flex flex-wrap gap-3 mt-3 text-sm">
-          {markets.map((m) =>
-            m.sourceUrl ? (
-              <a
-                key={m._id}
-                href={m.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="link link-primary text-xs"
-              >
-                {m.source} →
-              </a>
-            ) : null
+/** Card for a date question (timeline chart with confidence band) */
+function TimelineCard({ title, market }: { title: string; market: Market }) {
+  // Transform the 0-1 center to a year for the headline display
+  const center01 = market.probability / 100;
+  const rangeMin = market.scalingRangeMin ?? 0;
+  const rangeMax = market.scalingRangeMax ?? 1;
+  const predictedTimestamp = rangeMin + (rangeMax - rangeMin) * center01;
+  const predictedYear = new Date(predictedTimestamp * 1000).getFullYear();
+
+  const label = market.shortLabel || market.source;
+
+  return (
+    <div className="card bg-base-100">
+      <div className="card-body">
+        <h3 className="card-title text-lg mb-1">{title}</h3>
+
+        <div className="flex items-center gap-2 mb-3">
+          <span className="text-lg font-bold">~{predictedYear}</span>
+          {market.sourceUrl ? (
+            <a
+              href={market.sourceUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium hover:underline inline-flex items-center gap-1"
+              style={{ color: market.chartColor || "#8B5CF6" }}
+            >
+              {label}
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          ) : (
+            <span
+              className="text-sm font-medium"
+              style={{ color: market.chartColor || "#8B5CF6" }}
+            >
+              {label}
+            </span>
           )}
+          <span className="text-xs opacity-50">(shaded area 90% CI)</span>
         </div>
+
+        <TimelineChart
+          history={market.history}
+          scalingRangeMin={rangeMin}
+          scalingRangeMax={rangeMax}
+          color={market.chartColor || "#8B5CF6"}
+        />
       </div>
     </div>
   );
@@ -221,7 +334,7 @@ function CombinedCard({
 /** Card for a single standalone market */
 function SingleCard({ market }: { market: Market }) {
   return (
-    <div className="card bg-base-100 shadow-xl">
+    <div className="card bg-base-100">
       <div className="card-body">
         <div className="flex items-start justify-between mb-3">
           <div className="flex-1 mr-4">
@@ -231,13 +344,16 @@ function SingleCard({ market }: { market: Market }) {
                   href={market.sourceUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="link link-hover"
+                  className="hover:underline inline-flex items-center gap-1"
                 >
                   {market.title}
+                  <ExternalLink className="w-3.5 h-3.5" />
                 </a>
               </h3>
             ) : (
-              <h3 className="card-title text-lg mb-1">{market.title}</h3>
+              <h3 className="card-title text-lg mb-1">
+                {market.title}
+              </h3>
             )}
             {market.clarificationText && (
               <p className="text-sm opacity-70">{market.clarificationText}</p>
@@ -248,7 +364,7 @@ function SingleCard({ market }: { market: Market }) {
             <div className="text-xl font-bold text-primary">
               {market.probability}%
             </div>
-            <ProbTrend market={market} />
+
           </div>
         </div>
 
@@ -256,47 +372,11 @@ function SingleCard({ market }: { market: Market }) {
 
         <div className="flex items-center justify-between mt-4 text-sm">
           <span className="opacity-50 capitalize">
-            <span
-              className={`badge badge-xs mr-2 ${SOURCE_BADGE[market.source] || "badge-ghost"}`}
-            >
-              {market.source}
-            </span>
-            {new Date(market.lastUpdated).toLocaleDateString()}
+            {market.source} · {new Date(market.lastUpdated).toLocaleDateString()}
           </span>
-          {market.sourceUrl && (
-            <a
-              href={market.sourceUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="link link-primary"
-            >
-              View Market →
-            </a>
-          )}
         </div>
       </div>
     </div>
   );
 }
 
-/** Tiny trend indicator */
-function ProbTrend({ market }: { market: Market }) {
-  if (!market.previousProbability) return null;
-  const diff = market.probability - market.previousProbability;
-  if (diff === 0) return null;
-
-  return (
-    <span className="text-xs">
-      {diff > 0 ? (
-        <span className="text-success flex items-center">
-          <TrendingUp className="w-3 h-3 mr-0.5" />+{diff}
-        </span>
-      ) : (
-        <span className="text-error flex items-center">
-          <TrendingDown className="w-3 h-3 mr-0.5" />
-          {diff}
-        </span>
-      )}
-    </span>
-  );
-}

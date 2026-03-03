@@ -6,19 +6,23 @@ export const updateCurrentPrice = internalMutation({
     predictionId: v.id("predictions"),
     probability: v.number(),
     timestamp: v.number(),
+    lowerBound: v.optional(v.number()),
+    upperBound: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
     const prediction = await ctx.db.get(args.predictionId);
     if (!prediction) {
       throw new Error("Prediction not found");
     }
-    
+
     // Store history point for the price change
     await ctx.db.insert("predictionHistory", {
       predictionId: args.predictionId,
       probability: args.probability,
       timestamp: args.timestamp,
       source: prediction.source,
+      ...(args.lowerBound !== undefined && { lowerBound: args.lowerBound }),
+      ...(args.upperBound !== undefined && { upperBound: args.upperBound }),
     });
     
     // Update the prediction

@@ -19,6 +19,14 @@
     
     <link rel="stylesheet" href="/src/index.css" />
     <title>Iran Geopolitical Risk Dashboard</title>
+    <script>
+      // Apply theme before first paint to avoid flash
+      (function() {
+        var o = localStorage.getItem('dashboard-theme-override');
+        var dark = o === 'dark' ? true : o === 'light' ? false : window.matchMedia('(prefers-color-scheme: dark)').matches;
+        document.documentElement.setAttribute('data-theme', dark ? 'dark-analyst' : 'minimal');
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

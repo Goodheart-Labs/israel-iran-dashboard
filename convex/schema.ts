@@ -81,7 +81,12 @@ export default defineSchema({
     isRejected: v.optional(v.boolean()), // Admin rejection
     chartGroup: v.optional(v.string()), // Group markets on same chart (e.g. "nuclear_deal", "hormuz")
     chartColor: v.optional(v.string()), // Hex color for this series on combined charts
+    shortLabel: v.optional(v.string()), // Label shown in combined charts (e.g. "by June 30 · Polymarket")
     sortOrder: v.optional(v.number()), // Display order on dashboard
+    questionType: v.optional(v.union(v.literal("binary"), v.literal("date"))), // "date" for date questions
+    scalingRangeMin: v.optional(v.number()), // For date questions: min timestamp
+    scalingRangeMax: v.optional(v.number()), // For date questions: max timestamp
+    scalingZeroPoint: v.optional(v.number()), // For log scaling (null = linear)
   })
     .index("by_category", ["category"])
     .index("by_source", ["source"])
@@ -93,6 +98,8 @@ export default defineSchema({
     predictionId: v.id("predictions"),
     probability: v.number(),
     timestamp: v.number(),
+    lowerBound: v.optional(v.number()), // 0-1 interval lower bound (for date questions)
+    upperBound: v.optional(v.number()), // 0-1 interval upper bound (for date questions)
     source: v.union(
       v.literal("metaculus"),
       v.literal("kalshi"),

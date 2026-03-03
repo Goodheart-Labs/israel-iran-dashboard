@@ -23,13 +23,10 @@ function RootComponent() {
   return (
     <ConvexProvider client={convex}>
       <QueryClientProvider client={queryClient}>
-        <div className="min-h-screen flex flex-col">
-          <main className="flex-1 container mx-auto p-4 prose prose-invert max-w-none">
+        <div className="min-h-screen bg-base-200 text-base-content">
+          <main className="flex-1 container mx-auto p-4 max-w-none">
             <Outlet />
           </main>
-          <footer className="footer footer-center p-4 text-base-content">
-            <p>© {new Date().getFullYear()} Fullstack Vibe Coding</p>
-          </footer>
         </div>
         {import.meta.env.DEV && <TanStackRouterDevtools />}
       </QueryClientProvider>

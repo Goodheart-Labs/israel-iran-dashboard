@@ -2,9 +2,11 @@
 @plugin "@tailwindcss/typography";
 @plugin "daisyui";
 
+/* ─── Original "fantasy" themes (kept as fallback) ─── */
+
 @plugin "daisyui/theme" {
   name: "fantasy";
-  default: true;
+  default: false;
   prefersdark: false;
   color-scheme: "light";
   --color-base-100: oklch(100% 0 0);
@@ -40,7 +42,7 @@
 @plugin "daisyui/theme" {
   name: "fantasy-dark";
   default: false;
-  prefersdark: true;
+  prefersdark: false;
   color-scheme: "dark";
   --color-base-100: oklch(13.903% 0.029 256.847);
   --color-base-200: oklch(10.902% 0.029 256.847);
@@ -72,7 +74,167 @@
   --noise: 0;
 }
 
-/* Custom font family is preserved */
+/* ─── Minimal Modern ─── */
+/* Clean whites, thin borders, muted blue accent. Stripe/Linear vibes. */
+
+@plugin "daisyui/theme" {
+  name: "minimal";
+  default: true;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(97% 0.002 247);
+  --color-base-300: oklch(92% 0.004 247);
+  --color-base-content: oklch(18% 0.012 261);
+  --color-primary: oklch(55% 0.21 264);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(59% 0.014 254);
+  --color-secondary-content: oklch(100% 0 0);
+  --color-accent: oklch(62% 0.19 250);
+  --color-accent-content: oklch(100% 0 0);
+  --color-neutral: oklch(32% 0.015 261);
+  --color-neutral-content: oklch(93% 0.004 261);
+  --color-info: oklch(68% 0.15 235);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(64% 0.17 153);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(80% 0.16 80);
+  --color-warning-content: oklch(20% 0 0);
+  --color-error: oklch(60% 0.2 25);
+  --color-error-content: oklch(100% 0 0);
+  --radius-selector: 0.5rem;
+  --radius-field: 0.375rem;
+  --radius-box: 0.5rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* ─── Dark Analyst ─── */
+/* Slate darks, subtle borders, cool blue accents. Bloomberg/terminal feel. */
+
+@plugin "daisyui/theme" {
+  name: "dark-analyst";
+  default: false;
+  prefersdark: false;
+  color-scheme: "dark";
+  --color-base-100: oklch(26% 0.02 260);
+  --color-base-200: oklch(20% 0.02 260);
+  --color-base-300: oklch(35% 0.018 260);
+  --color-base-content: oklch(93% 0.006 255);
+  --color-primary: oklch(74% 0.14 224);
+  --color-primary-content: oklch(16% 0.02 224);
+  --color-secondary: oklch(68% 0.16 285);
+  --color-secondary-content: oklch(16% 0.02 285);
+  --color-accent: oklch(78% 0.13 195);
+  --color-accent-content: oklch(16% 0.02 195);
+  --color-neutral: oklch(45% 0.015 260);
+  --color-neutral-content: oklch(90% 0.004 260);
+  --color-info: oklch(74% 0.14 224);
+  --color-info-content: oklch(16% 0.02 224);
+  --color-success: oklch(72% 0.19 155);
+  --color-success-content: oklch(16% 0.02 155);
+  --color-warning: oklch(82% 0.16 80);
+  --color-warning-content: oklch(16% 0.02 80);
+  --color-error: oklch(65% 0.2 25);
+  --color-error-content: oklch(100% 0 0);
+  --radius-selector: 0.375rem;
+  --radius-field: 0.25rem;
+  --radius-box: 0.375rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+/* ─── Editorial ─── */
+/* Warm cream, serif headlines, FT/Economist red accent. */
+
+@plugin "daisyui/theme" {
+  name: "editorial";
+  default: false;
+  prefersdark: false;
+  color-scheme: "light";
+  --color-base-100: oklch(100% 0 0);
+  --color-base-200: oklch(97.5% 0.008 80);
+  --color-base-300: oklch(91% 0.008 74);
+  --color-base-content: oklch(18% 0 0);
+  --color-primary: oklch(50% 0.18 27);
+  --color-primary-content: oklch(100% 0 0);
+  --color-secondary: oklch(35% 0.035 252);
+  --color-secondary-content: oklch(95% 0.005 252);
+  --color-accent: oklch(69% 0.165 55);
+  --color-accent-content: oklch(18% 0.02 55);
+  --color-neutral: oklch(30% 0.01 74);
+  --color-neutral-content: oklch(93% 0.006 74);
+  --color-info: oklch(62% 0.15 240);
+  --color-info-content: oklch(100% 0 0);
+  --color-success: oklch(60% 0.16 155);
+  --color-success-content: oklch(100% 0 0);
+  --color-warning: oklch(80% 0.16 80);
+  --color-warning-content: oklch(20% 0 0);
+  --color-error: oklch(50% 0.18 27);
+  --color-error-content: oklch(100% 0 0);
+  --radius-selector: 0.125rem;
+  --radius-field: 0.125rem;
+  --radius-box: 0.125rem;
+  --size-selector: 0.25rem;
+  --size-field: 0.25rem;
+  --border: 1px;
+  --depth: 0;
+  --noise: 0;
+}
+
+
+/* ─── Base styles ─── */
+
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: "Inter", system-ui, -apple-system, sans-serif;
+}
+
+/* ─── Per-theme structural overrides ─── */
+
+/* Minimal: flat cards with thin border */
+[data-theme="minimal"] .card {
+  box-shadow: none;
+  border: 1px solid oklch(92% 0.004 247);
+}
+
+/* Dark Analyst: flat cards with subtle lighter border */
+[data-theme="dark-analyst"] .card {
+  box-shadow: none;
+  border: 1px solid oklch(35% 0.018 260);
+}
+
+/* Editorial: no shadow, bottom accent border only */
+[data-theme="editorial"] .card {
+  box-shadow: none;
+  border: none;
+  border-bottom: 2px solid oklch(88% 0.01 74);
+}
+
+[data-theme="editorial"] .card-title {
+  font-family: Georgia, "Times New Roman", serif;
+  letter-spacing: -0.01em;
+}
+
+[data-theme="editorial"] h1 {
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+/* ─── Chart tooltip CSS variables ─── */
+
+:root {
+  --chart-tooltip-bg: #1f2937;
+  --chart-tooltip-border: #374151;
+  --chart-tooltip-text: #f9fafb;
+}
+
+[data-theme="dark-analyst"] {
+  --chart-tooltip-bg: #334155;
+  --chart-tooltip-border: #475569;
+  --chart-tooltip-text: #f1f5f9;
 }

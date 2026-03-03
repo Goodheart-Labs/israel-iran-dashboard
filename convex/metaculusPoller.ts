@@ -52,16 +52,20 @@ export const pollMetaculusPrices = action({
           const q = data.question;
 
           let probability = 0;
+          let lowerBound: number | undefined;
+          let upperBound: number | undefined;
 
           // Try aggregations first (community prediction)
-          if (q?.aggregations?.recency_weighted?.latest?.centers?.[0] !== undefined) {
-            probability = Math.round(
-              q.aggregations.recency_weighted.latest.centers[0] * 100
-            );
+          const latest = q?.aggregations?.recency_weighted?.latest;
+          if (latest?.centers?.[0] !== undefined) {
+            probability = Math.round(latest.centers[0] * 100);
+            lowerBound = latest.interval_lower_bounds?.[0];
+            upperBound = latest.interval_upper_bounds?.[0];
           } else if (q?.aggregations?.metaculus_prediction?.latest?.centers?.[0] !== undefined) {
-            probability = Math.round(
-              q.aggregations.metaculus_prediction.latest.centers[0] * 100
-            );
+            const mpLatest = q.aggregations.metaculus_prediction.latest;
+            probability = Math.round(mpLatest.centers[0] * 100);
+            lowerBound = mpLatest.interval_lower_bounds?.[0];
+            upperBound = mpLatest.interval_upper_bounds?.[0];
           }
 
           if (probability > 0 && prediction.probability !== probability) {
@@ -71,6 +75,8 @@ export const pollMetaculusPrices = action({
                 predictionId: prediction._id,
                 probability,
                 timestamp: Date.now(),
+                lowerBound,
+                upperBound,
               }
             );
             console.log(
