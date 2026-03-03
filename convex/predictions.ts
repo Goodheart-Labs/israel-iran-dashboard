@@ -580,30 +580,19 @@ export const storeMarketHistory = mutation({
     source: v.union(v.literal("polymarket"), v.literal("kalshi"))
   },
   handler: async (ctx, args) => {
-    // Find prediction by market slug in source URL
+    // Find prediction by market slug in source URL (prefer active ones)
     const predictions = await ctx.db
       .query("predictions")
       .collect();
-    
+
     let prediction = null;
-    
-    // If marketSlug provided, use that (more reliable)
-    if (args.marketSlug) {
-      for (const p of predictions) {
-        if (p.sourceUrl && p.sourceUrl.includes(args.marketSlug)) {
-          prediction = p;
-          break;
-        }
-      }
-    } else {
-      // Fallback to old behavior for backward compatibility
-      for (const p of predictions) {
-        if (p.sourceUrl && p.sourceUrl.includes(args.marketId)) {
-          prediction = p;
-          break;
-        }
-      }
-    }
+
+    const slug = args.marketSlug || args.marketId;
+    const matches = predictions.filter(
+      (p) => p.sourceUrl && p.sourceUrl.includes(slug)
+    );
+    // Prefer active prediction when multiple match the same slug
+    prediction = matches.find((p) => p.isActive) || matches[0] || null;
     
     if (!prediction) {
       return { success: false, error: "Prediction not found", stored: 0 };
