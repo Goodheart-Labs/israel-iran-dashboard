@@ -33,25 +33,32 @@ export const pollCurrentPrices = action({
       const updatePromises = predictions.map(async (prediction: any) => {
         try {
           if (prediction.source === "polymarket") {
-            // Extract slug
+            // Extract slug from sourceUrl
             const urlParts = (prediction.sourceUrl || "").split('/');
             const slug = urlParts[urlParts.length - 1];
             if (!slug) {
               throw new Error("No slug in sourceUrl");
             }
 
-            // Quick fetch for current price only
-            const response = await fetch(`https://gamma-api.polymarket.com/events?slug=${slug}`);
-            if (!response.ok) {
-              throw new Error(`API returned ${response.status}`);
+            // Try events API first; fall back to markets API for market-level slugs
+            let market: any = null;
+            const eventsResp = await fetch(`https://gamma-api.polymarket.com/events?slug=${slug}`);
+            if (eventsResp.ok) {
+              const events = await eventsResp.json();
+              if (events?.[0]?.markets?.[0]) {
+                market = events[0].markets[0];
+              }
             }
 
-            const events = await response.json();
-            if (!events?.[0]?.markets?.[0]) {
-              throw new Error(`No market found for slug: ${slug}`);
+            if (!market) {
+              // Fall back: slug might be a market-level slug
+              const mktResp = await fetch(`https://gamma-api.polymarket.com/markets?slug=${slug}`);
+              if (!mktResp.ok) throw new Error(`API returned ${mktResp.status}`);
+              const mkts = await mktResp.json();
+              if (!mkts?.[0]) throw new Error(`No market found for slug: ${slug}`);
+              market = mkts[0];
             }
 
-            const market = events[0].markets[0];
             if (!market.outcomePrices) {
               throw new Error("No outcomePrices in market response");
             }

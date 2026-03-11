@@ -131,7 +131,8 @@ type MarketConfig = {
   sortOrder: number;  // Display order
   shortLabel?: string;     // Label shown in combined charts (e.g. "by June 30 · Polymarket")
   // Source-specific identifiers
-  slug?: string;           // Polymarket slug
+  slug?: string;           // Polymarket event slug (for single-market events)
+  marketSlug?: string;     // Polymarket market slug (for specific markets within multi-outcome events)
   kalshiTicker?: string;   // Kalshi ticker
   metaculusId?: number;    // Metaculus question ID
   // Date question config
@@ -177,12 +178,48 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     shortLabel: "for 7+ days · Kalshi",
   },
 
-  // --- Standalone: US/Iran Ceasefire (Polymarket) ---
+  // --- Combined chart: US/Iran Ceasefire (Polymarket + Metaculus) ---
   {
     source: "polymarket", slug: "us-x-iran-ceasefire-by",
     category: "military_action", chartGroup: "ceasefire",
     chartColor: SOURCE_COLORS.polymarket, sortOrder: 3,
     shortLabel: "Polymarket",
+  },
+  {
+    source: "metaculus", metaculusId: 42472,
+    category: "military_action", chartGroup: "ceasefire",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 3,
+    shortLabel: "Metaculus",
+  },
+
+  // --- Standalone: Conflict ends (Polymarket) ---
+  {
+    source: "polymarket",
+    slug: "iran-x-israelus-conflict-ends-by", // event slug for URL
+    marketSlug: "iran-x-israelus-conflict-ends-by-june-30",
+    category: "military_action", chartGroup: "conflict_ends",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 7,
+    shortLabel: "by June 30 · Polymarket",
+  },
+
+  // --- Standalone: Trump announces end of ops (Polymarket) ---
+  {
+    source: "polymarket",
+    slug: "trump-announces-end-of-military-operations-against-iran-by",
+    marketSlug: "trump-announces-end-of-military-operations-against-iran-by-june-30th",
+    category: "military_action", chartGroup: "ops_end",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 8,
+    shortLabel: "by June 30 · Polymarket",
+  },
+
+  // --- Standalone: US forces enter Iran / boots on ground (Polymarket) ---
+  {
+    source: "polymarket",
+    slug: "us-forces-enter-iran-by",
+    marketSlug: "us-forces-enter-iran-by-december-31-573-642-385-371-179",
+    category: "military_action", chartGroup: "us_forces_enter",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 9,
+    shortLabel: "by Dec 31 · Polymarket",
   },
 
   // --- Combined chart: US Invasion (Polymarket + Metaculus) ---
@@ -983,27 +1020,42 @@ export const seedInitialMarkets = action({
         let sourceUrl = "";
         let resolveDate: number | undefined;
 
-        if (config.source === "polymarket" && config.slug) {
-          const eventResponse = await fetch(
-            `https://gamma-api.polymarket.com/events?slug=${config.slug}`,
-            { headers: { 'Accept': 'application/json' } }
-          );
-          if (!eventResponse.ok) throw new Error(`Polymarket API ${eventResponse.status}`);
+        if (config.source === "polymarket" && (config.slug || config.marketSlug)) {
+          let md: any;
+          if (config.marketSlug) {
+            // Direct market slug lookup (for specific markets within multi-outcome events)
+            const mktResp = await fetch(
+              `https://gamma-api.polymarket.com/markets?slug=${config.marketSlug}`,
+              { headers: { 'Accept': 'application/json' } }
+            );
+            if (!mktResp.ok) throw new Error(`Polymarket API ${mktResp.status}`);
+            const mkts = await mktResp.json();
+            if (!mkts?.[0]) throw new Error("No markets found");
+            md = mkts[0];
+          } else {
+            const eventResponse = await fetch(
+              `https://gamma-api.polymarket.com/events?slug=${config.slug}`,
+              { headers: { 'Accept': 'application/json' } }
+            );
+            if (!eventResponse.ok) throw new Error(`Polymarket API ${eventResponse.status}`);
 
-          const events = await eventResponse.json();
-          if (!events?.[0]?.markets?.[0]) throw new Error("No markets found");
+            const events = await eventResponse.json();
+            if (!events?.[0]?.markets?.[0]) throw new Error("No markets found");
 
-          const market = events[0].markets[0];
-          const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${market.id}`);
-          if (!marketResponse.ok) throw new Error(`Market API ${marketResponse.status}`);
+            const market = events[0].markets[0];
+            const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${market.id}`);
+            if (!marketResponse.ok) throw new Error(`Market API ${marketResponse.status}`);
+            md = await marketResponse.json();
+          }
 
-          const md = await marketResponse.json();
           probability = Math.round(parseOutcomePrices(md.outcomePrices)[0] * 100);
           title = md.question;
           description = md.description?.slice(0, 500);
-          // Use the event-level slug (config.slug) for the URL, not the market-level slug (md.slug)
-          // The events API only works with event slugs, and the user-facing URL also uses event slugs
-          sourceUrl = `https://polymarket.com/event/${config.slug}`;
+          // For marketSlug markets, store the market slug in sourceUrl so the poller can look it up directly.
+          // For event-slug markets, store the event slug (poller uses events API).
+          sourceUrl = config.marketSlug
+            ? `https://polymarket.com/event/${config.marketSlug}`
+            : `https://polymarket.com/event/${config.slug}`;
           resolveDate = md.endDate ? new Date(md.endDate).getTime() : undefined;
 
         } else if (config.source === "kalshi" && config.kalshiTicker) {
