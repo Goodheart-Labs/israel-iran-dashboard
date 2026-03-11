@@ -164,18 +164,14 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     shortLabel: "Kalshi",
   },
 
-  // --- Combined chart: Strait of Hormuz (Polymarket + Kalshi) ---
+  // --- Standalone: Any US forces enter Iran by Dec 31 (Polymarket) ---
   {
-    source: "polymarket", slug: "will-iran-close-the-strait-of-hormuz-by-2027",
-    category: "military_action", chartGroup: "hormuz",
+    source: "polymarket",
+    slug: "us-forces-enter-iran-by",
+    marketSlug: "us-forces-enter-iran-by-december-31-573-642-385-371-179",
+    category: "military_action", chartGroup: "us_forces_enter",
     chartColor: SOURCE_COLORS.polymarket, sortOrder: 4,
-    shortLabel: "Polymarket",
-  },
-  {
-    source: "kalshi", kalshiTicker: "KXCLOSEHORMUZ-27JAN",
-    category: "military_action", chartGroup: "hormuz",
-    chartColor: SOURCE_COLORS.kalshi, sortOrder: 4,
-    shortLabel: "for 7+ days · Kalshi",
+    shortLabel: "Any US forces · Polymarket",
   },
 
   // --- Standalone: Conflict ends (Polymarket) ---
