@@ -744,17 +744,24 @@ export const fetchAllMarketHistory = action({
 
         console.log(`[HISTORY] Polymarket: ${prediction.title}`);
 
+        // Try events API first; fall back to markets API for market-level slugs
+        let md: any = null;
         const eventResponse = await fetch(`https://gamma-api.polymarket.com/events?slug=${slug}`);
-        if (!eventResponse.ok) throw new Error(`Events API ${eventResponse.status}`);
-
-        const events = await eventResponse.json();
-        if (!events?.[0]?.markets?.[0]) throw new Error("No markets found");
-
-        const market = events[0].markets[0];
-        const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${market.id}`);
-        if (!marketResponse.ok) throw new Error(`Market API ${marketResponse.status}`);
-
-        const md = await marketResponse.json();
+        if (eventResponse.ok) {
+          const events = await eventResponse.json();
+          if (events?.[0]?.markets?.[0]) {
+            const market = events[0].markets[0];
+            const marketResponse = await fetch(`https://gamma-api.polymarket.com/markets/${market.id}`);
+            if (marketResponse.ok) md = await marketResponse.json();
+          }
+        }
+        if (!md) {
+          const mktResp = await fetch(`https://gamma-api.polymarket.com/markets?slug=${slug}`);
+          if (!mktResp.ok) throw new Error(`Market API ${mktResp.status}`);
+          const mkts = await mktResp.json();
+          if (!mkts?.[0]) throw new Error("No markets found");
+          md = mkts[0];
+        }
         if (!md.clobTokenIds) throw new Error("No clobTokenIds");
 
         const clobTokenIds = JSON.parse(md.clobTokenIds);
