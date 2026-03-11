@@ -284,7 +284,7 @@ function AdminDashboard() {
                             <button
                               className="btn btn-xs btn-error"
                               onClick={() =>
-                                handleDeleteMarket(market._id, market.title)
+                                void handleDeleteMarket(market._id, market.title)
                               }
                             >
                               Delete
@@ -309,7 +309,7 @@ function AdminDashboard() {
               {/* Manual Update Button */}
               <button
                 className={`btn btn-primary w-full ${isUpdating ? "loading" : ""}`}
-                onClick={handleManualUpdate}
+                onClick={() => void handleManualUpdate()}
                 disabled={isUpdating}
               >
                 {isUpdating ? (
@@ -464,7 +464,7 @@ function AdminDashboard() {
               <div className="divider">Initial Setup</div>
               <button
                 className="btn btn-warning w-full mb-4"
-                onClick={async () => {
+                onClick={() => void (async () => {
                   if (
                     !confirm(
                       "This will load 30 days of historical data for all markets. Continue?",
@@ -480,11 +480,11 @@ function AdminDashboard() {
                     );
                   } catch (error) {
                     console.error("Initial load failed:", error);
-                    alert("Initial load failed: " + error);
+                    alert("Initial load failed: " + String(error));
                   } finally {
                     setIsUpdating(false);
                   }
-                }}
+                })()}
                 disabled={isUpdating}
               >
                 {isUpdating
@@ -497,7 +497,7 @@ function AdminDashboard() {
               {/* Manual Historical Update Button */}
               <button
                 className={`btn btn-secondary w-full mb-4 ${isUpdating ? "loading" : ""}`}
-                onClick={async () => {
+                onClick={() => void (async () => {
                   setIsUpdating(true);
                   try {
                     const result = await updateHistoricalData();
@@ -507,7 +507,7 @@ function AdminDashboard() {
                   } finally {
                     setIsUpdating(false);
                   }
-                }}
+                })()}
                 disabled={isUpdating}
               >
                 {isUpdating ? (
@@ -523,7 +523,7 @@ function AdminDashboard() {
               {/* Test Price Polling Button */}
               <button
                 className="btn btn-outline btn-primary w-full mb-4"
-                onClick={async () => {
+                onClick={() => void (async () => {
                   try {
                     const result = await pollCurrentPrices();
                     console.log("Price poll result:", result);
@@ -532,9 +532,9 @@ function AdminDashboard() {
                     );
                   } catch (error) {
                     console.error("Price poll failed:", error);
-                    alert("Price poll failed: " + error);
+                    alert("Price poll failed: " + String(error));
                   }
-                }}
+                })()}
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Test Price Polling
@@ -549,7 +549,7 @@ function AdminDashboard() {
 
               <button
                 className={`btn btn-secondary w-full ${isFetchingHistory ? "loading" : ""}`}
-                onClick={handleFetchHistory}
+                onClick={() => void handleFetchHistory()}
                 disabled={isFetchingHistory}
               >
                 {isFetchingHistory ? (
@@ -592,7 +592,7 @@ function AdminDashboard() {
               {/* Debug Button */}
               <button
                 className={`btn btn-outline btn-warning w-full mt-4 ${isDebugging ? "loading" : ""}`}
-                onClick={async () => {
+                onClick={() => void (async () => {
                   setIsDebugging(true);
                   setDebugResult(null);
                   try {
@@ -607,7 +607,7 @@ function AdminDashboard() {
                   } finally {
                     setIsDebugging(false);
                   }
-                }}
+                })()}
                 disabled={isDebugging}
               >
                 {isDebugging ? "Debugging..." : "Debug Historical Gaps"}
@@ -682,7 +682,7 @@ function AdminDashboard() {
             <div className="modal-action">
               <button
                 className="btn btn-primary"
-                onClick={handleSaveClarification}
+                onClick={() => void handleSaveClarification()}
                 disabled={isLoading}
               >
                 {isLoading ? "Saving..." : "Save"}

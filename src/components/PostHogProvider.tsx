@@ -20,4 +20,5 @@ export function CSPostHogProvider({ children }: { children: ReactNode }) {
   return <PostHogProvider client={posthog}>{children}</PostHogProvider>
 }
 
+// eslint-disable-next-line react-refresh/only-export-components
 export { posthog }

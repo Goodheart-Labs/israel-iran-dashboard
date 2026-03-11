@@ -20,7 +20,7 @@ function DebugAuthPage() {
       alert("Token logged to console");
     } catch (error) {
       console.error("Failed to get token:", error);
-      alert("Failed to get token: " + error);
+      alert("Failed to get token: " + String(error));
     }
   };
 

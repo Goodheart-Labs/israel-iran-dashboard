@@ -178,20 +178,6 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     shortLabel: "for 7+ days · Kalshi",
   },
 
-  // --- Combined chart: US/Iran Ceasefire (Polymarket + Metaculus) ---
-  {
-    source: "polymarket", slug: "us-x-iran-ceasefire-by",
-    category: "military_action", chartGroup: "ceasefire",
-    chartColor: SOURCE_COLORS.polymarket, sortOrder: 3,
-    shortLabel: "Polymarket",
-  },
-  {
-    source: "metaculus", metaculusId: 42472,
-    category: "military_action", chartGroup: "ceasefire",
-    chartColor: SOURCE_COLORS.metaculus, sortOrder: 3,
-    shortLabel: "Metaculus",
-  },
-
   // --- Standalone: Conflict ends (Polymarket) ---
   {
     source: "polymarket",
@@ -200,26 +186,6 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     category: "military_action", chartGroup: "conflict_ends",
     chartColor: SOURCE_COLORS.polymarket, sortOrder: 7,
     shortLabel: "by June 30 · Polymarket",
-  },
-
-  // --- Standalone: Trump announces end of ops (Polymarket) ---
-  {
-    source: "polymarket",
-    slug: "trump-announces-end-of-military-operations-against-iran-by",
-    marketSlug: "trump-announces-end-of-military-operations-against-iran-by-june-30th",
-    category: "military_action", chartGroup: "ops_end",
-    chartColor: SOURCE_COLORS.polymarket, sortOrder: 8,
-    shortLabel: "by June 30 · Polymarket",
-  },
-
-  // --- Standalone: US forces enter Iran / boots on ground (Polymarket) ---
-  {
-    source: "polymarket",
-    slug: "us-forces-enter-iran-by",
-    marketSlug: "us-forces-enter-iran-by-december-31-573-642-385-371-179",
-    category: "military_action", chartGroup: "us_forces_enter",
-    chartColor: SOURCE_COLORS.polymarket, sortOrder: 9,
-    shortLabel: "by Dec 31 · Polymarket",
   },
 
   // --- Combined chart: US Invasion (Polymarket + Metaculus) ---
