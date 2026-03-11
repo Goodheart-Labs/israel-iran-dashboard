@@ -119,16 +119,18 @@ export function TimelineChart({
             stroke="#9CA3AF"
             angle={-45}
             textAnchor="end"
-            height={40}
+            height={50}
             tickLine={false}
+            label={{ value: "Date of forecast", position: "insideBottom", offset: -2, fontSize: 10, fill: "#6B7280" }}
           />
           <YAxis
             domain={[yMin, yMax]}
             tick={{ fontSize: 10 }}
             stroke="#9CA3AF"
             tickFormatter={formatYear}
-            width={40}
+            width={50}
             tickLine={false}
+            label={{ value: "Date it ceases", angle: -90, position: "insideLeft", offset: 10, fontSize: 10, fill: "#6B7280" }}
           />
           <Tooltip
             contentStyle={{

@@ -27,6 +27,8 @@ const GROUP_TITLES: Record<string, string> = {
   us_invasion: "US Ground Invasion of Iran Before 2027",
   nuclear_weapon: "Iran Nuclear Weapon Before 2030",
   islamic_republic: "Iran Ceases to be Islamic Republic",
+  conflict_ends: "Iran x Israel/US Conflict Ends",
+  us_forces_enter: "Any US Forces Enter Iran",
 };
 
 // Per-group chart config

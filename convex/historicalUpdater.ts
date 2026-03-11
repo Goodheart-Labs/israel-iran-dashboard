@@ -37,27 +37,34 @@ export const updateHistoricalData = action({
           console.log(`[HISTORICAL] Processing ${prediction.title} (${slug})`);
 
           // Fetch market details to get clobTokenId
+          // Try events API first; fall back to markets API for market-level slugs
+          let marketDetails: any = null;
           const eventResponse = await fetch(
             `https://gamma-api.polymarket.com/events?slug=${slug}`,
           );
-          if (!eventResponse.ok) {
-            throw new Error(`Event API returned ${eventResponse.status}`);
+          if (eventResponse.ok) {
+            const events = await eventResponse.json();
+            if (events?.[0]?.markets?.[0]) {
+              const market = events[0].markets[0];
+              const marketResponse = await fetch(
+                `https://gamma-api.polymarket.com/markets/${market.id}`,
+              );
+              if (marketResponse.ok) {
+                marketDetails = await marketResponse.json();
+              }
+            }
           }
 
-          const events = await eventResponse.json();
-          if (!events?.[0]?.markets?.[0]) {
-            throw new Error("No markets found for slug");
+          if (!marketDetails) {
+            // Fall back: slug is a market-level slug
+            const mktResp = await fetch(
+              `https://gamma-api.polymarket.com/markets?slug=${slug}`,
+            );
+            if (!mktResp.ok) throw new Error(`Market API returned ${mktResp.status}`);
+            const mkts = await mktResp.json();
+            if (!mkts?.[0]) throw new Error("No markets found for slug");
+            marketDetails = mkts[0];
           }
-
-          const market = events[0].markets[0];
-          const marketResponse = await fetch(
-            `https://gamma-api.polymarket.com/markets/${market.id}`,
-          );
-          if (!marketResponse.ok) {
-            throw new Error(`Market API returned ${marketResponse.status}`);
-          }
-
-          const marketDetails = await marketResponse.json();
           if (!marketDetails.clobTokenIds) {
             throw new Error("No clobTokenIds found");
           }
