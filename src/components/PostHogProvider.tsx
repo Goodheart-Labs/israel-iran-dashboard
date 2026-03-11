@@ -3,7 +3,7 @@ import { PostHogProvider } from 'posthog-js/react'
 import { ReactNode } from 'react'
 
 // Initialize PostHog
-if (typeof window !== 'undefined') {
+if (typeof window !== 'undefined' && import.meta.env.PROD) {
   const posthogKey = import.meta.env.VITE_POSTHOG_KEY
   const posthogHost = import.meta.env.VITE_POSTHOG_HOST || 'https://us.i.posthog.com'
   

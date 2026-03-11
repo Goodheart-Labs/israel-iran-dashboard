@@ -19,7 +19,8 @@
       "Bash(mv:*)",
       "Bash(npx convex run:*)",
       "Bash(npx convex deploy:*)",
-      "Bash(pnpm convex logs:*)"
+      "Bash(pnpm convex logs:*)",
+      "mcp__playwright__browser_network_requests"
     ]
   },
   "enableAllProjectMcpServers": true,
