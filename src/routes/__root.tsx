@@ -3,12 +3,15 @@ import { QueryClientProvider } from "@tanstack/react-query";
 import {
   Outlet,
   createRootRouteWithContext,
+  useRouterState,
 } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import {
   ConvexReactClient,
   ConvexProvider,
 } from "convex/react";
+import { useEffect } from "react";
+import { posthog } from "@/components/PostHogProvider";
 
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
@@ -19,6 +22,11 @@ export const Route = createRootRouteWithContext<{
 
 function RootComponent() {
   const { queryClient, convexClient: convex } = Route.useRouteContext();
+  const location = useRouterState({ select: (s) => s.location });
+
+  useEffect(() => {
+    posthog.capture("$pageview", { $current_url: window.location.href });
+  }, [location.pathname, location.search]);
 
   return (
     <ConvexProvider client={convex}>

@@ -33,6 +33,7 @@ import type * as seed from "../seed.js";
 import type * as simple from "../simple.js";
 import type * as simpleUpdater from "../simpleUpdater.js";
 import type * as statusMutations from "../statusMutations.js";
+import type * as suggestions from "../suggestions.js";
 import type * as sync_syncData from "../sync/syncData.js";
 import type * as systemStatus from "../systemStatus.js";
 import type * as testData from "../testData.js";
@@ -69,6 +70,7 @@ declare const fullApi: ApiFromModules<{
   simple: typeof simple;
   simpleUpdater: typeof simpleUpdater;
   statusMutations: typeof statusMutations;
+  suggestions: typeof suggestions;
   "sync/syncData": typeof sync_syncData;
   systemStatus: typeof systemStatus;
   testData: typeof testData;

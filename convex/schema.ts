@@ -120,4 +120,24 @@ export default defineSchema({
     value: v.any(), // Flexible value storage
     updatedAt: v.number(),
   }).index("by_key", ["key"]),
+
+  // Community market suggestions
+  suggestions: defineTable({
+    text: v.string(),
+    upvotes: v.number(),
+    flags: v.number(),
+    status: v.union(v.literal("active"), v.literal("held")),
+    ipHash: v.string(), // SHA-256 hash of submitter's IP
+  })
+    .index("by_status", ["status"])
+    .index("by_status_upvotes", ["status", "upvotes"]),
+
+  // Tracks who has voted/flagged (prevents duplicates)
+  suggestionVotes: defineTable({
+    suggestionId: v.id("suggestions"),
+    ipHash: v.string(),
+    type: v.union(v.literal("upvote"), v.literal("flag")),
+  })
+    .index("by_suggestion", ["suggestionId"])
+    .index("by_suggestion_ip_type", ["suggestionId", "ipHash", "type"]),
 });

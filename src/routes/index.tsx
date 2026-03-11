@@ -8,6 +8,7 @@ import { CombinedChart, type ChartSeries } from "@/components/CombinedChart";
 import { TimelineChart } from "@/components/TimelineChart";
 import { formatDistanceToNow } from "date-fns";
 import { useState, useEffect } from "react";
+import { SuggestionsPanel } from "@/components/SuggestionsPanel";
 
 const simpleMarketsQuery = convexQuery(api.simple.getMarkets, {});
 
@@ -190,6 +191,8 @@ function HomePage() {
           <SingleCard key={market._id} market={market} />
         ))}
       </div>
+
+      <SuggestionsPanel />
 
       {/* Footer */}
       <div className="mt-12 pb-8 text-center text-sm opacity-50">

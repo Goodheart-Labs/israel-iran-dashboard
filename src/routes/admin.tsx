@@ -5,7 +5,7 @@ import { api } from "../../convex/_generated/api";
 import { Authenticated, Unauthenticated, AuthLoading } from "convex/react";
 import { SignInButton } from "@clerk/clerk-react";
 import type { Id } from "../../convex/_generated/dataModel";
-import { RefreshCw, CheckCircle, XCircle, Clock, BarChart } from "lucide-react";
+import { RefreshCw, CheckCircle, XCircle, Clock, BarChart, Flag, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 
 export const Route = createFileRoute("/admin")({
@@ -42,6 +42,52 @@ function AdminPage() {
         <AdminDashboard />
       </Authenticated>
     </>
+  );
+}
+
+function HeldSuggestionsCard() {
+  const held = useQuery(api.suggestions.listHeld) ?? [];
+  const approveMutation = useMutation(api.suggestions.approve);
+  const removeMutation = useMutation(api.suggestions.remove);
+
+  return (
+    <div className="card bg-base-100 shadow-xl">
+      <div className="card-body">
+        <h2 className="card-title">
+          <Flag className="w-5 h-5 text-warning" />
+          Flagged Suggestions ({held.length})
+        </h2>
+        {held.length === 0 ? (
+          <p className="text-sm opacity-50">No suggestions in the holding area.</p>
+        ) : (
+          <div className="space-y-3">
+            {held.map((s) => (
+              <div key={s._id} className="p-3 bg-base-200 rounded-lg text-sm">
+                <p className="mb-2">{s.text}</p>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs opacity-50">{s.flags} flags · {s.upvotes} upvotes</span>
+                  <div className="flex gap-2">
+                    <button
+                      className="btn btn-xs btn-success"
+                      onClick={() => void approveMutation({ suggestionId: s._id })}
+                    >
+                      Approve
+                    </button>
+                    <button
+                      className="btn btn-xs btn-error"
+                      onClick={() => void removeMutation({ suggestionId: s._id })}
+                    >
+                      <Trash2 className="w-3 h-3" />
+                      Delete
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
@@ -615,10 +661,12 @@ function AdminDashboard() {
               </div>
             </div>
           </div>
+
+          <HeldSuggestionsCard />
         </div>
       </div>
 
-      {/* Edit Modal */}
+      {/* Edit Clarification Modal */}
       {selectedMarket && (
         <div className="modal modal-open">
           <div className="modal-box">
