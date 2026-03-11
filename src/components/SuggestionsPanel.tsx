@@ -89,7 +89,7 @@ export function SuggestionsPanel() {
     <div className="mt-12 border-t border-base-300 pt-10">
       <h2 className="text-xl font-bold mb-1">Suggest a market</h2>
       <p className="text-sm opacity-50 mb-6">
-        What question should be on this dashboard? Suggest it below — top suggestions may get added.
+        What question should be on this dashboard? Suggest it below — if a suggestion gets lots of votes, it's much easier to convince Polymarket and Kalshi to make it a real market.
       </p>
 
       {/* Submit form */}
