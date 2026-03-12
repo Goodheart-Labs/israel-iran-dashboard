@@ -597,34 +597,31 @@ export const storeMarketHistory = mutation({
       return { success: false, error: "Prediction not found", stored: 0 };
     }
     
-    // Store historical data points
+    // Fetch all existing timestamps in one query to avoid per-point DB queries
+    const existingHistory = await ctx.db
+      .query("predictionHistory")
+      .withIndex("by_prediction_time", (q) =>
+        q.eq("predictionId", prediction._id)
+      )
+      .collect();
+    const existingTimestamps = new Set(existingHistory.map((h) => h.timestamp));
+
+    // Bulk insert only new points
     let stored = 0;
     for (const point of args.historyData) {
-      try {
-        // Check if this data point already exists
-        const existing = await ctx.db
-          .query("predictionHistory")
-          .withIndex("by_prediction_time", (q) => 
-            q.eq("predictionId", prediction._id)
-          )
-          .filter(q => q.eq(q.field("timestamp"), point.t * 1000))
-          .first();
-        
-        if (!existing) {
-          await ctx.db.insert("predictionHistory", {
-            predictionId: prediction._id,
-            probability: Math.round(point.p * 100), // Convert to percentage
-            timestamp: point.t * 1000, // Convert to milliseconds
-            source: args.source,
-          });
-          stored++;
-        }
-      } catch (error) {
-        // Skip if error (likely duplicate)
-        console.log("Skipping history point:", error);
+      const ts = point.t * 1000;
+      if (!existingTimestamps.has(ts)) {
+        await ctx.db.insert("predictionHistory", {
+          predictionId: prediction._id,
+          probability: Math.round(point.p * 100),
+          timestamp: ts,
+          source: args.source,
+        });
+        existingTimestamps.add(ts); // prevent dupes within same batch
+        stored++;
       }
     }
-    
+
     return { success: true, stored };
   },
 });
