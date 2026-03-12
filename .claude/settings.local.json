@@ -21,7 +21,9 @@
       "Bash(npx convex deploy:*)",
       "Bash(pnpm convex logs:*)",
       "mcp__playwright__browser_network_requests",
-      "mcp__playwright__browser_install"
+      "mcp__playwright__browser_install",
+      "Bash(curl -s \"https://www.metaculus.com/api/posts/5253/\")",
+      "Bash(curl -s \"https://www.metaculus.com/api/posts/7770/\")"
     ]
   },
   "enableAllProjectMcpServers": true,
