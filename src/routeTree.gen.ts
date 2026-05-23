@@ -11,14 +11,22 @@
 // Import Routes
 
 import { Route as rootRoute } from './routes/__root'
+import { Route as WishlistImport } from './routes/wishlist'
 import { Route as StatusImport } from './routes/status'
 import { Route as OriginalImport } from './routes/original'
 import { Route as MaintenanceImport } from './routes/maintenance'
+import { Route as HantavirusImport } from './routes/hantavirus'
 import { Route as DebugAuthImport } from './routes/debug-auth'
 import { Route as AdminImport } from './routes/admin'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
+
+const WishlistRoute = WishlistImport.update({
+  id: '/wishlist',
+  path: '/wishlist',
+  getParentRoute: () => rootRoute,
+} as any)
 
 const StatusRoute = StatusImport.update({
   id: '/status',
@@ -35,6 +43,12 @@ const OriginalRoute = OriginalImport.update({
 const MaintenanceRoute = MaintenanceImport.update({
   id: '/maintenance',
   path: '/maintenance',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const HantavirusRoute = HantavirusImport.update({
+  id: '/hantavirus',
+  path: '/hantavirus',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -81,6 +95,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DebugAuthImport
       parentRoute: typeof rootRoute
     }
+    '/hantavirus': {
+      id: '/hantavirus'
+      path: '/hantavirus'
+      fullPath: '/hantavirus'
+      preLoaderRoute: typeof HantavirusImport
+      parentRoute: typeof rootRoute
+    }
     '/maintenance': {
       id: '/maintenance'
       path: '/maintenance'
@@ -102,6 +123,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof StatusImport
       parentRoute: typeof rootRoute
     }
+    '/wishlist': {
+      id: '/wishlist'
+      path: '/wishlist'
+      fullPath: '/wishlist'
+      preLoaderRoute: typeof WishlistImport
+      parentRoute: typeof rootRoute
+    }
   }
 }
 
@@ -111,18 +139,22 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/hantavirus': typeof HantavirusRoute
   '/maintenance': typeof MaintenanceRoute
   '/original': typeof OriginalRoute
   '/status': typeof StatusRoute
+  '/wishlist': typeof WishlistRoute
 }
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/hantavirus': typeof HantavirusRoute
   '/maintenance': typeof MaintenanceRoute
   '/original': typeof OriginalRoute
   '/status': typeof StatusRoute
+  '/wishlist': typeof WishlistRoute
 }
 
 export interface FileRoutesById {
@@ -130,9 +162,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/hantavirus': typeof HantavirusRoute
   '/maintenance': typeof MaintenanceRoute
   '/original': typeof OriginalRoute
   '/status': typeof StatusRoute
+  '/wishlist': typeof WishlistRoute
 }
 
 export interface FileRouteTypes {
@@ -141,19 +175,31 @@ export interface FileRouteTypes {
     | '/'
     | '/admin'
     | '/debug-auth'
+    | '/hantavirus'
     | '/maintenance'
     | '/original'
     | '/status'
+    | '/wishlist'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/admin' | '/debug-auth' | '/maintenance' | '/original' | '/status'
+  to:
+    | '/'
+    | '/admin'
+    | '/debug-auth'
+    | '/hantavirus'
+    | '/maintenance'
+    | '/original'
+    | '/status'
+    | '/wishlist'
   id:
     | '__root__'
     | '/'
     | '/admin'
     | '/debug-auth'
+    | '/hantavirus'
     | '/maintenance'
     | '/original'
     | '/status'
+    | '/wishlist'
   fileRoutesById: FileRoutesById
 }
 
@@ -161,18 +207,22 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
   DebugAuthRoute: typeof DebugAuthRoute
+  HantavirusRoute: typeof HantavirusRoute
   MaintenanceRoute: typeof MaintenanceRoute
   OriginalRoute: typeof OriginalRoute
   StatusRoute: typeof StatusRoute
+  WishlistRoute: typeof WishlistRoute
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
   DebugAuthRoute: DebugAuthRoute,
+  HantavirusRoute: HantavirusRoute,
   MaintenanceRoute: MaintenanceRoute,
   OriginalRoute: OriginalRoute,
   StatusRoute: StatusRoute,
+  WishlistRoute: WishlistRoute,
 }
 
 export const routeTree = rootRoute
@@ -188,9 +238,11 @@ export const routeTree = rootRoute
         "/",
         "/admin",
         "/debug-auth",
+        "/hantavirus",
         "/maintenance",
         "/original",
-        "/status"
+        "/status",
+        "/wishlist"
       ]
     },
     "/": {
@@ -202,6 +254,9 @@ export const routeTree = rootRoute
     "/debug-auth": {
       "filePath": "debug-auth.tsx"
     },
+    "/hantavirus": {
+      "filePath": "hantavirus.tsx"
+    },
     "/maintenance": {
       "filePath": "maintenance.tsx"
     },
@@ -210,6 +265,9 @@ export const routeTree = rootRoute
     },
     "/status": {
       "filePath": "status.tsx"
+    },
+    "/wishlist": {
+      "filePath": "wishlist.tsx"
     }
   }
 }

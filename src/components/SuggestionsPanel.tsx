@@ -3,6 +3,7 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import { ThumbsUp, Flag, Send } from "lucide-react";
 import type { Id } from "../../convex/_generated/dataModel";
+import { Link } from "@tanstack/react-router";
 
 async function getIpHash(): Promise<string> {
   try {
@@ -23,7 +24,7 @@ async function getIpHash(): Promise<string> {
   }
 }
 
-export function SuggestionsPanel() {
+export function SuggestionsPanel({ standalone = false }: { standalone?: boolean }) {
   const suggestions = useQuery(api.suggestions.listActive) ?? [];
   const submitMutation = useMutation(api.suggestions.submit);
   const upvoteMutation = useMutation(api.suggestions.upvote);
@@ -86,8 +87,15 @@ export function SuggestionsPanel() {
   );
 
   return (
-    <div className="mt-12 border-t border-base-300 pt-10">
-      <h2 className="text-xl font-bold mb-1">Suggest a market</h2>
+    <div className={standalone ? "" : "mt-12 border-t border-base-300 pt-10"}>
+      {!standalone && (
+        <div className="flex items-baseline gap-3 mb-1">
+          <h2 className="text-xl font-bold">Suggest a market</h2>
+          <Link to="/wishlist" className="text-sm opacity-50 hover:opacity-100 no-underline">
+            See all →
+          </Link>
+        </div>
+      )}
       <p className="text-sm opacity-50 mb-6">
         What question should be on this dashboard? Suggest it below — if a suggestion gets lots of votes, it's much easier to convince Polymarket and Kalshi to make it a real market.
       </p>
