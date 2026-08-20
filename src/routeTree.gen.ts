@@ -15,6 +15,7 @@ import { Route as WishlistImport } from './routes/wishlist'
 import { Route as StatusImport } from './routes/status'
 import { Route as OriginalImport } from './routes/original'
 import { Route as MaintenanceImport } from './routes/maintenance'
+import { Route as IpoImport } from './routes/ipo'
 import { Route as HantavirusImport } from './routes/hantavirus'
 import { Route as DebugAuthImport } from './routes/debug-auth'
 import { Route as AdminImport } from './routes/admin'
@@ -43,6 +44,12 @@ const OriginalRoute = OriginalImport.update({
 const MaintenanceRoute = MaintenanceImport.update({
   id: '/maintenance',
   path: '/maintenance',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const IpoRoute = IpoImport.update({
+  id: '/ipo',
+  path: '/ipo',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -102,6 +109,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof HantavirusImport
       parentRoute: typeof rootRoute
     }
+    '/ipo': {
+      id: '/ipo'
+      path: '/ipo'
+      fullPath: '/ipo'
+      preLoaderRoute: typeof IpoImport
+      parentRoute: typeof rootRoute
+    }
     '/maintenance': {
       id: '/maintenance'
       path: '/maintenance'
@@ -140,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
   '/hantavirus': typeof HantavirusRoute
+  '/ipo': typeof IpoRoute
   '/maintenance': typeof MaintenanceRoute
   '/original': typeof OriginalRoute
   '/status': typeof StatusRoute
@@ -151,6 +166,7 @@ export interface FileRoutesByTo {
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
   '/hantavirus': typeof HantavirusRoute
+  '/ipo': typeof IpoRoute
   '/maintenance': typeof MaintenanceRoute
   '/original': typeof OriginalRoute
   '/status': typeof StatusRoute
@@ -163,6 +179,7 @@ export interface FileRoutesById {
   '/admin': typeof AdminRoute
   '/debug-auth': typeof DebugAuthRoute
   '/hantavirus': typeof HantavirusRoute
+  '/ipo': typeof IpoRoute
   '/maintenance': typeof MaintenanceRoute
   '/original': typeof OriginalRoute
   '/status': typeof StatusRoute
@@ -176,6 +193,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/debug-auth'
     | '/hantavirus'
+    | '/ipo'
     | '/maintenance'
     | '/original'
     | '/status'
@@ -186,6 +204,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/debug-auth'
     | '/hantavirus'
+    | '/ipo'
     | '/maintenance'
     | '/original'
     | '/status'
@@ -196,6 +215,7 @@ export interface FileRouteTypes {
     | '/admin'
     | '/debug-auth'
     | '/hantavirus'
+    | '/ipo'
     | '/maintenance'
     | '/original'
     | '/status'
@@ -208,6 +228,7 @@ export interface RootRouteChildren {
   AdminRoute: typeof AdminRoute
   DebugAuthRoute: typeof DebugAuthRoute
   HantavirusRoute: typeof HantavirusRoute
+  IpoRoute: typeof IpoRoute
   MaintenanceRoute: typeof MaintenanceRoute
   OriginalRoute: typeof OriginalRoute
   StatusRoute: typeof StatusRoute
@@ -219,6 +240,7 @@ const rootRouteChildren: RootRouteChildren = {
   AdminRoute: AdminRoute,
   DebugAuthRoute: DebugAuthRoute,
   HantavirusRoute: HantavirusRoute,
+  IpoRoute: IpoRoute,
   MaintenanceRoute: MaintenanceRoute,
   OriginalRoute: OriginalRoute,
   StatusRoute: StatusRoute,
@@ -239,6 +261,7 @@ export const routeTree = rootRoute
         "/admin",
         "/debug-auth",
         "/hantavirus",
+        "/ipo",
         "/maintenance",
         "/original",
         "/status",
@@ -256,6 +279,9 @@ export const routeTree = rootRoute
     },
     "/hantavirus": {
       "filePath": "hantavirus.tsx"
+    },
+    "/ipo": {
+      "filePath": "ipo.tsx"
     },
     "/maintenance": {
       "filePath": "maintenance.tsx"

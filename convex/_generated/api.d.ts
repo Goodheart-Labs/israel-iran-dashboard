@@ -13,6 +13,8 @@ import type {
   FilterApi,
   FunctionReference,
 } from "convex/server";
+import type * as caveats from "../caveats.js";
+import type * as chartVotes from "../chartVotes.js";
 import type * as crons from "../crons.js";
 import type * as debug_checkHistory from "../debug/checkHistory.js";
 import type * as debug_checkMarketStatus from "../debug/checkMarketStatus.js";
@@ -24,6 +26,8 @@ import type * as historicalMutations from "../historicalMutations.js";
 import type * as historicalUpdater from "../historicalUpdater.js";
 import type * as historyMutations from "../historyMutations.js";
 import type * as initialDataLoad from "../initialDataLoad.js";
+import type * as ipoCurves from "../ipoCurves.js";
+import type * as ipoSeed from "../ipoSeed.js";
 import type * as kalshiPoller from "../kalshiPoller.js";
 import type * as metaculusPoller from "../metaculusPoller.js";
 import type * as predictions from "../predictions.js";
@@ -50,6 +54,8 @@ import type * as users from "../users.js";
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  caveats: typeof caveats;
+  chartVotes: typeof chartVotes;
   crons: typeof crons;
   "debug/checkHistory": typeof debug_checkHistory;
   "debug/checkMarketStatus": typeof debug_checkMarketStatus;
@@ -61,6 +67,8 @@ declare const fullApi: ApiFromModules<{
   historicalUpdater: typeof historicalUpdater;
   historyMutations: typeof historyMutations;
   initialDataLoad: typeof initialDataLoad;
+  ipoCurves: typeof ipoCurves;
+  ipoSeed: typeof ipoSeed;
   kalshiPoller: typeof kalshiPoller;
   metaculusPoller: typeof metaculusPoller;
   predictions: typeof predictions;

@@ -3,13 +3,19 @@ import { query, mutation } from "./_generated/server";
 import { ConvexError } from "convex/values";
 
 export const listActive = query({
-  args: {},
-  handler: async (ctx) => {
-    return await ctx.db
+  // Omit `topic` for the Requests page, which shows everything. Pass one on a
+  // dashboard so it only shows suggestions made about that dashboard —
+  // otherwise the IPO page ends up advertising Hormuz markets.
+  args: { topic: v.optional(v.string()) },
+  handler: async (ctx, { topic }) => {
+    const all = await ctx.db
       .query("suggestions")
       .withIndex("by_status", (q) => q.eq("status", "active"))
       .order("desc")
       .collect();
+    if (!topic) return all;
+    // Anything submitted before topics existed came from the Iran dashboard.
+    return all.filter((s) => (s.topic ?? "iran") === topic);
   },
 });
 
@@ -28,11 +34,16 @@ export const submit = mutation({
   args: {
     text: v.string(),
     ipHash: v.string(),
+    topic: v.optional(v.string()),
+    url: v.optional(v.string()),
   },
-  handler: async (ctx, { text, ipHash }) => {
+  handler: async (ctx, { text, ipHash, topic, url }) => {
     const trimmed = text.trim();
     if (trimmed.length < 10) {
       throw new ConvexError("Suggestion must be at least 10 characters.");
+    }
+    if (url && !/^https?:\/\//i.test(url)) {
+      throw new ConvexError("A link must start with http:// or https://");
     }
     if (trimmed.length > 300) {
       throw new ConvexError("Suggestion must be under 300 characters.");
@@ -44,6 +55,8 @@ export const submit = mutation({
       flags: 0,
       status: "active",
       ipHash,
+      topic,
+      url: url || undefined,
     });
   },
 });

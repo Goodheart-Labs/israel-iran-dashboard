@@ -24,14 +24,22 @@ async function getIpHash(): Promise<string> {
   }
 }
 
-export function SuggestionsPanel({ standalone = false }: { standalone?: boolean }) {
-  const suggestions = useQuery(api.suggestions.listActive) ?? [];
+export function SuggestionsPanel({
+  standalone = false,
+  topic,
+}: {
+  standalone?: boolean;
+  /** Scope to one dashboard; omit on the Requests page to show everything. */
+  topic?: string;
+}) {
+  const suggestions = useQuery(api.suggestions.listActive, { topic }) ?? [];
   const submitMutation = useMutation(api.suggestions.submit);
   const upvoteMutation = useMutation(api.suggestions.upvote);
   const flagMutation = useMutation(api.suggestions.flag);
 
   const [ipHash, setIpHash] = useState<string | null>(null);
   const [text, setText] = useState("");
+  const [url, setUrl] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -50,8 +58,9 @@ export function SuggestionsPanel({ standalone = false }: { standalone?: boolean 
     setSubmitting(true);
     setError(null);
     try {
-      await submitMutation({ text, ipHash });
+      await submitMutation({ text, ipHash, topic, url: url.trim() || undefined });
       setText("");
+      setUrl("");
       setSuccess(true);
       setTimeout(() => setSuccess(false), 3000);
     } catch (e) {
@@ -59,7 +68,7 @@ export function SuggestionsPanel({ standalone = false }: { standalone?: boolean 
     } finally {
       setSubmitting(false);
     }
-  }, [ipHash, text, submitMutation]);
+  }, [ipHash, text, url, topic, submitMutation]);
 
   const handleUpvote = useCallback(
     async (id: Id<"suggestions">) => {
@@ -126,6 +135,17 @@ export function SuggestionsPanel({ standalone = false }: { standalone?: boolean 
         </button>
       </div>
 
+      <div className="flex gap-2 mb-8 not-prose">
+        <input
+          type="url"
+          className="input input-bordered flex-1 text-sm"
+          placeholder="Link to an existing market or source (optional)"
+          value={url}
+          onChange={(e) => setUrl(e.target.value)}
+          maxLength={500}
+        />
+      </div>
+
       {error && <p className="text-error text-sm mb-4">{error}</p>}
       {success && <p className="text-success text-sm mb-4">Suggestion submitted — thanks!</p>}
 
@@ -153,7 +173,19 @@ export function SuggestionsPanel({ standalone = false }: { standalone?: boolean 
                 </button>
 
                 {/* Text */}
-                <p className="flex-1 text-sm pt-1">{s.text}</p>
+                <div className="flex-1 pt-1">
+                  <p className="text-sm">{s.text}</p>
+                  {s.url && (
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs link link-hover opacity-60"
+                    >
+                      linked source →
+                    </a>
+                  )}
+                </div>
 
                 {/* Flag */}
                 <button

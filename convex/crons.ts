@@ -31,4 +31,12 @@ crons.interval(
   api.historicalUpdater.updateHistoricalData,
 );
 
+// Refresh the IPO sources that publish a whole curve at once (Metaculus CDFs,
+// Kalshi order-book ladders). Hourly is plenty — these move slowly.
+crons.interval(
+  "refresh-ipo-curves",
+  { hours: 1 },
+  api.ipoCurves.refreshIpoCurves,
+);
+
 export default crons;

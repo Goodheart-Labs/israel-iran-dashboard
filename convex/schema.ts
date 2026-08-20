@@ -5,10 +5,13 @@ export const predictionCategories = [
   "military_action",
   "nuclear_program",
   "sanctions",
-  "regional_conflict", 
+  "regional_conflict",
   "israel_relations",
   "protests",
-  "regime_stability"
+  "regime_stability",
+  "pandemic",
+  "ai_companies",
+  "ai_timelines"
 ] as const;
 
 export const predictionSources = [
@@ -57,7 +60,10 @@ export default defineSchema({
       v.literal("regional_conflict"),
       v.literal("israel_relations"),
       v.literal("protests"),
-      v.literal("regime_stability")
+      v.literal("regime_stability"),
+      v.literal("pandemic"),
+      v.literal("ai_companies"),
+      v.literal("ai_timelines")
     ),
     title: v.string(),
     description: v.optional(v.string()),
@@ -114,6 +120,79 @@ export default defineSchema({
     .index("by_prediction_time", ["predictionId", "timestamp"])
     .index("by_timestamp", ["timestamp"]),
     
+  // Cumulative "chance it has happened by date" curves, one row per source
+  // per question. Polymarket rungs live in `predictions` (they're individual
+  // binary markets); these are for sources that publish a whole curve at once
+  // — a Metaculus CDF, or a Kalshi ladder priced from order books — and for
+  // anything needing a server-side API key.
+  forecastCurves: defineTable({
+    key: v.string(), // e.g. "ipo_anthropic:metaculus"
+    topic: v.string(), // e.g. "ipo_anthropic"
+    source: v.string(), // "metaculus" | "kalshi"
+    label: v.string(), // shown in the chart legend
+    sourceUrl: v.optional(v.string()),
+    note: v.optional(v.string()), // caveat, e.g. announcement ≠ completion
+    points: v.array(v.object({ t: v.number(), p: v.number() })), // t ms, p 0-1
+    // How this source's implied date has moved: t = when the forecast was
+    // made, impliedT = the date it pointed at. Only sources that publish a
+    // history have this.
+    medianHistory: v.optional(
+      v.array(v.object({ t: v.number(), impliedT: v.number() }))
+    ),
+    updatedAt: v.number(),
+  })
+    .index("by_key", ["key"])
+    .index("by_topic", ["topic"]),
+
+  // Reader-maintained caveats on a dashboard: anyone can add one, vote on how
+  // helpful it is, or rewrite it. Nothing is ever edited in place — see
+  // textRevisions — so vandalism is always revertible.
+  caveats: defineTable({
+    topic: v.string(), // e.g. "ipo"
+    content: v.string(),
+    author: v.optional(v.string()),
+    pinned: v.boolean(), // site-authored, sorts first
+    createdAt: v.number(),
+  }).index("by_topic", ["topic"]),
+
+  caveatVotes: defineTable({
+    caveatId: v.id("caveats"),
+    rating: v.union(
+      v.literal("helpful"),
+      v.literal("somewhat_helpful"),
+      v.literal("not_helpful")
+    ),
+    voterKey: v.string(), // random per-browser token, not an identity
+    createdAt: v.number(),
+  })
+    .index("by_caveat", ["caveatId"])
+    .index("by_caveat_voter", ["caveatId", "voterKey"]),
+
+  // "Was this chart useful?" — one vote per browser per chart. slot is a
+  // stable id like "ipo:central-chart" or "iran:hormuz".
+  chartVotes: defineTable({
+    slot: v.string(),
+    rating: v.union(
+      v.literal("useful"),
+      v.literal("somewhat_useful"),
+      v.literal("not_useful")
+    ),
+    voterKey: v.string(),
+    createdAt: v.number(),
+  })
+    .index("by_slot", ["slot"])
+    .index("by_slot_voter", ["slot", "voterKey"]),
+
+  // Append-only revision log for any editable text. slot is "caveat:<id>",
+  // or a chart explanation like "iran:hormuz:info".
+  textRevisions: defineTable({
+    slot: v.string(),
+    content: v.string(),
+    editor: v.optional(v.string()),
+    revertedFrom: v.optional(v.id("textRevisions")),
+    createdAt: v.number(),
+  }).index("by_slot", ["slot"]),
+
   // Simple system status tracking
   systemStatus: defineTable({
     key: v.string(), // e.g., "lastUpdate", "updateHealth"
@@ -128,6 +207,10 @@ export default defineSchema({
     flags: v.number(),
     status: v.union(v.literal("active"), v.literal("held")),
     ipHash: v.string(), // SHA-256 hash of submitter's IP
+    // Which dashboard it was suggested from. Absent on anything submitted
+    // before topics existed, which all came from the Iran page.
+    topic: v.optional(v.string()),
+    url: v.optional(v.string()), // an existing market or source, if they had one
   })
     .index("by_status", ["status"])
     .index("by_status_upvotes", ["status", "upvotes"]),

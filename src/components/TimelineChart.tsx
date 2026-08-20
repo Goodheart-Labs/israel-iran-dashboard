@@ -1,3 +1,4 @@
+import { scaleToTimestamp } from "@/lib/metaculusScale";
 import {
   ComposedChart,
   Area,
@@ -20,17 +21,21 @@ interface TimelineChartProps {
   history: TimelinePoint[];
   scalingRangeMin: number; // Unix seconds
   scalingRangeMax: number; // Unix seconds
+  scalingZeroPoint?: number | null; // set when the question is log-scaled
   color?: string;
+  /** Y-axis caption; the axis shows the forecast date, not a probability. */
+  yLabel?: string;
 }
 
-/** Convert a 0-1 position on the Metaculus range to a fractional year */
 function scaleToYear(
   value01: number,
   rangeMin: number,
-  rangeMax: number
+  rangeMax: number,
+  zeroPoint?: number | null
 ): number {
-  const timestampSec = rangeMin + (rangeMax - rangeMin) * value01;
-  const d = new Date(timestampSec * 1000);
+  const d = new Date(
+    scaleToTimestamp(value01, rangeMin, rangeMax, zeroPoint) * 1000
+  );
   return d.getFullYear() + d.getMonth() / 12;
 }
 
@@ -49,7 +54,9 @@ export function TimelineChart({
   history,
   scalingRangeMin,
   scalingRangeMax,
+  scalingZeroPoint,
   color = "#8B5CF6",
+  yLabel = "Forecast date",
 }: TimelineChartProps) {
   if (!history || history.length === 0) {
     return (
@@ -62,14 +69,14 @@ export function TimelineChart({
   // Transform history into chart data
   const chartData = history.map((h) => {
     const center01 = h.probability / 100;
-    const centerYear = scaleToYear(center01, scalingRangeMin, scalingRangeMax);
+    const centerYear = scaleToYear(center01, scalingRangeMin, scalingRangeMax, scalingZeroPoint);
 
     let lowerYear: number | undefined;
     let upperYear: number | undefined;
 
     if (h.lowerBound !== undefined && h.upperBound !== undefined) {
-      lowerYear = scaleToYear(h.lowerBound, scalingRangeMin, scalingRangeMax);
-      upperYear = scaleToYear(h.upperBound, scalingRangeMin, scalingRangeMax);
+      lowerYear = scaleToYear(h.lowerBound, scalingRangeMin, scalingRangeMax, scalingZeroPoint);
+      upperYear = scaleToYear(h.upperBound, scalingRangeMin, scalingRangeMax, scalingZeroPoint);
     }
 
     return {
@@ -130,7 +137,7 @@ export function TimelineChart({
             tickFormatter={formatYear}
             width={50}
             tickLine={false}
-            label={{ value: "Date it ceases", angle: -90, position: "insideLeft", offset: 10, fontSize: 10, fill: "#6B7280" }}
+            label={{ value: yLabel, angle: -90, position: "insideLeft", offset: 10, fontSize: 10, fill: "#6B7280" }}
           />
           <Tooltip
             contentStyle={{

@@ -66,6 +66,7 @@ export const getMarkets = query({
           source: p.source,
           sourceUrl: p.sourceUrl,
           lastUpdated: p.lastUpdated,
+          resolveDate: p.resolveDate,
           clarificationText: p.clarificationText,
           chartGroup: p.chartGroup,
           chartColor: p.chartColor,

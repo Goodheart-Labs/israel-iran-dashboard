@@ -196,3 +196,26 @@
 - Import icons from `lucide-react`
 - When making identical changes to multiple occurrences, use Edit with `replace_all: true` instead of MultiEdit. Avoid MultiEdit whenever possible, it is unreliable.
 - Never leave floating promisses, use void when needed
+
+## Dashboard data gotchas
+
+- **Polymarket renames market slugs**, appending numeric suffixes when a market
+  is edited. A rung silently stops updating when this happens. `ipoSeed` matches
+  by title and patches `sourceUrl`, so re-running it repairs the drift.
+- **Seeded markets have no price history.** Run
+  `npx convex run historicalUpdater:updateHistoricalData` after seeding, or the
+  charts render as flat lines.
+- **Kalshi reports `last_price: null` on some series** (the IPO ladders, and
+  `KXUSAIRANAGREEMENT`). `kalshiPoller` reads `last_price`, so those markets
+  freeze at their last known value and the chart carries it forward — a stale
+  number presented as current. `convex/ipoCurves.ts` works around it by pricing
+  from order-book midpoints; that technique should move into `kalshiPoller`.
+- **Metaculus API keys are per-deployment.** This deployment's key works; the one
+  in the `agi-timelines-dashboard` repo 403s on both community predictions and
+  `download-data`, which is likely why that dashboard is degraded.
+- **Metaculus date questions can be log-scaled** (`scaling.zero_point`). Mapping
+  those linearly is badly wrong — one question read as 2120 instead of 2028. Use
+  `scaleToTimestamp` in `src/lib/metaculusScale.ts`.
+- **Resolved Polymarket markets keep charting.** Gamma exposes `closed` and
+  `outcomePrices`; nothing currently reads them, so a settled market shows as a
+  live forecast pinned at 100%.

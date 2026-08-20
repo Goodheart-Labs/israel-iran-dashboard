@@ -125,7 +125,7 @@ function parseOutcomePrices(outcomePrices: unknown): number[] {
 
 type MarketConfig = {
   source: "polymarket" | "kalshi" | "metaculus";
-  category: "military_action" | "nuclear_program" | "regime_stability" | "sanctions" | "regional_conflict" | "israel_relations" | "protests";
+  category: "military_action" | "nuclear_program" | "regime_stability" | "sanctions" | "regional_conflict" | "israel_relations" | "protests" | "pandemic";
   chartGroup: string; // Markets with same chartGroup render on one chart
   chartColor: string; // Hex color for this line
   sortOrder: number;  // Display order
@@ -213,6 +213,64 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     questionType: "date" as const,
     scalingRangeMin: 1661904000, // Aug 31 2022
     scalingRangeMax: 4796668800, // Jan 1 2122
+  },
+
+  // ============================================================
+  // HANTAVIRUS DASHBOARD (rendered at /hantavirus)
+  // ============================================================
+
+  // --- Combined: WHO PHEIC declaration (Kalshi + Metaculus) ---
+  {
+    source: "kalshi", kalshiTicker: "KXNEWOUTBREAKHANTA-26",
+    category: "pandemic", chartGroup: "hanta_pheic",
+    chartColor: SOURCE_COLORS.kalshi, sortOrder: 10,
+    shortLabel: "Kalshi",
+  },
+  {
+    source: "metaculus", metaculusId: 43468,
+    category: "pandemic", chartGroup: "hanta_pheic",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 10,
+    shortLabel: "Metaculus",
+  },
+
+  // --- Standalone: WHO pandemic designation (Polymarket) ---
+  {
+    source: "polymarket", slug: "hantavirus-pandemic-in-2026",
+    category: "pandemic", chartGroup: "hanta_pandemic",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 11,
+    shortLabel: "Polymarket",
+  },
+
+  // --- Standalone: MV Hondius secondary spread (Metaculus) ---
+  {
+    source: "metaculus", metaculusId: 43461,
+    category: "pandemic", chartGroup: "hanta_secondary",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 12,
+    shortLabel: "Metaculus",
+  },
+
+  // --- Standalone: Confirmed US case by May 15 (Polymarket) ---
+  {
+    source: "polymarket", slug: "confirmed-case-of-hantavirus-in-us-by-may-15",
+    category: "pandemic", chartGroup: "hanta_us_case",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 13,
+    shortLabel: "Polymarket",
+  },
+
+  // --- Standalone: Lab leak confirmed by June 30 (Polymarket) ---
+  {
+    source: "polymarket", slug: "hantavirus-lab-leak-confirmed-by-june-30-1",
+    category: "pandemic", chartGroup: "hanta_lab_leak",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 14,
+    shortLabel: "Polymarket",
+  },
+
+  // --- Standalone: Hantavirus vaccine in 2026 (Polymarket) ---
+  {
+    source: "polymarket", slug: "hantavirus-vaccine-in-2026",
+    category: "pandemic", chartGroup: "hanta_vaccine",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 15,
+    shortLabel: "Polymarket",
   },
 ];
 
