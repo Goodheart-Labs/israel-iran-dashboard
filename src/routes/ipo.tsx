@@ -64,7 +64,7 @@ const COMPANIES = [
     name: "Anthropic",
     color: ANTHROPIC,
     blurb:
-      "Cumulative odds that Anthropic has completed an IPO by each date. Resolution needs shares actually trading — an announcement or S-1 filing alone is not enough.",
+      "Chance that Anthropic's IPO lands in each month, derived from Polymarket's cumulative \"IPO by date\" rungs. Resolution needs shares actually trading — an announcement or S-1 filing alone is not enough.",
   },
   {
     key: "ipo_openai",
@@ -204,7 +204,8 @@ function IpoPage() {
           When will Anthropic and OpenAI IPO?
         </h1>
         <p className="text-sm opacity-50">
-          Real-money forecasts from Polymarket · Updated continuously
+          Forecasting data from Polymarket, Kalshi, and Metaculus · Updated
+          continuously
         </p>
       </div>
 
