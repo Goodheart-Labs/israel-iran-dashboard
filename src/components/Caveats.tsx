@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 import type { Id } from "../../convex/_generated/dataModel";
+import { helpfulnessScore, HIDE_SCORE } from "@/lib/helpfulness";
 
 const RATINGS = [
   { value: "helpful", label: "Helpful" },
@@ -39,6 +40,24 @@ export function Caveats({ topic }: { topic: string }) {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const [open, setOpen] = useState<Caveat | null>(null);
+  const ranked = [...(caveats ?? [])].sort(
+    (a, b) => helpfulnessScore(b.tally) - helpfulnessScore(a.tally),
+  );
+  const visible = ranked.filter((c) => helpfulnessScore(c.tally) > HIDE_SCORE);
+  const hidden = ranked.filter((c) => helpfulnessScore(c.tally) <= HIDE_SCORE);
+  const renderCaveat = (caveat: Caveat) => (
+    <li key={caveat._id} className="border-l-2 border-base-300 pl-4">
+      <p className="text-sm opacity-80">{caveat.content}</p>
+      <div className="mt-1 flex items-center justify-end gap-2 text-xs">
+        <button
+          className="btn btn-ghost btn-xs min-h-10"
+          onClick={() => setOpen(caveat)}
+        >
+          Rate or edit
+        </button>
+      </div>
+    </li>
+  );
 
   const submit = async () => {
     if (!draft.trim()) return;
@@ -57,14 +76,15 @@ export function Caveats({ topic }: { topic: string }) {
         <h3 className="card-title text-lg mb-1">Notes &amp; caveats</h3>
         <p className="text-xs opacity-50 mb-4">
           Anyone can add a caveat, vote on how helpful it is, or rewrite one.
-          Edits keep a full history and can be reverted.
+          Edits keep a full history and can be reverted. Entries are sorted by
+          helpfulness; less helpful entries are tucked away below.
         </p>
 
         {caveats === undefined ? (
           <p className="text-sm opacity-50">Loading…</p>
         ) : (
           <ul className="space-y-4">
-            {(caveats as Caveat[]).map((caveat) => {
+            {visible.map((caveat) => {
               const total =
                 caveat.tally.helpful +
                 caveat.tally.somewhat_helpful +
@@ -91,10 +111,21 @@ export function Caveats({ topic }: { topic: string }) {
           </ul>
         )}
 
+        {hidden.length > 0 && (
+          <details className="mt-6 rounded-lg border border-base-300 p-4">
+            <summary className="cursor-pointer text-sm">
+              Hidden by reader votes · {hidden.length} entries
+            </summary>
+            <p className="my-3 text-xs opacity-60">
+              These entries remain editable and votable. They return
+              automatically when readers rate them more helpful.
+            </p>
+            <ul className="space-y-4">{hidden.map(renderCaveat)}</ul>
+          </details>
+        )}
+
         <div className="mt-6 pt-4 border-t border-base-300">
-          <label className="text-sm font-medium block mb-2">
-            Add a caveat
-          </label>
+          <label className="text-sm font-medium block mb-2">Add a caveat</label>
           <textarea
             className="textarea textarea-bordered w-full text-sm"
             rows={3}
@@ -116,7 +147,10 @@ export function Caveats({ topic }: { topic: string }) {
       </div>
 
       {open && (
-        <CaveatDialog caveat={open} onClose={() => setOpen(null)} />
+        <CaveatDialog
+          caveat={(caveats ?? []).find((c) => c._id === open._id) ?? open}
+          onClose={() => setOpen(null)}
+        />
       )}
     </div>
   );
@@ -296,7 +330,7 @@ function CaveatDialog({
                               revision.content,
                               String(revision._id) === "original"
                                 ? undefined
-                                : (revision._id as Id<"textRevisions">)
+                                : (revision._id as Id<"textRevisions">),
                             )
                           }
                         >

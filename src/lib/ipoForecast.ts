@@ -8,7 +8,9 @@ export type CumulativePoint = { date: Date; p: number };
 export function medianDayFromCumulative(
   points: CumulativePoint[],
 ): Date | null {
-  const sorted = [...points].sort((a, b) => a.date.getTime() - b.date.getTime());
+  const sorted = [...points].sort(
+    (a, b) => a.date.getTime() - b.date.getTime(),
+  );
   let runningMax = 0;
   const monotonic = sorted.map(({ date, p }) => {
     runningMax = Math.max(runningMax, p);
@@ -93,12 +95,64 @@ export function distributionToCumulative(
 export function averageDays(days: (Date | null)[]): Date | null {
   const valid = days.filter((d): d is Date => d !== null);
   if (valid.length === 0) return null;
-  const mean =
-    valid.reduce((sum, d) => sum + d.getTime(), 0) / valid.length;
+  const mean = valid.reduce((sum, d) => sum + d.getTime(), 0) / valid.length;
   return new Date(mean);
 }
 
 const DAY_MS = 86_400_000;
+
+export type LagBucket = { days: number; weight: number };
+
+/**
+ * Convert an event-date CDF into a later event-date CDF by convolving it with
+ * a discrete lag distribution. Values before the source curve are zero; after
+ * its final rung, the final known cumulative probability is carried forward.
+ */
+export function applyLagDistribution(
+  curve: CumulativePoint[],
+  lagBuckets: LagBucket[],
+): CumulativePoint[] {
+  const points = [...curve]
+    .sort((a, b) => a.date.getTime() - b.date.getTime())
+    .map(({ date, p }) => ({ t: date.getTime(), p }));
+  const totalWeight = lagBuckets.reduce(
+    (sum, bucket) => sum + bucket.weight,
+    0,
+  );
+  if (points.length < 2 || totalWeight <= 0) return curve;
+
+  let runningMax = 0;
+  for (const point of points) {
+    runningMax = Math.max(runningMax, point.p);
+    point.p = runningMax;
+  }
+
+  const cdfAt = (t: number): number => {
+    if (t < points[0].t) return 0;
+    if (t >= points[points.length - 1].t) return points[points.length - 1].p;
+    let i = 1;
+    while (points[i].t < t) i++;
+    const a = points[i - 1];
+    const b = points[i];
+    return a.p + ((t - a.t) / (b.t - a.t)) * (b.p - a.p);
+  };
+
+  const minLag = Math.min(...lagBuckets.map((bucket) => bucket.days));
+  const maxLag = Math.max(...lagBuckets.map((bucket) => bucket.days));
+  const start = points[0].t + minLag * DAY_MS;
+  const end = points[points.length - 1].t + maxLag * DAY_MS;
+  const adjusted: CumulativePoint[] = [];
+
+  for (let t = start; t <= end; t += DAY_MS) {
+    const p =
+      lagBuckets.reduce(
+        (sum, bucket) => sum + bucket.weight * cdfAt(t - bucket.days * DAY_MS),
+        0,
+      ) / totalWeight;
+    adjusted.push({ date: new Date(t), p });
+  }
+  return adjusted;
+}
 
 // Convert a cumulative curve into a monthly probability distribution:
 // P(event lands in the month ending at each date), linearly interpolating the
@@ -107,9 +161,7 @@ const DAY_MS = 86_400_000;
 export function monthlyDistribution(
   curve: CumulativePoint[],
 ): { date: Date; p: number }[] {
-  const sorted = [...curve].sort(
-    (a, b) => a.date.getTime() - b.date.getTime(),
-  );
+  const sorted = [...curve].sort((a, b) => a.date.getTime() - b.date.getTime());
   let runningMax = 0;
   const points = sorted.map(({ date, p }) => {
     runningMax = Math.max(runningMax, p);
@@ -181,9 +233,7 @@ export function blendedMonthlyDistribution(
 // first, then take the midpoint, rather than averaging per-source medians.
 // At each sampled day, only curves whose data covers that day participate;
 // outside its first/last point a curve simply drops out of the average.
-export function blendedMedianDay(
-  curves: CumulativePoint[][],
-): Date | null {
+export function blendedMedianDay(curves: CumulativePoint[][]): Date | null {
   const valid = curves
     .map((curve) => {
       const sorted = [...curve].sort(
@@ -237,13 +287,18 @@ const WEEK_MS = 7 * DAY_MS;
  * headline, run backwards through history.
  */
 export function impliedDateSeries(
-  rungs: { resolveDate: number; history: Array<{ timestamp: number; probability: number }> }[],
+  rungs: {
+    resolveDate: number;
+    history: Array<{ timestamp: number; probability: number }>;
+  }[],
 ): { t: number; impliedT: number }[] {
   const usable = rungs.filter((r) => r.history.length > 0);
   if (usable.length === 0) return [];
 
   const start = Math.max(...usable.map((r) => r.history[0].timestamp));
-  const end = Math.max(...usable.map((r) => r.history[r.history.length - 1].timestamp));
+  const end = Math.max(
+    ...usable.map((r) => r.history[r.history.length - 1].timestamp),
+  );
   if (!Number.isFinite(start) || end <= start) return [];
 
   const out: { t: number; impliedT: number }[] = [];

@@ -1,5 +1,5 @@
 import { convexQuery } from "@convex-dev/react-query";
-import { useSuspenseQuery } from "@tanstack/react-query";
+import { useQueries, useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { api } from "../../convex/_generated/api";
 import {
@@ -8,25 +8,24 @@ import {
   type Market,
 } from "@/components/TopicDashboard";
 import { SuggestionsPanel } from "@/components/SuggestionsPanel";
+import { Caveats } from "@/components/Caveats";
+import { fetchPolymarketHistory, mergeRecordedHistory } from "@/lib/polymarketHistory";
+import { isPastDeadline } from "@/lib/marketPresentation";
 
 // nuclear_deal is retired: Polymarket resolved it YES (closed, outcome 1) and
 // Kalshi's series stopped publishing a last price in March, so the card showed
 // a settled question next to a five-month-old number.
 const GROUP_TITLES: Record<string, string> = {
   hormuz: "Strait of Hormuz closure before 2027",
-  ceasefire: "US/Iran ceasefire before April",
+  ceasefire: "US/Iran ceasefire",
   us_invasion: "US ground invasion of Iran before 2027",
   nuclear_weapon: "Iran nuclear weapon before 2030",
   islamic_republic: "Iran ceases to be Islamic Republic",
-  conflict_ends: "Conflict ends for 2 weeks before July",
+  conflict_ends: "14-day pause in the Iran–Israel/US conflict",
   us_forces_enter: "Any US forces enter Iran before 2027",
 };
 
 const IRAN_GROUPS = Object.keys(GROUP_TITLES);
-
-const GROUP_DAYS_TO_SHOW: Record<string, number> = {
-  us_invasion: 7,
-};
 
 const GROUP_RESOLUTION: Record<string, GroupResolution> = {
   us_forces_enter: {
@@ -57,7 +56,7 @@ const GROUP_RESOLUTION: Record<string, GroupResolution> = {
   },
   us_invasion: {
     summary:
-      "Resolves Yes if the US launches a ground invasion of Iran before 2027. Polymarket requires intent to establish control; Metaculus requires 100+ troops on Iranian soil for 5+ consecutive days.",
+      "These forecasts use different definitions of a US ground invasion before 2027. Polymarket requires an offensive intended to establish control over Iranian territory by 31 December 2026. Metaculus requires at least 100 US ground troops in Iran for more than five consecutive days before 1 January 2027. The probabilities are not directly comparable.",
     footnotes: [
       {
         id: 0,
@@ -89,8 +88,9 @@ const GROUP_RESOLUTION: Record<string, GroupResolution> = {
     ],
   },
   conflict_ends: {
+    notice: "Deadline needs verification: the source title says June 30, but the stored closing date is in March. Do not treat the stored date as the event deadline.",
     summary:
-      "Resolves Yes if there is a continuous 14-day period without qualifying military action between Iran, Israel, and the US before June 30. Cyberattacks, sanctions, and proxy forces (Hezbollah, Houthis) do not count.",
+      "Resolves Yes if a continuous 14-day period without qualifying military action between Iran, Israel, and the US begins by the question’s deadline. Cyberattacks, sanctions, and proxy forces (Hezbollah, Houthis) do not count.",
     footnotes: [
       {
         id: 0,
@@ -114,17 +114,48 @@ export const Route = createFileRoute("/")({
 
 function HomePage() {
   const { data: markets } = useSuspenseQuery(simpleMarketsQuery);
+  const iranMarkets = markets.filter((market) => market.chartGroup && IRAN_GROUPS.includes(market.chartGroup));
+  // Metaculus histories are sparse forecast changes, not high-frequency prices.
+  // The existing per-question query retains bounds and avoids the shared 500-row cap.
+  const storedMarkets = iranMarkets.filter((market) => market.source === "metaculus" || isPastDeadline([market], Date.now()));
+  const storedQueries = useQueries({
+    queries: storedMarkets.map((market) => convexQuery(api.predictions.getHistory, { predictionId: market._id })),
+  });
+  const polymarketMarkets = iranMarkets.filter((market) => market.source === "polymarket" && market.sourceUrl);
+  const sourceQueries = useQueries({
+    queries: polymarketMarkets.map((market) => {
+      const slug = new URL(market.sourceUrl!).pathname.split("/").filter(Boolean).at(-1)!;
+      return {
+        queryKey: ["polymarket-history", slug],
+        queryFn: ({ signal }: { signal: AbortSignal }) => fetchPolymarketHistory(slug, signal),
+        staleTime: 30 * 60_000,
+        refetchInterval: 30 * 60_000,
+        retry: 1,
+      };
+    }),
+  });
+  const displayMarkets: Market[] = iranMarkets.map((market) => {
+    const stored = storedQueries[storedMarkets.findIndex((m) => m._id === market._id)];
+    const source = sourceQueries[polymarketMarkets.findIndex((m) => m._id === market._id)];
+    const history = mergeRecordedHistory(stored?.data ?? market.history, source?.data ?? []);
+    const coverage = history.length ? `${history.length} observations, ${new Date(history[0].timestamp).toLocaleDateString()}–${new Date(history[history.length - 1].timestamp).toLocaleDateString()}.` : "No historical observations.";
+    return {
+      ...market,
+      history,
+      historyNote: `${coverage} ${source?.isError ? "Older source history unavailable; showing stored observations." : stored?.isError ? "Full stored history could not be loaded." : source?.isPending || stored?.isPending ? "Loading older observations…" : ""}`,
+    };
+  });
 
   return (
     <TopicDashboard
       topic="iran"
-      title="Iran Geopolitical Risk Dashboard"
-      markets={markets as Market[]}
+      title="Iran"
+      subtitle="Forecasts of military action, nuclear risk and political change. Sources are shown separately because their definitions can differ."
+      markets={displayMarkets}
       groupTitles={GROUP_TITLES}
       groupResolutions={GROUP_RESOLUTION}
-      groupDaysToShow={GROUP_DAYS_TO_SHOW}
       groupKeys={IRAN_GROUPS}
-      footer={<SuggestionsPanel />}
+      footer={<><Caveats topic="iran" /><SuggestionsPanel topic="iran" /></>}
     />
   );
 }

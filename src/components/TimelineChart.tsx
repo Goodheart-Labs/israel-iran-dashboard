@@ -39,10 +39,11 @@ function scaleToYear(
   return d.getFullYear() + d.getMonth() / 12;
 }
 
-function formatXDate(ts: number): string {
+function formatXDate(ts: number, includeYear: boolean): string {
   return new Date(ts).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
+    ...(includeYear ? { year: "2-digit" as const } : {}),
   });
 }
 
@@ -121,13 +122,14 @@ export function TimelineChart({
             type="number"
             domain={["dataMin", "dataMax"]}
             scale="time"
-            tickFormatter={formatXDate}
+            tickFormatter={(ts: number) => formatXDate(ts, history[history.length - 1].timestamp - history[0].timestamp > 365 * 86_400_000)}
             tick={{ fontSize: 10 }}
             stroke="#9CA3AF"
             angle={-45}
             textAnchor="end"
             height={50}
             tickLine={false}
+            minTickGap={28}
             label={{ value: "Date of forecast", position: "insideBottom", offset: -2, fontSize: 10, fill: "#6B7280" }}
           />
           <YAxis

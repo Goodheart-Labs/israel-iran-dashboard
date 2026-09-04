@@ -6,7 +6,9 @@ import {
   Tooltip,
   ResponsiveContainer,
   CartesianGrid,
+  Legend,
 } from "recharts";
+import { mergeMarketHistory } from "@/lib/marketPresentation";
 
 type HistoryPoint = { timestamp: number; probability: number };
 
@@ -16,102 +18,55 @@ export type ChartSeries = {
   source: string;
   probability: number;
   history: HistoryPoint[];
+  sourceUrl?: string;
+  lastUpdated?: number;
+  resolveDate?: number;
+  historyNote?: string;
 };
+
+function SourceLegend({ series }: { series: ChartSeries[] }) {
+  return <div className="flex flex-wrap justify-center gap-x-4 gap-y-1 pb-3 text-xs">
+    {series.map((s, i) => {
+      const detail = [s.lastUpdated !== undefined ? `Last updated: ${new Date(s.lastUpdated).toLocaleString()}` : "",
+        s.resolveDate !== undefined ? `Stored closing date: ${new Date(s.resolveDate).toLocaleDateString()}` : "", s.historyNote].filter(Boolean).join(" · ");
+      const content = <><svg width="20" height="10" aria-hidden="true"><line x1="0" x2="20" y1="5" y2="5" stroke="currentColor" strokeWidth="2" /></svg><span className="capitalize">{s.label}</span><span className="tabular-nums">{s.probability}%</span></>;
+      return s.sourceUrl
+        ? <a key={i} href={s.sourceUrl} target="_blank" rel="noopener noreferrer" title={detail} aria-label={`${s.label}: ${s.probability}%. ${detail}`} className="inline-flex items-center gap-1 py-1 hover:underline" style={{ color: s.color }}>{content}</a>
+        : <span key={i} title={detail} className="inline-flex items-center gap-1 py-1" style={{ color: s.color }}>{content}</span>;
+    })}
+  </div>;
+}
 
 interface CombinedChartProps {
   series: ChartSeries[];
   daysToShow?: number; // Limit chart to last N days
 }
 
-function formatDate(ts: number): string {
+function formatDate(ts: number, includeYear: boolean): string {
   return new Date(ts).toLocaleDateString("en-US", {
     month: "short",
     day: "numeric",
+    ...(includeYear ? { year: "2-digit" as const } : {}),
   });
-}
-
-// Merge multiple series into a single dataset keyed by timestamp.
-// Each series keeps its own timestamps; we collect all unique timestamps
-// and for each series carry forward the last known value.
-function mergeSeriesData(series: ChartSeries[]) {
-  // Collect all unique timestamps across all series
-  const allTimestamps = new Set<number>();
-  for (const s of series) {
-    for (const p of s.history) {
-      allTimestamps.add(p.timestamp);
-    }
-  }
-
-  const sorted = Array.from(allTimestamps).sort((a, b) => a - b);
-
-  // Build lookup per series: sorted arrays for carry-forward
-  const seriesData = series.map((s) => {
-    const sorted = [...s.history].sort((a, b) => a.timestamp - b.timestamp);
-    return sorted;
-  });
-
-  const result: Array<Record<string, number | null>> = [];
-
-  // Track current index into each series for carry-forward
-  const indices = new Array(series.length).fill(0);
-
-  for (const ts of sorted) {
-    const row: Record<string, number | null> = { timestamp: ts };
-
-    for (let i = 0; i < series.length; i++) {
-      const data = seriesData[i];
-      // Advance index to the latest point at or before this timestamp
-      while (
-        indices[i] < data.length - 1 &&
-        data[indices[i] + 1].timestamp <= ts
-      ) {
-        indices[i]++;
-      }
-
-      if (data.length === 0 || data[indices[i]].timestamp > ts) {
-        row[`series_${i}`] = null;
-      } else {
-        row[`series_${i}`] = data[indices[i]].probability;
-      }
-    }
-
-    result.push(row);
-  }
-
-  return result;
 }
 
 export function CombinedChart({ series, daysToShow }: CombinedChartProps) {
-  const hasHistory = series.some((s) => s.history.length > 0);
+  const displaySeries = daysToShow
+    ? series.map((s) => ({ ...s, history: s.history.filter((p) => p.timestamp >= Date.now() - daysToShow * 86_400_000) }))
+    : series;
+  const hasHistory = displaySeries.some((s) => s.history.length > 0);
 
   if (!hasHistory) {
     return (
       <div className="bg-base-200 rounded-lg p-8 text-center opacity-50">
-        <p>No historical data yet</p>
-        <div className="flex justify-center gap-6 mt-3">
-          {series.map((s, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ backgroundColor: s.color }}
-              />
-              <span className="text-sm">{s.probability}%</span>
-            </div>
-          ))}
-        </div>
+        <p>No observations in this period</p>
+        <SourceLegend series={series} />
       </div>
     );
   }
 
-  // Optionally limit to last N days
-  const displaySeries = daysToShow
-    ? series.map((s) => {
-        const cutoff = Date.now() - daysToShow * 24 * 60 * 60 * 1000;
-        return { ...s, history: s.history.filter((p) => p.timestamp >= cutoff) };
-      })
-    : series;
-
-  const chartData = mergeSeriesData(displaySeries);
+  const chartData = mergeMarketHistory(displaySeries);
+  const includeYear = Number(chartData[chartData.length - 1].timestamp) - Number(chartData[0].timestamp) > 365 * 86_400_000;
 
   return (
     <div className="bg-base-200 rounded-lg p-2" style={{ height: "260px" }}>
@@ -120,6 +75,7 @@ export function CombinedChart({ series, daysToShow }: CombinedChartProps) {
           data={chartData}
           margin={{ top: 5, right: 5, left: 0, bottom: 0 }}
         >
+          <Legend verticalAlign="top" content={<SourceLegend series={series} />} />
           <CartesianGrid
             strokeDasharray="3 3"
             stroke="currentColor"
@@ -130,13 +86,14 @@ export function CombinedChart({ series, daysToShow }: CombinedChartProps) {
             type="number"
             domain={["dataMin", "dataMax"]}
             scale="time"
-            tickFormatter={formatDate}
+            tickFormatter={(ts: number) => formatDate(ts, includeYear)}
             tick={{ fontSize: 10 }}
             stroke="#9CA3AF"
             angle={-45}
             textAnchor="end"
             height={40}
             tickLine={false}
+            minTickGap={28}
           />
           <YAxis
             domain={[0, 100]}
@@ -168,7 +125,7 @@ export function CombinedChart({ series, daysToShow }: CombinedChartProps) {
               name={`series_${i}`}
               stroke={s.color}
               strokeWidth={2.5}
-              dot={false}
+              dot={s.history.length === 1 ? { r: 3, fill: s.color } : false}
               connectNulls
               activeDot={{
                 r: 5,

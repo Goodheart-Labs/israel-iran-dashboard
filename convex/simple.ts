@@ -30,6 +30,9 @@ export const getMarkets = query({
       .query("predictions")
       .withIndex("by_active", (q) => q.eq("isActive", true))
       .collect();
+    const extendedHistoryGroups = new Set(["hormuz", "ceasefire", "us_invasion", "nuclear_weapon", "islamic_republic", "conflict_ends", "us_forces_enter"]);
+    const dayMs = 86_400_000;
+    const today = Math.floor(Date.now() / dayMs) * dayMs;
     
     // Sort by sortOrder then creation time
     predictions.sort((a, b) => {
@@ -42,16 +45,28 @@ export const getMarkets = query({
     // For each prediction, get its history
     const predictionsWithHistory = await Promise.all(
       predictions.map(async (p) => {
-        // Get most recent 500 history points for rich charts
+        const historyDays = extendedHistoryGroups.has(p.chartGroup ?? "") ? 180 : 0;
+        // Keep the combined read budget at at most 500 observations per market.
         const recentHistory = await ctx.db
           .query("predictionHistory")
           .withIndex("by_prediction_time", (q) =>
             q.eq("predictionId", p._id)
           )
           .order("desc")
-          .take(500);
+          .take(500 - historyDays);
         
-        const historyData = recentHistory.reverse().map(h => ({
+        // One actual closing observation per UTC day, plus recent detail.
+        // Bounded index seeks avoid loading months of high-frequency rows.
+        const dailyHistory = await Promise.all(Array.from({ length: historyDays }, (_, i) => {
+          const start = today - (i + 1) * dayMs;
+          return ctx.db.query("predictionHistory")
+            .withIndex("by_prediction_time", (q) => q.eq("predictionId", p._id)
+              .gte("timestamp", start).lt("timestamp", start + dayMs))
+            .order("desc").first();
+        }));
+        const points = new Map(recentHistory.map((h) => [h.timestamp, h]));
+        for (const h of dailyHistory) if (h) points.set(h.timestamp, h);
+        const historyData = [...points.values()].sort((a, b) => a.timestamp - b.timestamp).map(h => ({
           timestamp: h.timestamp,
           probability: h.probability,
           ...(h.lowerBound !== undefined && { lowerBound: h.lowerBound }),
@@ -76,7 +91,8 @@ export const getMarkets = query({
           scalingRangeMin: p.scalingRangeMin,
           scalingRangeMax: p.scalingRangeMax,
           scalingZeroPoint: p.scalingZeroPoint,
-          history: p.questionType === "date"
+          historySampling: historyDays ? "daily-and-recent" as const : "recent" as const,
+          history: historyDays > 0 || p.questionType === "date"
             ? historyData  // Don't despike date question data (values are positions, not probabilities)
             : despike(historyData),
         };

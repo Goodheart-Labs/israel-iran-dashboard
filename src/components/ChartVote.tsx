@@ -3,9 +3,9 @@ import { useMutation, useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 const RATINGS = [
-  { value: "useful", label: "Useful" },
-  { value: "somewhat_useful", label: "Somewhat" },
-  { value: "not_useful", label: "Not useful" },
+  { value: "useful", label: "Helpful" },
+  { value: "somewhat_useful", label: "Somewhat helpful" },
+  { value: "not_useful", label: "Not helpful" },
 ] as const;
 
 type Rating = (typeof RATINGS)[number]["value"];
@@ -41,10 +41,11 @@ export function ChartVote({ slot }: { slot: string }) {
     return (
       <div className="flex justify-end mt-2">
         <button
-          className="btn btn-ghost btn-xs opacity-50 hover:opacity-100"
+          className="btn btn-ghost btn-xs opacity-50 hover:opacity-100 max-sm:min-h-10 max-sm:px-3"
           onClick={() => setOpen(true)}
         >
-          You found this {RATINGS.find((r) => r.value === mine)?.label.toLowerCase()}
+          You found this{" "}
+          {RATINGS.find((r) => r.value === mine)?.label.toLowerCase()}
           {total > 1 ? ` · ${total} votes` : ""}
         </button>
       </div>
@@ -54,7 +55,10 @@ export function ChartVote({ slot }: { slot: string }) {
   if (!open) {
     return (
       <div className="flex justify-end mt-2">
-        <button className="btn btn-outline btn-xs" onClick={() => setOpen(true)}>
+        <button
+          className="btn btn-ghost btn-xs border border-base-300 bg-base-200 text-base-content opacity-45 hover:border-base-content/20 hover:bg-base-300 hover:opacity-80 max-sm:min-h-10 max-sm:px-3"
+          onClick={() => setOpen(true)}
+        >
           Vote{total > 0 ? ` (${total})` : ""}
         </button>
       </div>
@@ -63,11 +67,11 @@ export function ChartVote({ slot }: { slot: string }) {
 
   return (
     <div className="flex flex-wrap items-center justify-end gap-1.5 mt-2">
-      <span className="text-xs opacity-50 mr-1">Is this chart useful?</span>
+      <span className="text-xs opacity-70 mr-1">Is this helpful?</span>
       {RATINGS.map((rating) => (
         <button
           key={rating.value}
-          className={`btn btn-xs ${mine === rating.value ? "btn-primary" : "btn-outline"}`}
+          className={`btn btn-xs max-sm:min-h-10 max-sm:px-3 ${mine === rating.value ? "btn-primary" : "btn-outline"}`}
           onClick={() => {
             void castVote({ slot, rating: rating.value, voterKey: key });
             setOpen(false);
@@ -80,7 +84,7 @@ export function ChartVote({ slot }: { slot: string }) {
         </button>
       ))}
       <button
-        className="btn btn-ghost btn-xs"
+        className="btn btn-ghost btn-xs max-sm:min-h-10 max-sm:min-w-10"
         onClick={() => setOpen(false)}
         aria-label="Close"
       >

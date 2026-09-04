@@ -1,12 +1,17 @@
-import { ExternalLink, Sun, Moon } from "lucide-react";
+import { ExternalLink, Info, Sun, Moon } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useRef, useId, type ReactNode } from "react";
 import { MarketChart } from "@/components/MarketChart";
 import { CombinedChart, type ChartSeries } from "@/components/CombinedChart";
 import { TimelineChart } from "@/components/TimelineChart";
 import { scaleToTimestamp } from "@/lib/metaculusScale";
 import { EditableInfo } from "@/components/EditableInfo";
 import { ChartVote } from "@/components/ChartVote";
+import { VotedCard } from "@/components/VotedCard";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+import { chartScore } from "@/lib/helpfulness";
+import { isPastDeadline } from "@/lib/marketPresentation";
 
 export type FootnoteDef = {
   id: number;
@@ -17,6 +22,7 @@ export type FootnoteDef = {
 
 export type GroupResolution = {
   summary: string;
+  notice?: string;
   footnotes: FootnoteDef[];
 };
 
@@ -28,6 +34,9 @@ export type Market = {
   source: string;
   sourceUrl?: string;
   lastUpdated: number;
+  resolveDate?: number;
+  historySampling?: "daily-and-recent" | "source-daily-and-recent" | "recent";
+  historyNote?: string;
   clarificationText?: string;
   chartGroup?: string;
   chartColor?: string;
@@ -71,6 +80,12 @@ export function TopicDashboard({
   groupKeys?: string[];
   footer?: ReactNode;
 }) {
+  const votes = useQuery(api.chartVotes.listAll);
+  const [now, setNow] = useState(Date.now);
+  useEffect(() => {
+    const timer = window.setInterval(() => setNow(Date.now()), 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
   const [manualDark, setManualDark] = useState<boolean | null>(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("dashboard-theme-override");
@@ -83,7 +98,7 @@ export function TopicDashboard({
   const [systemDark, setSystemDark] = useState(() =>
     typeof window !== "undefined"
       ? window.matchMedia("(prefers-color-scheme: dark)").matches
-      : false
+      : false,
   );
 
   useEffect(() => {
@@ -124,16 +139,25 @@ export function TopicDashboard({
   }
 
   const sortedGroups = Array.from(groups.entries()).sort((a, b) => {
+    const scoreDifference = chartScore((votes ?? []).filter((v) => v.slot === `${topic}:${b[0]}`))
+      - chartScore((votes ?? []).filter((v) => v.slot === `${topic}:${a[0]}`));
     const orderA = a[1][0]?.sortOrder ?? 999;
     const orderB = b[1][0]?.sortOrder ?? 999;
-    return orderA - orderB;
+    return scoreDifference || orderA - orderB;
   });
-
-  const visibleMarkets = [...sortedGroups.flatMap(([, ms]) => ms), ...ungrouped];
-  const mostRecent =
-    visibleMarkets.length > 0
-      ? Math.max(...visibleMarkets.map((m) => m.lastUpdated))
-      : null;
+  const currentGroups = sortedGroups.filter(([, ms]) => !isPastDeadline(ms, now));
+  const archivedGroups = sortedGroups.filter(([, ms]) => isPastDeadline(ms, now));
+  const renderGroup = ([groupKey, groupMarkets]: [string, Market[]]) => {
+    const props = {
+      slot: `${topic}:${groupKey}`,
+      title: groupTitles[groupKey] || groupKey,
+      resolution: groupResolutions[groupKey],
+    };
+    const dateMarket = groupMarkets.find((m) => m.questionType === "date");
+    return dateMarket
+      ? <TimelineCard key={groupKey} {...props} market={dateMarket} />
+      : <CombinedCard key={groupKey} {...props} markets={groupMarkets} daysToShow={groupDaysToShow?.[groupKey]} />;
+  };
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -150,64 +174,26 @@ export function TopicDashboard({
       <div className="mb-8">
         <h1 className="text-3xl font-bold tracking-tight mb-1">{title}</h1>
         <p className="text-sm opacity-50">
-          {subtitle ?? "Forecasting data from Polymarket, Kalshi, and Metaculus"}
-          {mostRecent && (
-            <span>
-              {" "}
-              &middot; Updated {formatDistanceToNow(new Date(mostRecent))} ago
-            </span>
-          )}
+          {subtitle ??
+            "Forecasting data from Polymarket, Kalshi, and Metaculus"}
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {(() => {
-          let footnoteCounter = 1;
-          return sortedGroups.map(([groupKey, groupMarkets]) => {
-            const groupTitle = groupTitles[groupKey] || groupKey;
-            const resolution = groupResolutions[groupKey];
-
-            const numberedFootnotes = resolution?.footnotes.map((fn) => ({
-              ...fn,
-              id: footnoteCounter++,
-            }));
-
-            const resolutionWithNumbers = resolution
-              ? { summary: resolution.summary, footnotes: numberedFootnotes }
-              : undefined;
-
-            const isDateGroup = groupMarkets.some(
-              (m) => m.questionType === "date"
-            );
-            if (isDateGroup) {
-              return (
-                <TimelineCard
-                  key={groupKey}
-                  slot={`${topic}:${groupKey}`}
-                  title={groupTitle}
-                  market={groupMarkets[0]}
-                  resolution={resolutionWithNumbers}
-                />
-              );
-            }
-
-            return (
-              <CombinedCard
-                key={groupKey}
-                slot={`${topic}:${groupKey}`}
-                title={groupTitle}
-                markets={groupMarkets}
-                daysToShow={groupDaysToShow?.[groupKey]}
-                resolution={resolutionWithNumbers}
-              />
-            );
-          });
-        })()}
+        {currentGroups.map(renderGroup)}
 
         {ungrouped.map((market) => (
           <SingleCard key={market._id} market={market} />
         ))}
       </div>
+
+      {archivedGroups.length > 0 && (
+        <details className="my-8 border-t border-base-300 pt-4">
+          <summary className="cursor-pointer py-2 text-sm font-medium">Past closing dates · {archivedGroups.length} questions</summary>
+          <p className="my-3 text-xs opacity-60">These sources’ stored closing dates have passed. Figures are last recorded forecasts, not confirmed outcomes.</p>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">{archivedGroups.map(renderGroup)}</div>
+        </details>
+      )}
 
       {footer}
 
@@ -221,8 +207,8 @@ export function TopicDashboard({
             className="underline hover:opacity-80"
           >
             Goodheart Labs
-          </a>
-          {" "}&middot; Support this project by buying a subscription on{" "}
+          </a>{" "}
+          &middot; Support this project by buying a subscription on{" "}
           <a
             href="https://nathanpmyoung.substack.com"
             target="_blank"
@@ -238,28 +224,40 @@ export function TopicDashboard({
 }
 
 function Footnote({ footnote }: { footnote: FootnoteDef }) {
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const id = useId();
+  const open = hovered || pinned;
+  useEffect(() => {
+    if (!open) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!ref.current?.contains(event.target as Node)) { setPinned(false); setHovered(false); }
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [open]);
   return (
-    <span className="group/fn">
+    <div ref={ref} className="inline-block text-xs"
+      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      onBlur={(event) => { if (!event.currentTarget.contains(event.relatedTarget)) { setPinned(false); setHovered(false); } }}
+      onKeyDown={(event) => { if (event.key === "Escape") { setPinned(false); setHovered(false); } }}>
+      <button type="button" className="inline-flex min-h-10 items-center gap-1 underline decoration-dotted underline-offset-4 opacity-65 hover:opacity-100"
+        aria-expanded={open} aria-controls={id} onClick={() => { setPinned(!pinned); setHovered(false); }}>
+        <Info className="w-3 h-3" /> {footnote.source} rules
+      </button>
+      <div id={id} hidden={!open} className="absolute left-0 right-0 z-30 rounded-md border border-base-300 bg-base-100 p-4 shadow-lg max-h-72 overflow-y-auto">
+      <p className="leading-relaxed opacity-80 mb-2">{footnote.fullText}</p>
       <a
         href={footnote.url}
         target="_blank"
         rel="noopener noreferrer"
-        className="text-xs text-base-content/50 hover:text-base-content/80 cursor-pointer align-super ml-0.5"
+        className="inline-flex items-center gap-1 underline py-2"
       >
-        [{footnote.id}]
+        Original question <ExternalLink className="w-3 h-3" />
       </a>
-      <div className="hidden group-hover/fn:block absolute z-50 left-0 right-0 mt-1 p-3 rounded-lg bg-base-300 text-base-content text-sm shadow-xl border border-base-content/20 max-h-64 overflow-y-auto">
-        <div className="font-semibold mb-1">
-          <span className="inline-flex items-center gap-1">
-            {footnote.source}
-            <ExternalLink className="w-3 h-3" />
-          </span>
-        </div>
-        <p className="text-base-content/70 text-xs leading-relaxed">
-          {footnote.fullText}
-        </p>
       </div>
-    </span>
+    </div>
   );
 }
 
@@ -274,14 +272,27 @@ function ResolutionSummary({
     <div className="relative not-prose">
       <EditableInfo
         slot={slot}
-        trailing={resolution.footnotes.map((fn) => (
-          <Footnote key={fn.id} footnote={fn} />
-        ))}
       >
         {resolution.summary}
       </EditableInfo>
+      <div className="flex flex-wrap gap-x-4 -mt-3 mb-2">
+        {resolution.footnotes.map((fn) => <Footnote key={fn.source + fn.url} footnote={fn} />)}
+      </div>
+      {resolution.notice && <p className="border-l-2 border-base-300 pl-3 mb-3 text-sm">{resolution.notice}</p>}
     </div>
   );
+}
+
+function SourceFreshness({ market }: { market: Market }) {
+  const past = market.resolveDate !== undefined && market.resolveDate <= Date.now();
+  return <div className="text-xs basis-full text-base-content/60" title={market.historyNote}>
+    <time dateTime={new Date(market.lastUpdated).toISOString()} title={new Date(market.lastUpdated).toLocaleString()}>
+      {past ? "Last recorded" : "Updated"} {formatDistanceToNow(market.lastUpdated, { addSuffix: true })}
+    </time>
+    {market.resolveDate !== undefined
+      ? <span> · Stored closing date: {new Date(market.resolveDate).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}{past ? " · Closed-date forecast, outcome unverified" : ""}</span>
+      : <span> · Closing date unavailable</span>}
+  </div>;
 }
 
 function CombinedCard({
@@ -298,57 +309,29 @@ function CombinedCard({
   resolution?: GroupResolution;
 }) {
   const series: ChartSeries[] = markets.map((m) => ({
-    label: m.title,
+    label: m.shortLabel || m.source,
     color: m.chartColor || "#3B82F6",
     source: m.source,
     probability: m.probability,
     history: m.history,
+    sourceUrl: m.sourceUrl,
+    lastUpdated: m.lastUpdated,
+    resolveDate: m.resolveDate,
+    historyNote: m.historyNote,
   }));
 
   return (
-    <div className="card bg-base-100">
+    <VotedCard slot={slot}>
       <div className="card-body">
         <h3 className="card-title text-lg mb-1">{title}</h3>
         {resolution && (
           <ResolutionSummary slot={`${slot}:info`} resolution={resolution} />
         )}
 
-        <div className="flex flex-wrap gap-3 mb-3">
-          {markets.map((m) => {
-            const label = m.shortLabel || m.source;
-
-            return (
-              <div key={m._id} className="flex items-center gap-2">
-                <span className="text-lg font-bold">{m.probability}%</span>
-
-                {m.sourceUrl ? (
-                  <a
-                    href={m.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-sm font-medium hover:underline inline-flex items-center gap-1"
-                    style={{ color: m.chartColor || "#3B82F6" }}
-                  >
-                    {label}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                ) : (
-                  <span
-                    className="text-sm font-medium"
-                    style={{ color: m.chartColor || "#3B82F6" }}
-                  >
-                    {label}
-                  </span>
-                )}
-              </div>
-            );
-          })}
-        </div>
-
         <CombinedChart series={series} daysToShow={daysToShow} />
         <ChartVote slot={slot} />
       </div>
-    </div>
+    </VotedCard>
   );
 }
 
@@ -377,14 +360,14 @@ function TimelineCard({
   const label = market.shortLabel || market.source;
 
   return (
-    <div className="card bg-base-100">
+    <VotedCard slot={slot}>
       <div className="card-body">
         <h3 className="card-title text-lg mb-1">{title}</h3>
         {resolution && (
           <ResolutionSummary slot={`${slot}:info`} resolution={resolution} />
         )}
 
-        <div className="flex items-center gap-2 mb-3">
+        <div className="flex flex-wrap items-center gap-2 mb-3">
           <span className="text-lg font-bold">~{predictedYear}</span>
           {market.sourceUrl ? (
             <a
@@ -405,7 +388,8 @@ function TimelineCard({
               {label}
             </span>
           )}
-          <span className="text-xs opacity-50">(shaded area 90% CI)</span>
+          {market.history.some((p) => p.lowerBound !== undefined && p.upperBound !== undefined) && <span className="text-xs opacity-50">(shaded area: 90% interval)</span>}
+          <SourceFreshness market={market} />
         </div>
 
         <TimelineChart
@@ -417,7 +401,7 @@ function TimelineCard({
         />
         <ChartVote slot={slot} />
       </div>
-    </div>
+    </VotedCard>
   );
 }
 
@@ -458,7 +442,8 @@ function SingleCard({ market }: { market: Market }) {
 
         <div className="flex items-center justify-between mt-4 text-sm">
           <span className="opacity-50 capitalize">
-            {market.source} · {new Date(market.lastUpdated).toLocaleDateString()}
+            {market.source} ·{" "}
+            {new Date(market.lastUpdated).toLocaleDateString()}
           </span>
         </div>
       </div>

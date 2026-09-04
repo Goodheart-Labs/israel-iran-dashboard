@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import {
   CartesianGrid,
   ComposedChart,
@@ -42,6 +43,16 @@ export function ImpliedDateChart({
   series: ImpliedDateSeries[];
   height?: number;
 }) {
+  const [compact, setCompact] = useState(false);
+
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 639px)");
+    const update = () => setCompact(media.matches);
+    update();
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+
   const rowsByTime = new Map<number, Record<string, number>>();
   for (const s of series) {
     for (const point of s.points) {
@@ -88,22 +99,27 @@ export function ImpliedDateChart({
             stroke="#9CA3AF"
             tickLine={false}
             height={30}
+            minTickGap={compact ? 28 : 5}
           />
           <YAxis
             domain={domain}
             tickFormatter={formatImplied}
             tick={{ fontSize: 10 }}
             stroke="#9CA3AF"
-            width={62}
+            width={compact ? 44 : 62}
             tickLine={false}
-            label={{
-              value: "Implied IPO date",
-              angle: -90,
-              position: "insideLeft",
-              offset: 12,
-              fontSize: 10,
-              fill: "#6B7280",
-            }}
+            label={
+              compact
+                ? undefined
+                : {
+                    value: "Implied IPO date",
+                    angle: -90,
+                    position: "insideLeft",
+                    offset: 12,
+                    fontSize: 10,
+                    fill: "#6B7280",
+                  }
+            }
           />
           <Tooltip
             contentStyle={{
@@ -122,7 +138,11 @@ export function ImpliedDateChart({
               name,
             ]}
           />
-          <Legend verticalAlign="top" height={26} wrapperStyle={{ fontSize: 11 }} />
+          <Legend
+            verticalAlign="top"
+            height={26}
+            wrapperStyle={{ fontSize: 11 }}
+          />
           {series.map((s) => (
             <Line
               key={s.name}
@@ -134,7 +154,12 @@ export function ImpliedDateChart({
               dot={false}
               connectNulls
               isAnimationActive={false}
-              activeDot={{ r: 5, fill: s.color, strokeWidth: 2, stroke: "#fff" }}
+              activeDot={{
+                r: 5,
+                fill: s.color,
+                strokeWidth: 2,
+                stroke: "#fff",
+              }}
             />
           ))}
         </ComposedChart>
