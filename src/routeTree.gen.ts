@@ -18,6 +18,7 @@ import { Route as MaintenanceImport } from './routes/maintenance'
 import { Route as IpoImport } from './routes/ipo'
 import { Route as HantavirusImport } from './routes/hantavirus'
 import { Route as DebugAuthImport } from './routes/debug-auth'
+import { Route as AgiImport } from './routes/agi'
 import { Route as AdminImport } from './routes/admin'
 import { Route as IndexImport } from './routes/index'
 
@@ -65,6 +66,12 @@ const DebugAuthRoute = DebugAuthImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const AgiRoute = AgiImport.update({
+  id: '/agi',
+  path: '/agi',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const AdminRoute = AdminImport.update({
   id: '/admin',
   path: '/admin',
@@ -93,6 +100,13 @@ declare module '@tanstack/react-router' {
       path: '/admin'
       fullPath: '/admin'
       preLoaderRoute: typeof AdminImport
+      parentRoute: typeof rootRoute
+    }
+    '/agi': {
+      id: '/agi'
+      path: '/agi'
+      fullPath: '/agi'
+      preLoaderRoute: typeof AgiImport
       parentRoute: typeof rootRoute
     }
     '/debug-auth': {
@@ -152,6 +166,7 @@ declare module '@tanstack/react-router' {
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/agi': typeof AgiRoute
   '/debug-auth': typeof DebugAuthRoute
   '/hantavirus': typeof HantavirusRoute
   '/ipo': typeof IpoRoute
@@ -164,6 +179,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/agi': typeof AgiRoute
   '/debug-auth': typeof DebugAuthRoute
   '/hantavirus': typeof HantavirusRoute
   '/ipo': typeof IpoRoute
@@ -177,6 +193,7 @@ export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
   '/admin': typeof AdminRoute
+  '/agi': typeof AgiRoute
   '/debug-auth': typeof DebugAuthRoute
   '/hantavirus': typeof HantavirusRoute
   '/ipo': typeof IpoRoute
@@ -191,6 +208,7 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/admin'
+    | '/agi'
     | '/debug-auth'
     | '/hantavirus'
     | '/ipo'
@@ -202,6 +220,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/admin'
+    | '/agi'
     | '/debug-auth'
     | '/hantavirus'
     | '/ipo'
@@ -213,6 +232,7 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/admin'
+    | '/agi'
     | '/debug-auth'
     | '/hantavirus'
     | '/ipo'
@@ -226,6 +246,7 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AdminRoute: typeof AdminRoute
+  AgiRoute: typeof AgiRoute
   DebugAuthRoute: typeof DebugAuthRoute
   HantavirusRoute: typeof HantavirusRoute
   IpoRoute: typeof IpoRoute
@@ -238,6 +259,7 @@ export interface RootRouteChildren {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AdminRoute: AdminRoute,
+  AgiRoute: AgiRoute,
   DebugAuthRoute: DebugAuthRoute,
   HantavirusRoute: HantavirusRoute,
   IpoRoute: IpoRoute,
@@ -259,6 +281,7 @@ export const routeTree = rootRoute
       "children": [
         "/",
         "/admin",
+        "/agi",
         "/debug-auth",
         "/hantavirus",
         "/ipo",
@@ -273,6 +296,9 @@ export const routeTree = rootRoute
     },
     "/admin": {
       "filePath": "admin.tsx"
+    },
+    "/agi": {
+      "filePath": "agi.tsx"
     },
     "/debug-auth": {
       "filePath": "debug-auth.tsx"
