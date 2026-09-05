@@ -64,37 +64,48 @@ function AgiPage() {
       {data && latest && (
         <>
           <VotedCard slot="agi:headline" className="mb-8">
-            <div className="card-body">
-              <div className="text-4xl sm:text-5xl font-semibold tracking-tight">
+            <div className="px-5 pt-9 pb-7 sm:px-10 sm:pt-12 sm:pb-9 text-center">
+              <p className="text-xs font-medium tracking-[0.14em] uppercase opacity-60">
+                Combined median forecast
+              </p>
+              <div className="my-3 text-[clamp(5rem,12vw,9rem)] leading-none font-semibold tracking-[-0.06em] tabular-nums">
                 {latest.value}
               </div>
-              <p className="text-sm opacity-65">
-                Combined median forecast
-                {latest.range
-                  ? ` · middle 80%: ${latest.range[0]}–${latest.range[1]}`
-                  : ""}
-              </p>
+              {latest.range && (
+                <p className="text-sm opacity-70">
+                  <span className="font-medium tabular-nums">
+                    {latest.range[0]}–{latest.range[1]}
+                  </span>
+                  <span className="mx-2 opacity-40" aria-hidden="true">/</span>
+                  middle 80%
+                </p>
+              )}
+            </div>
+            <div className="mx-auto w-full max-w-2xl px-5 pb-5 text-center [&>p]:mb-0">
               <EditableInfo slot="agi:headline:info">
-                The original AGI dashboard’s combined forecast, using the same
-                calculation and source data. These questions use different
-                definitions; the combined date is an index, not a forecast for
-                one precisely defined event.
+                A blend of forecasts using different definitions of AGI. This
+                date is an index, not a prediction for one precisely defined
+                event.
               </EditableInfo>
-              <p className="text-xs opacity-50">
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-2 border-t border-base-300 px-5 py-3 sm:px-8">
+              <div className="text-xs leading-relaxed opacity-60">
                 Forecast dated{" "}
                 {new Date(latest.date).toLocaleDateString("en-GB", {
                   day: "numeric",
                   month: "short",
                   year: "numeric",
                 })}
-              </p>
-              {data.unavailableSources.includes("kalshi") && (
-                <p className="text-xs opacity-65">
-                  Kalshi is currently unavailable. The index uses the other four
-                  forecast series.
-                </p>
-              )}
-              <ChartVote slot="agi:headline" />
+                {data.unavailableSources.includes("kalshi") && (
+                  <span className="block sm:inline">
+                    <span className="hidden sm:inline"> · </span>
+                    Four forecast series; Kalshi unavailable.
+                  </span>
+                )}
+              </div>
+              <div className="ml-auto [&>div]:mt-0">
+                <ChartVote slot="agi:headline" />
+              </div>
             </div>
           </VotedCard>
           <VotedCard slot="agi:combined" className="mb-8">
