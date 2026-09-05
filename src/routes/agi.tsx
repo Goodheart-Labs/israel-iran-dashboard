@@ -68,7 +68,7 @@ function AgiPage() {
               <p className="text-xs font-medium tracking-[0.14em] uppercase opacity-60">
                 Combined median forecast
               </p>
-              <div className="my-3 text-[clamp(5rem,12vw,9rem)] leading-none font-semibold tracking-[-0.06em] tabular-nums">
+              <div className="my-3 text-[clamp(4rem,9vw,6.5rem)] leading-none font-semibold tracking-[-0.06em] tabular-nums">
                 {latest.value}
               </div>
               {latest.range && (
