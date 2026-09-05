@@ -33,10 +33,6 @@ function AgiPage() {
     <div className="max-w-7xl mx-auto">
       <header className="mb-8">
         <h1>When might we achieve AGI?</h1>
-        <p className="text-sm opacity-60">
-          Forecasts from Metaculus, Manifold and Kalshi, across different
-          definitions of AGI.
-        </p>
       </header>
       {query.isPending && (
         <p role="status" className="py-12 text-sm opacity-60">
@@ -65,9 +61,6 @@ function AgiPage() {
         <>
           <VotedCard slot="agi:headline" className="mb-8">
             <div className="px-5 pt-9 pb-7 sm:px-10 sm:pt-12 sm:pb-9 text-center">
-              <p className="text-xs font-medium tracking-[0.14em] uppercase opacity-60">
-                Combined forecast
-              </p>
               <div className="my-3 text-[clamp(4rem,9vw,6.5rem)] leading-none font-semibold tracking-[-0.06em] tabular-nums">
                 {latest.value}
               </div>
