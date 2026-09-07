@@ -1,5 +1,26 @@
 # Claude session notes
 
+## Current work: IPO headline year label timezone fix (2026-09-07)
+
+Twitter reply (Gumbledalf, Hamburg) flagged the OpenAI card reading "6% chance
+it has happened by Dec 31, 2027" against a May 2027 median. The percentage was
+right; the year was wrong for viewers east of UTC. `src/routes/ipo.tsx` built
+the year with `getFullYear()` on the rung's `resolveDate`, which the seed sets
+to 23:59 UTC on Dec 31 2026 — already Jan 1 2027 in Europe. Berkeley viewers
+(UTC-7) saw 2026, so it never showed locally. Fixed with `getUTCFullYear()`;
+also dropped a no-op `.replace("by ", "by ")` on the shortLabel.
+
+Checked siblings: `monthlyDistribution()` in `src/lib/ipoForecast.ts` uses
+local month-ends on purpose (commented); the ~1h offset vs UTC rungs shifts a
+negligible sliver of interpolated mass, so left alone. `TopicDashboard.tsx`
+and `TimelineChart.tsx` local getters are not at year boundaries.
+
+## Commits this session
+
+- fix: IPO headline year label used local timezone, wrong east of UTC
+
+---
+
 ## Current work: Luke feedback copy fixes (2026-08-21)
 
 Luke T reviewed globalriskodds.com/ipo. Two of his points actioned this session:

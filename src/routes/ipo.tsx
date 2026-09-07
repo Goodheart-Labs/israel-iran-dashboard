@@ -408,8 +408,10 @@ function IpoPage() {
               {company.finalRung && (
                 <p className="text-xs opacity-50">
                   {company.finalRung.probability}% chance it has happened{" "}
-                  {company.finalRung.shortLabel?.replace("by ", "by ")},{" "}
-                  {new Date(company.finalRung.resolveDate!).getFullYear()}
+                  {company.finalRung.shortLabel},{" "}
+                  {/* Rungs resolve 23:59 UTC; local getFullYear() rolls
+                      into the next year for viewers east of UTC. */}
+                  {new Date(company.finalRung.resolveDate!).getUTCFullYear()}
                 </p>
               )}
               <ChartVote slot={`ipo:${company.key}:headline-date`} />
