@@ -3,6 +3,7 @@ import { SuggestionsPanel } from "@/components/SuggestionsPanel";
 import { ArrowLeft } from "lucide-react";
 
 export const Route = createFileRoute("/wishlist")({
+  staticData: { title: "Requests" },
   component: WishlistPage,
 });
 

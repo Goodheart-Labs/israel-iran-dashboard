@@ -210,6 +210,7 @@ async function fetchValuationSeries(): Promise<ValuationForecast[]> {
 }
 
 export const Route = createFileRoute("/ipo")({
+  staticData: { title: "AI IPOs" },
   loader: async ({ context: { queryClient } }) => {
     await Promise.all([
       queryClient.ensureQueryData(marketsQuery),

@@ -12,6 +12,14 @@ import { useEffect } from "react";
 import { posthog } from "@/components/PostHogProvider";
 import { ChartVisibility } from "@/components/VotedCard";
 
+declare module "@tanstack/react-router" {
+  interface StaticDataRouteOption {
+    title?: string;
+  }
+}
+
+const SITE_NAME = "Global Risk Odds";
+
 export const Route = createRootRouteWithContext<{
   queryClient: QueryClient;
   convexClient: ConvexReactClient;
@@ -50,6 +58,16 @@ function TopicTabs() {
 function RootComponent() {
   const { queryClient, convexClient: convex } = Route.useRouteContext();
   const location = useRouterState({ select: (s) => s.location });
+  // Deepest matched route wins; routes without a title fall back to the site name.
+  const pageTitle = useRouterState({
+    select: (s) =>
+      [...s.matches].reverse().find((m) => m.staticData.title)?.staticData
+        .title,
+  });
+
+  useEffect(() => {
+    document.title = pageTitle ? `${pageTitle} · ${SITE_NAME}` : SITE_NAME;
+  }, [pageTitle]);
 
   useEffect(() => {
     posthog.capture("$pageview", { $current_url: window.location.href });

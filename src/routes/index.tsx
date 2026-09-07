@@ -106,6 +106,7 @@ const GROUP_RESOLUTION: Record<string, GroupResolution> = {
 const simpleMarketsQuery = convexQuery(api.simple.getMarkets, {});
 
 export const Route = createFileRoute("/")({
+  staticData: { title: "Iran" },
   loader: async ({ context: { queryClient } }) => {
     await queryClient.ensureQueryData(simpleMarketsQuery);
   },

@@ -1,5 +1,35 @@
 # Claude session notes
 
+## Current work: site title / link-preview rebrand (2026-09-07)
+
+Nathan flagged that the page title and link preview still read "Iran
+Geopolitical Risk Dashboard" on every route of globalriskodds.com. The static
+tags in `index.html` were the only source of titles and are shared by all
+routes in this SPA.
+
+- `index.html`: title, description, keywords, og:* and twitter:* now describe
+  Global Risk Odds (added og:site_name and og:url). Social scrapers only read
+  this static file, so this is what fixes link previews.
+- Browser tab titles per route: `staticData.title` on each topic route (Iran,
+  AI IPOs, AGI, Hantavirus, Requests) and an effect in `__root.tsx` setting
+  `document.title` to "<topic> · Global Risk Odds". Chose a plain effect over
+  TanStack `head()`/`HeadContent` because that would render a second `<title>`
+  alongside the static one in index.html.
+- Left `src/routes/original.tsx` (legacy, unlinked) and docs untouched.
+- No og:image exists; previews are text-only summary cards.
+- Verification: `pnpm run lint` clean; served `dist/` and read titles with the
+  Playwright-cache `chrome-headless-shell --dump-dom`. /agi and /wishlist show
+  "AGI · Global Risk Odds" / "Requests · Global Risk Odds". Loader-backed routes
+  (/, /ipo, /hantavirus) render an EMPTY body in headless Chromium, with or
+  without this change (stash-tested), so their titles could only be checked
+  for the fallback. Same code path as the working routes.
+
+## Commits this session
+
+- fix: rebrand page title and link preview from Iran dashboard to Global Risk Odds
+
+---
+
 ## Current work: IPO headline year label timezone fix (2026-09-07)
 
 Twitter reply (Gumbledalf, Hamburg) flagged the OpenAI card reading "6% chance

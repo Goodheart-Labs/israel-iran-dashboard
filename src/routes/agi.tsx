@@ -8,7 +8,10 @@ import { Caveats } from "@/components/Caveats";
 import { SuggestionsPanel } from "@/components/SuggestionsPanel";
 import { fetchAgiDashboard, type AgiSource } from "@/lib/agi";
 
-export const Route = createFileRoute("/agi")({ component: AgiPage });
+export const Route = createFileRoute("/agi")({
+  staticData: { title: "AGI" },
+  component: AgiPage,
+});
 
 function AgiPage() {
   const query = useQuery({
