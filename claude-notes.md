@@ -39,6 +39,18 @@ what it means for California, prompted by a tweet claiming ~2.5% megaflood odds.
   NOAA Climate at a Glance, NOAA CO-OPS high-tide-flooding counts and the CPC
   RONI table and prints the tables; `docs/elnino-estimates.md` holds the
   working plus that output, dated 2026-09-11.
+- Third pass: Nathan wants specific quotes. Pulled auto-captions of Swain's
+  10 Aug and 10 Sep Weather West updates (yt-dlp via uvx; VTT parsed by
+  keeping only `<c>`-tagged fresh lines) plus five short clips, and the
+  Huang & Swain full text via Europe PMC (PMC9374343). Every tile now has a
+  `quotes` list (verbatim, timestamp-linked) shown in the working card and
+  one in the popover; docs/elnino-estimates.md has the full quote list.
+  Numbers revised on the quotes: very wet winter 55 → 65% (ECMWF hindcast
+  2015-16 correctly, Swain gives 2-in-3 for top-10%), coastal 60 → 75%
+  (Swain: "almost 100% guaranteed", lift already 6-12 in), storm month
+  20 → 25% (follows tile 1). Megaflood definition now carries the ARkHist
+  amount, ~447 mm / 17.6 in statewide in 30 days. Open: Spilled Ink voting
+  page for these quotes (Nathan's "maybe"), and 3% vs 5% for megaflood.
 - Feedback from @Just_Curius (the tweet's author) via Nathan's DMs, same
   evening: "megastorm" in Huang & Swain means the month-long ARkStorm event
   (= our megaflood), their 2.5% is Fig. 5B (annual likelihood vs GMST, ~1%/yr

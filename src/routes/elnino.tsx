@@ -133,6 +133,8 @@ const SCRIPT_URL = `${REPO}/scripts/elnino_estimates.py`;
 
 type Row = { label: string; value: string; detail?: string; face?: string }; // face: short label on the tile
 
+type Quote = { text: string; who: string; url: string };
+
 type Estimate = {
   key: string;
   label: string;
@@ -141,47 +143,66 @@ type Estimate = {
   definition: string;
   rows: Row[]; // base rate, analogs, forecasts, in that order
   method: string; // how the rows become the headline
+  quotes: Quote[]; // verbatim, pinned to a source; YouTube quotes are lightly corrected auto-captions
   sources: { label: string; url: string }[];
 };
 
 const ANALOGS = "the 9 strong El Niño winters since 1950 (peak RONI ≥ 1.5)";
+const SWAIN_SEP = "Daniel Swain, Weather West September update, 10 Sep 2026";
+const SWAIN_AUG = "Daniel Swain, Weather West August update, 10 Aug 2026";
+const HS = "Huang & Swain 2022, Science Advances";
 
 const CALIFORNIA_ESTIMATES: Estimate[] = [
   {
     key: "wet",
     label: "Very wet winter",
-    headline: "~55%",
-    range: "35–75%",
+    headline: "~65%",
+    range: "45–85%",
     definition:
       "California's statewide Dec–Feb 2026-27 precipitation is at least 15.1 inches: the wettest 20% of the 131 winters on record (median 10.8 in).",
     rows: [
       { label: "Base rate, all 131 winters", value: "20%", detail: "by construction" },
       { label: `Rate in ${ANALOGS}`, value: "33%", detail: "3 of 9: 1957-58, 1982-83, 1997-98. Above the median: 6 of 9." },
-      { label: "ECMWF August ensemble", value: "70–100%", detail: "odds of a top-20% winter, by location (Swain, 10 Aug)" },
+      { label: "ECMWF September ensemble", value: ">70%", detail: "odds of a top-20% winter along the coast; ~2 in 3 for a top-10% winter; ~20% for a record-wet winter in a significant chunk of the state (Swain, 10 Sep)" },
       { label: "NOAA CPC outlook, 20 Aug", value: ">50%", detail: "odds of above-normal (top-third) precipitation for coastal California" },
     ],
     method:
-      "Roughly the midpoint of the analog rate (33%) and the ECMWF ensemble (~80%). We lean toward the model because this event is forecast to peak near RONI 3.0, beyond every analog (max 2.4), and away from it because 2015-16 was a record-class event that delivered an ordinary 12.3-inch winter.",
+      "Between the analog rate (33%) and the ECMWF ensemble (>70%), leaning to the model. It correctly hindcast 2015-16 as a dry strong-El Niño winter and 1982-83 and 1997-98 as wet ones, and this event is forecast to peak near RONI 3.0, beyond every analog (max 2.4). We stop short of the model because it is one system and, as Swain notes, an under-dispersed ensemble can be too wet or too dry.",
+    quotes: [
+      { text: "a greater than 70% chance of precipitation this December through February being among the wettest 20%.", who: SWAIN_SEP + ", 41:46", url: SW_SEP + "&t=2506s" },
+      { text: "It is more likely than not, probably about two in three odds of a winter among the wettest 10% we've seen. That's a more defensible headline.", who: SWAIN_SEP + ", 1:01:07", url: SW_SEP + "&t=3667s" },
+      { text: "this model correctly identified that 2015-2016, despite being a very strong El Niño year, would not be a very wet year in California, and also correctly identified in reforecasts that 1982-1983 and 97-98 would be very wet winters in California.", who: SWAIN_SEP + ", 43:18", url: SW_SEP + "&t=2598s" },
+      { text: "realistically there is something like a 20% chance that a significant chunk of California sees record wet conditions this winter.", who: SWAIN_SEP + ", 1:01:42", url: SW_SEP + "&t=3702s" },
+      { text: "Contrary to some newspaper headlines, that does not mean that California is, quote, heading for the wettest winter ever. That's something that we just can't know at this juncture.", who: "Daniel Swain, Weather West clip, Aug 2026", url: "https://www.youtube.com/watch?v=_hsTA3yfhEU" },
+      { text: "increased significantly to above 50 percent across much of coastal California and adjacent areas of southern Arizona from DJF through FMA, peaking in coverage during JFM.", who: "NOAA CPC seasonal outlook discussion, 20 Aug 2026 (odds of above-normal precipitation)", url: "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/fxus05.html" },
+    ],
     sources: [
       { label: "NOAA Climate at a Glance, California Dec–Feb precipitation", url: "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/statewide/time-series/4/pcp/3/2/1895-2026" },
-      { label: "Swain on the ECMWF August ensemble", url: "https://x.com/Weather_West/status/2085473752268021774" },
+      { label: "Weather West September update (YouTube)", url: SW_SEP },
       { label: "NOAA CPC seasonal outlook discussion", url: "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/fxus05.html" },
     ],
   },
   {
     key: "coast",
     label: "Coastal flooding",
-    headline: "~60%",
-    range: "40–80%",
+    headline: "~75%",
+    range: "55–90%",
     definition:
       "The Los Angeles tide gauge (NOAA 9410660) records at least 3 days between Nov 2026 and Apr 2027 at or above NOAA's minor coastal flood level: 11.18 ft on the station datum, 1.9 ft above mean higher high water.",
     rows: [
       { label: "Base rate, 72 winters since 1950", value: "10%", detail: "7 of 72. Last 11 winters: 3 of 11 (2025-26 had 6 days with no El Niño)." },
       { label: `Rate in ${ANALOGS}`, value: "38%", detail: "3 of 8 with data: 1982-83 (6 days), 2015-16 (5), 1997-98 (3). At least 1 day: 7 of 8." },
-      { label: "El Niño sea-level lift", value: "6–10 in", detail: "NOAA: seasonal rise on the US West Coast, a third to a half of the 22-inch margin between mean higher high water and the flood level" },
+      { label: "El Niño sea-level lift", value: "6–12 in", detail: "already observed off California in September (Swain), a third to a half of the 22-inch margin between mean higher high water and the flood level; NOAA: 6–10 in seasonal rise" },
     ],
     method:
-      "The analog rate, raised because the two most recent analogs both cleared 3 days easily, last winter cleared it with no El Niño at all, and this event is forecast to lift the ocean more than any of them.",
+      "The analog rate, raised a long way: the two most recent analogs both cleared 3 days easily, last winter cleared it with no El Niño at all, the lift is already 6–12 inches in September, and Swain expects record sea levels in San Diego and much of the state this winter.",
+    quotes: [
+      { text: "There will be significant coastal flooding that will get worse from here. That is almost 100% guaranteed. How bad it gets will depend.", who: SWAIN_SEP + ", 1:06:15", url: SW_SEP + "&t=3975s" },
+      { text: "I expect us to break the records in San Diego. So I think we'll probably see record sea levels in many parts of California except possibly San Francisco proper", who: SWAIN_SEP + ", 32:53", url: SW_SEP + "&t=1973s" },
+      { text: "we're already seeing significant elevation of sea level along the California coast exceeding that 15 cm level. So, we're between 15 and 30.", who: SWAIN_SEP + ", 24:57", url: SW_SEP + "&t=1497s" },
+      { text: "all of our progressive sea level records have been broken during strong El Niño events. 82-83 was the highest sea level we'd ever seen in the Bay Area by a wide margin at that point in time.", who: SWAIN_AUG + ", 23:02", url: SW_AUG + "&t=1382s" },
+      { text: "there's no guarantee, although the coastal flooding is about as close to a guarantee as we can get. The inland flooding is a bigger wild card", who: SWAIN_AUG + ", 1:04:52", url: SW_AUG + "&t=3892s" },
+    ],
     sources: [
       { label: "NOAA high tide flooding, Los Angeles gauge", url: "https://tidesandcurrents.noaa.gov/high-tide-flooding/" },
       { label: "NOAA flood levels for station 9410660", url: "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/9410660/floodlevels.json" },
@@ -191,8 +212,8 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
   {
     key: "megastorm",
     label: "Major storm month",
-    headline: "~20%",
-    range: "12–35%",
+    headline: "~25%",
+    range: "15–40%",
     definition:
       "Some calendar month from Nov 2026 to Mar 2027 delivers at least 9 inches of precipitation averaged over the whole state. Twelve winters in 131 have done it: Dec 1955, Jan 1969, Mar 1983, Feb 1986, Jan 1995 (the record, 12.5 in), Feb 1998, Jan 2017 and five before 1920.",
     rows: [
@@ -201,7 +222,12 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
       { label: "If the winter is top-20% wet", value: "37%", detail: "10 of 27; otherwise 2 of 104 = 2%" },
     ],
     method:
-      "0.55 × 37% + 0.45 × 2% = 21%, taking the 55% from the very-wet-winter tile.",
+      "0.65 × 37% + 0.35 × 2% = 25%, taking the 65% from the very-wet-winter tile.",
+    quotes: [
+      { text: "as far as probabilistic prediction goes, this is pretty much the strongest signal that we can get in terms of increased risk for coastal flooding certainly in California, but I would also argue for freshwater inland flooding from heavy rainfall.", who: "Daniel Swain, Weather West clip, Aug 2026", url: "https://www.youtube.com/watch?v=MHFxESIO8jw" },
+      { text: "That is pretty different than the situation we had in 2015-2016 and is more akin to 82-83 or 97-98 plus, in the former case, 40 years worth of global warming", who: SWAIN_AUG + ", 1:01:32", url: SW_AUG + "&t=3692s" },
+      { text: "The stats show that only about 2% of Californians have flood insurance, only 2%.", who: "Daniel Swain, Weather West clip, Aug 2026", url: "https://www.youtube.com/watch?v=fyQKrgrNAYU" },
+    ],
     sources: [
       { label: "NOAA Climate at a Glance, California monthly precipitation", url: "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/statewide/time-series/4/pcp/1/0/1895-2026" },
     ],
@@ -212,13 +238,22 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
     headline: "~3%",
     range: "2–8%",
     definition:
-      "A month-long megastorm on the ARkStorm scale: a weeks-long sequence whose 30-day statewide precipitation exceeds anything in the 131-year record (biggest month: 12.5 in, Jan 1995) and approaches the winter of 1861-62. ARkStorm 2.0's historical scenario (ARkHist), which brings slightly less rain than 1862 did.",
+      "A month-long megastorm on the ARkStorm scale: roughly 447 mm (17.6 in) or more of precipitation averaged over the whole state in 30 days, the ARkHist scenario of ARkStorm 2.0, which brings slightly less rain than the winter of 1861-62 did. The biggest calendar month in the 131-year record is 12.5 in (Jan 1995).",
     rows: [
       { label: "Base rate at today's warming", value: "2.5–3% / yr", detail: "Huang & Swain 2022, Fig. 5B: about 1%/yr in the pre-industrial climate, rising ~1.2 points per °C of global warming. At 1.3–1.65°C (30-year-smoothed vs single-year 2026 estimates) that is 2.5–3%. Cross-check: a stationary 131-year record is beaten with probability 1/132 = 0.8%; warming to date has roughly doubled the 1920 rate." },
       { label: "El Niño multiplier", value: "×1–3", detail: "Every one of the most intense simulated 30-day sequences in the paper's ensemble fell in a moderate-to-strong El Niño year, which are a quarter to a third of years. Our record: 2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall (2.4×). Applying no multiplier is the cautious reading.", face: "El Niño" },
     ],
     method:
       "The headline is the unconditioned Fig. 5B rate, ~3%, which is where the ~2.5% figure circulating online comes from. Conditioning on this being a strong El Niño winter, as the paper's own results suggest, would give 5–8%; the range covers both readings.",
+    quotes: [
+      { text: "Recent estimates suggest that floods equal to or greater in magnitude to those in 1862 occur five to seven times per millennium [i.e., a 1.0 to 0.5% annual likelihood or 100- to 200-year recurrence interval (RI)]", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
+      { text: "We find that the annual likelihood of an ARkHist level event increases rapidly for each 1°C of global warming [by ~0.012/year per degree C from a baseline of ~0.01/year]", who: HS + ", Fig. 5B", url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
+      { text: "We find that climate change to date (as of 2022) has already increased the annual likelihood of an ARkHist event by ~105% relative to 1920 in the CESM1-LENS ensemble", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
+      { text: "We further find that all of the most intense 30-day megastorm events in the CESM1-LENS ensemble occur during moderate to strong ENSO warm phase (El Niño) conditions—both in the historical and warmer future scenarios—suggesting that these events may potentially exhibit some degree of predictability at seasonal scale.", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
+      { text: "Collectively, seven of eight historical and future potential California megastorm events occur under moderate or strong El Niño conditions as defined by the ELI (eight of eight, if rounding to the nearest degree of longitude).", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
+      { text: "California-wide average cumulative precipitation during the 30-day periods encompassing both extreme storm sequence scenarios represents a considerable fraction of the total annual [October-September water year (WY)] precipitation occurring during both ARkHist (~447 mm or 46% of the WY total) and ARkFuture (~586 mm, of 40% of the WY total).", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
+      { text: "California is likely to see anywhere from extra precipitation & storm surge to a megastorm and a megaflood this winter (~2.5% chance).", who: "@Just_Curius on X, 11 Sep 2026", url: "https://x.com/Just_Curius/status/2098592816028954706" },
+    ],
     sources: [
       { label: "Huang & Swain 2022, Science Advances (Fig. 5B)", url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
       { label: "Weather West summary of ARkStorm 2.0", url: "https://weatherwest.com/archives/16626" },
@@ -278,7 +313,10 @@ function EstimateTile({ e }: { e: Estimate }) {
           </tbody>
         </table>
         <p className="text-xs opacity-80">{e.method}</p>
-        <a href={`#working-${e.key}`} className="text-xs underline">Full working and sources below</a>
+        <blockquote className="text-xs border-l-2 border-base-300 pl-2 opacity-80">
+          “{e.quotes[0].text}” <span className="opacity-60">— {e.quotes[0].who}</span>
+        </blockquote>
+        <a href={`#working-${e.key}`} className="text-xs underline">Full working, quotes and sources below</a>
       </div>
     </div>
   );
@@ -312,7 +350,8 @@ function Working() {
         Same recipe for each tile: a definition in physical units, the base rate over the whole
         record, the rate in the nine strong El Niño winters since 1950 (peak RONI ≥ 1.5: 1957-58,
         1965-66, 1972-73, 1982-83, 1986-87, 1991-92, 1997-98, 2009-10, 2015-16), the official
-        forecasts where they exist, then the arithmetic. This event is forecast to peak near RONI
+        forecasts where they exist, then the arithmetic, with the sources quoted verbatim (YouTube
+        quotes are lightly corrected auto-captions, linked to the timestamp). This event is forecast to peak near RONI
         3.0, beyond every analog, so the analog rates are a floor for the El Niño effect. The data
         section is generated by{" "}
         <a href={SCRIPT_URL} target="_blank" rel="noopener noreferrer" className="underline">scripts/elnino_estimates.py</a>
@@ -340,6 +379,17 @@ function Working() {
                   </tr>
                 </tbody>
               </table>
+              <div className="mt-3">
+                <div className="text-xs font-medium opacity-70 mb-1">What the sources say, verbatim</div>
+                <ul className="space-y-2">
+                  {e.quotes.map((q) => (
+                    <li key={q.url + q.text.slice(0, 24)} className="border-l-2 border-base-300 pl-3 text-xs">
+                      “{q.text}”{" "}
+                      <a href={q.url} target="_blank" rel="noopener noreferrer" className="underline opacity-70 whitespace-nowrap">— {q.who}</a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
               <ul className="text-xs mt-2 space-y-1">
                 {e.sources.map((src) => (
                   <li key={src.url}>
