@@ -51,7 +51,7 @@ level, 11.18 ft on the station datum = 1.9 ft above mean higher high water.
   both cleared 3 days easily, last winter cleared it with no El Niño at all,
   and this event is forecast to lift the ocean more than any of them.
 
-### 3. Megastorm month: ~20% (range 12-35%)
+### 3. Major storm month: ~20% (range 12-35%)
 
 Definition: some calendar month from Nov 2026 to Mar 2027 delivers at least
 9 inches of precipitation averaged over the whole state. Twelve winters in 131
@@ -64,28 +64,34 @@ Feb 1986, Jan 1995 (the record, 12.5 in), Feb 1998, Jan 2017.
   2 of 104 = 2%.
 - Our number: 0.55 x 37% + 0.45 x 2% = 21%, using tile 1 for the 0.55.
 
-### 4. Megaflood: ~3% (range 1-6%)
+### 4. Megaflood, ARkStorm-scale month-long megastorm: ~3% (range 2-8%)
 
-Definition: an ARkStorm-scale event, a weeks-long storm sequence whose 30-day
-statewide precipitation exceeds anything in the 131-year instrumental record
-(the biggest calendar month is 12.5 in, Jan 1995) and approaches the winter of
-1861-62. This is the "ARkHist" scenario of ARkStorm 2.0 (Huang & Swain 2022),
-which brings slightly less rain than 1862 did.
+Definition: a weeks-long storm sequence whose 30-day statewide precipitation
+exceeds anything in the 131-year instrumental record (the biggest calendar
+month is 12.5 in, Jan 1995) and approaches the winter of 1861-62. This is the
+"ARkHist" scenario of ARkStorm 2.0 (Huang & Swain 2022), which brings slightly
+less rain than 1862 did. ("Megastorm" in that paper means this month-long
+event, not the single big month of tile 3.)
 
-- Base rate: Huang & Swain put ARkHist at roughly a 1-in-90-to-100-year event
-  in the 1995-2005 climate, about 1% a year, and find warming to date has
-  already doubled the risk relative to the pre-industrial climate. Instrumental
-  cross-check: a stationary 131-year record is beaten in a given year with
-  probability about 1/132 = 0.8%.
-- El Niño: in their simulations, 7 of the 8 largest 30-day storm sequences
-  occurred during moderate-to-strong El Niño conditions, which cover roughly a
-  quarter to a third of years, so an El Niño winter carries about 2-3 times
-  the average risk. Our own record agrees: 2 of the 9 strong El Niño winters
-  produced one of the 12 nine-inch months, versus 12 of 131 overall (2.4x).
-- Our number: 1% x 2.5 = 2.5%, rounded up to 3% because this event is
-  forecast beyond every analog; the range covers how thin the evidence is.
-  The 2.5% figure circulating online sits inside this range but is not a
-  published number.
+- Base rate at today's warming: Huang & Swain, Fig. 5B, fit the annual
+  likelihood of an ARkHist-level event as ~0.01/yr in the pre-industrial
+  climate plus ~0.012/yr per degree C of global mean surface temperature
+  (GMST) anomaly, on a 30-year-smoothed basis. At 1.3 C (smoothed, mid-2020s)
+  that is 2.6%; at the 1.6-1.7 C some expect for the single year 2026 it is
+  ~3%. The paper also states warming to date has already raised the
+  likelihood ~105% relative to 1920. Instrumental cross-check: a stationary
+  131-year record is beaten in a given year with probability 1/132 = 0.8%.
+- El Niño: "all of the most intense 30-day megastorm events in the CESM1-LENS
+  ensemble occur during moderate to strong ENSO warm phase (El Niño)
+  conditions"; 7 of 8 by the ENSO Longitude Index, 8 of 8 rounding. Such
+  years are a quarter to a third of all years, so a strong El Niño winter
+  should carry 2-3 times the unconditioned annual rate. Our own record: 2 of
+  the 9 strong El Niño winters produced one of the 12 nine-inch months, vs
+  12 of 131 overall (2.4x).
+- Our number: the headline is the unconditioned Fig. 5B rate, ~3%, which is
+  also where the ~2.5% figure circulating online comes from (Fig. 5B read at
+  2026's expected GMST). Conditioning on El Niño as above gives 5-8%. The
+  range spans both readings.
 
 ## Data (output of scripts/elnino_estimates.py, 2026-09-11)
 

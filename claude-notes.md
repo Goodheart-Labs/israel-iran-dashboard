@@ -39,6 +39,14 @@ what it means for California, prompted by a tweet claiming ~2.5% megaflood odds.
   NOAA Climate at a Glance, NOAA CO-OPS high-tide-flooding counts and the CPC
   RONI table and prints the tables; `docs/elnino-estimates.md` holds the
   working plus that output, dated 2026-09-11.
+- Feedback from @Just_Curius (the tweet's author) via Nathan's DMs, same
+  evening: "megastorm" in Huang & Swain means the month-long ARkStorm event
+  (= our megaflood), their 2.5% is Fig. 5B (annual likelihood vs GMST, ~1%/yr
+  + 1.2 pts/°C) read at 2026's expected 1.6-1.7 °C, and they'd go to 3-4% at
+  most. Renamed the 9-inch tile "Major storm month", retitled the last tile
+  "Megaflood (ARkStorm)", rebuilt its rows around Fig. 5B with the El Niño
+  conditioning shown as ×1-3 (headline stays ~3%, range 2-8%). Open question
+  for Nathan: publish the conditioned 5-8% or the expert's unconditioned 3%.
 - Shipped 2026-09-11 evening on Nathan's "put it live, don't put it in the
   top bar": /elnino is reachable by URL only (no tab, like /hantavirus).
   Branch merged fast-forward into main and pushed; Vercel prod build runs

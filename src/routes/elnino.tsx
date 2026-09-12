@@ -190,7 +190,7 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
   },
   {
     key: "megastorm",
-    label: "Megastorm month",
+    label: "Major storm month",
     headline: "~20%",
     range: "12–35%",
     definition:
@@ -208,19 +208,19 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
   },
   {
     key: "megaflood",
-    label: "Megaflood",
+    label: "Megaflood (ARkStorm)",
     headline: "~3%",
-    range: "1–6%",
+    range: "2–8%",
     definition:
-      "An ARkStorm-scale event: a weeks-long storm sequence whose 30-day statewide precipitation exceeds anything in the 131-year record (biggest month: 12.5 in, Jan 1995) and approaches the winter of 1861-62. ARkStorm 2.0's historical scenario, which brings slightly less rain than 1862 did.",
+      "A month-long megastorm on the ARkStorm scale: a weeks-long sequence whose 30-day statewide precipitation exceeds anything in the 131-year record (biggest month: 12.5 in, Jan 1995) and approaches the winter of 1861-62. ARkStorm 2.0's historical scenario (ARkHist), which brings slightly less rain than 1862 did.",
     rows: [
-      { label: "Base rate", value: "~1% / yr", detail: "Huang & Swain 2022: a 1-in-90-to-100-year event in the 1995–2005 climate, already double the pre-industrial rate. Cross-check: a stationary 131-year record is beaten with probability 1/132 = 0.8%." },
-      { label: "El Niño multiplier", value: "×2–3", face: "El Niño", detail: "7 of the 8 largest simulated 30-day sequences fell in moderate-to-strong El Niño years, which are a quarter to a third of years. Our record: 2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall (2.4×)." },
+      { label: "Base rate at today's warming", value: "2.5–3% / yr", detail: "Huang & Swain 2022, Fig. 5B: about 1%/yr in the pre-industrial climate, rising ~1.2 points per °C of global warming. At 1.3–1.65°C (30-year-smoothed vs single-year 2026 estimates) that is 2.5–3%. Cross-check: a stationary 131-year record is beaten with probability 1/132 = 0.8%; warming to date has roughly doubled the 1920 rate." },
+      { label: "El Niño multiplier", value: "×1–3", detail: "Every one of the most intense simulated 30-day sequences in the paper's ensemble fell in a moderate-to-strong El Niño year, which are a quarter to a third of years. Our record: 2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall (2.4×). Applying no multiplier is the cautious reading.", face: "El Niño" },
     ],
     method:
-      "1% × 2.5 = 2.5%, rounded up to 3% because this event is forecast beyond every analog. The 2.5% figure circulating online sits inside the range but is not a published number.",
+      "The headline is the unconditioned Fig. 5B rate, ~3%, which is where the ~2.5% figure circulating online comes from. Conditioning on this being a strong El Niño winter, as the paper's own results suggest, would give 5–8%; the range covers both readings.",
     sources: [
-      { label: "Huang & Swain 2022, Science Advances", url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
+      { label: "Huang & Swain 2022, Science Advances (Fig. 5B)", url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
       { label: "Weather West summary of ARkStorm 2.0", url: "https://weatherwest.com/archives/16626" },
       { label: "USGS ARkStorm scenario", url: "https://www.usgs.gov/programs/science-application-for-risk-reduction/science/arkstorm-scenario" },
     ],
