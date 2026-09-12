@@ -131,7 +131,7 @@ const REPO = "https://github.com/Goodheart-Labs/israel-iran-dashboard/blob/main"
 const WORKING_URL = `${REPO}/docs/elnino-estimates.md`;
 const SCRIPT_URL = `${REPO}/scripts/elnino_estimates.py`;
 
-type Row = { label: string; value: string; detail?: string };
+type Row = { label: string; value: string; detail?: string; face?: string }; // face: short label on the tile
 
 type Estimate = {
   key: string;
@@ -215,7 +215,7 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
       "An ARkStorm-scale event: a weeks-long storm sequence whose 30-day statewide precipitation exceeds anything in the 131-year record (biggest month: 12.5 in, Jan 1995) and approaches the winter of 1861-62. ARkStorm 2.0's historical scenario, which brings slightly less rain than 1862 did.",
     rows: [
       { label: "Base rate", value: "~1% / yr", detail: "Huang & Swain 2022: a 1-in-90-to-100-year event in the 1995–2005 climate, already double the pre-industrial rate. Cross-check: a stationary 131-year record is beaten with probability 1/132 = 0.8%." },
-      { label: "El Niño multiplier", value: "×2–3", detail: "7 of the 8 largest simulated 30-day sequences fell in moderate-to-strong El Niño years, which are a quarter to a third of years. Our record: 2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall (2.4×)." },
+      { label: "El Niño multiplier", value: "×2–3", face: "El Niño", detail: "7 of the 8 largest simulated 30-day sequences fell in moderate-to-strong El Niño years, which are a quarter to a third of years. Our record: 2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall (2.4×)." },
     ],
     method:
       "1% × 2.5 = 2.5%, rounded up to 3% because this event is forecast beyond every analog. The 2.5% figure circulating online sits inside the range but is not a published number.",
@@ -254,9 +254,9 @@ function EstimateTile({ e }: { e: Estimate }) {
           <div className="text-3xl font-bold leading-tight">{e.headline}</div>
           <div className="text-xs opacity-50">range {e.range}</div>
           <div className="text-xs mt-2 leading-snug">
-            <span className="opacity-60">base rate</span> <span className="font-medium">{base.value}</span>
+            <span className="opacity-60">{base.face ?? "base rate"}</span> <span className="font-medium">{base.value}</span>
             <span className="opacity-40"> · </span>
-            <span className="opacity-60">El Niño winters</span> <span className="font-medium">{analogs.value}</span>
+            <span className="opacity-60">{analogs.face ?? "El Niño winters"}</span> <span className="font-medium">{analogs.value}</span>
           </div>
         </div>
       </button>
