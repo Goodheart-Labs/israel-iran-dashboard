@@ -11,7 +11,8 @@ import {
 } from "@/components/TopicDashboard";
 import { SuggestionsPanel } from "@/components/SuggestionsPanel";
 import { Caveats } from "@/components/Caveats";
-import { VotableList } from "@/components/ItemVote";
+import { ItemVote, VotableList } from "@/components/ItemVote";
+import { useQuery } from "convex/react";
 import { itemId } from "@/lib/helpfulness";
 
 // RONI = NOAA CPC's Relative Oceanic Niño Index: the Niño-3.4 anomaly minus
@@ -321,6 +322,7 @@ function CaliforniaEstimates() {
 }
 
 function Working() {
+  const votes = useQuery(api.chartVotes.listAll) ?? [];
   return (
     <section className="mt-10 not-prose">
       <h2 className="text-xl font-semibold tracking-tight mb-1">How the California numbers are made</h2>
@@ -350,12 +352,14 @@ function Working() {
                       <td className="pr-2 py-1 opacity-70 w-2/5">{r.label}</td>
                       <td className="pr-2 py-1 font-medium whitespace-nowrap">{r.value}</td>
                       <td className="py-1 opacity-70">{r.detail}</td>
+                      <td className="py-1 pl-2 text-right"><ItemVote slot={`elnino:row:${e.key}:${itemId(r.label)}`} votes={votes} /></td>
                     </tr>
                   ))}
                   <tr className="align-top border-t border-base-300">
                     <td className="pr-2 py-1 opacity-70">Our number</td>
                     <td className="pr-2 py-1 font-bold whitespace-nowrap">{e.headline}</td>
                     <td className="py-1 opacity-80">{e.method}</td>
+                    <td className="py-1 pl-2 text-right"><ItemVote slot={`elnino:ours:${e.key}`} votes={votes} /></td>
                   </tr>
                 </tbody>
               </table>

@@ -38,7 +38,7 @@ export function ItemVote({ slot, votes }: { slot: string; votes: Vote[] }) {
 
   if (!open) {
     return (
-      <span className="inline-flex items-center ml-2 align-middle not-prose">
+      <span className="inline-flex items-center shrink-0 align-middle not-prose">
         <button
           type="button"
           onClick={() => setOpen(true)}
@@ -53,7 +53,7 @@ export function ItemVote({ slot, votes }: { slot: string; votes: Vote[] }) {
   }
 
   return (
-    <span className="inline-flex flex-wrap items-center gap-1 ml-2 align-middle not-prose">
+    <span className="inline-flex flex-wrap items-center justify-end gap-1 shrink-0 align-middle not-prose">
       <span className="text-[10px] opacity-60">Useful?</span>
       {RATINGS.map((r) => (
         <button
@@ -101,8 +101,8 @@ export function VotableList<T>({
   const shown = scored.filter((s) => s.score > HIDE_SCORE);
   const hidden = scored.filter((s) => s.score <= HIDE_SCORE);
   const row = (s: (typeof scored)[number]) => (
-    <li key={s.slot} className={itemClassName}>
-      {render(s.item)}
+    <li key={s.slot} className={`${itemClassName ?? ""} flex items-start justify-between gap-3`}>
+      <span className="min-w-0">{render(s.item)}</span>
       <ItemVote slot={s.slot} votes={votes} />
     </li>
   );
