@@ -39,6 +39,12 @@ what it means for California, prompted by a tweet claiming ~2.5% megaflood odds.
   NOAA Climate at a Glance, NOAA CO-OPS high-tide-flooding counts and the CPC
   RONI table and prints the tables; `docs/elnino-estimates.md` holds the
   working plus that output, dated 2026-09-11.
+- Nathan dropped the "Major storm month" tile (9-inch calendar month) as
+  redundant next to the ARkStorm tile; three tiles remain. Per-quote and
+  per-source usefulness voting added (ItemVote/VotableList, chartVotes slots
+  `elnino:quote:<tile>:<hash>` / `elnino:source:<tile>:<hash>`), Vote-button-
+  then-options pattern like the chart cards. 'Resolves Yes if' → 'We would
+  count it as a yes if'. Fixed card-body paragraph flex-grow gap.
 - Third pass: Nathan wants specific quotes. Pulled auto-captions of Swain's
   10 Aug and 10 Sep Weather West updates (yt-dlp via uvx; VTT parsed by
   keeping only `<c>`-tagged fresh lines) plus five short clips, and the

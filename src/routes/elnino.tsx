@@ -214,29 +214,6 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
     ],
   },
   {
-    key: "megastorm",
-    label: "Major storm month",
-    headline: "~25%",
-    range: "15–40%",
-    definition:
-      "Some calendar month from Nov 2026 to Mar 2027 delivers at least 9 inches of precipitation averaged over the whole state. Twelve winters in 131 have done it: Dec 1955, Jan 1969, Mar 1983, Feb 1986, Jan 1995 (the record, 12.5 in), Feb 1998, Jan 2017 and five before 1920.",
-    rows: [
-      { label: "Base rate, all 131 winters", value: "9%", detail: "12 of 131" },
-      { label: `Rate in ${ANALOGS}`, value: "22%", detail: "2 of 9: Mar 1983 (9.0 in), Feb 1998 (11.5 in)" },
-      { label: "If the winter is top-20% wet", value: "37%", detail: "10 of 27; otherwise 2 of 104 = 2%" },
-    ],
-    method:
-      "0.65 × 37% + 0.35 × 2% = 25%, taking the 65% from the very-wet-winter tile.",
-    quotes: [
-      { text: "as far as probabilistic prediction goes, this is pretty much the strongest signal that we can get in terms of increased risk for coastal flooding certainly in California, but I would also argue for freshwater inland flooding from heavy rainfall.", who: "Daniel Swain, Weather West clip, Aug 2026", url: "https://www.youtube.com/watch?v=MHFxESIO8jw" },
-      { text: "That is pretty different than the situation we had in 2015-2016 and is more akin to 82-83 or 97-98 plus, in the former case, 40 years worth of global warming", who: SWAIN_AUG + ", 1:01:32", url: SW_AUG + "&t=3692s" },
-      { text: "The stats show that only about 2% of Californians have flood insurance, only 2%.", who: "Daniel Swain, Weather West clip, Aug 2026", url: "https://www.youtube.com/watch?v=fyQKrgrNAYU" },
-    ],
-    sources: [
-      { label: "NOAA Climate at a Glance, California monthly precipitation", url: "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/statewide/time-series/4/pcp/1/0/1895-2026" },
-    ],
-  },
-  {
     key: "megaflood",
     label: "Megaflood (ARkStorm)",
     headline: "~3%",
@@ -336,7 +313,7 @@ function CaliforniaEstimates() {
           the base rates.
         </p>
       </div>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {CALIFORNIA_ESTIMATES.map((e) => <EstimateTile key={e.key} e={e} />)}
       </div>
     </section>

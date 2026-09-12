@@ -14,7 +14,7 @@ climate-adjusted El Niño index) reached 1.5 or more. The 2026-27 event is
 forecast to peak near 3.0, well beyond the strongest analog (2.4 in 1982-83),
 so analogs are a floor for the El Niño effect, not a ceiling.
 
-## Our numbers (revised 2026-09-11 evening after Swain's 10 Sep update)
+## Our numbers (revised 2026-09-11 evening after Swain's 10 Sep update; the "major storm month" tile was dropped the same evening, its data stays below)
 
 ### 1. Very wet winter: ~65% (range 45-85%)
 
@@ -53,21 +53,7 @@ level, 11.18 ft on the station datum = 1.9 ft above mean higher high water.
 - Our number: the analog rate raised a long way for those reasons. Earlier
   draft said 60%.
 
-### 3. Major storm month: ~25% (range 15-40%)
-
-We would count it as a yes if: some calendar month from Nov 2026 to Mar 2027 delivers at least
-9 inches of precipitation averaged over the whole state. Twelve winters in 131
-have done it: Dec 1955, Jan 1969, Mar 1983, Feb 1986, Jan 1995 (the record,
-12.5 in), Feb 1998, Jan 2017 and five before 1920. (Not the "month-long
-megastorm" of Huang & Swain, which is tile 4.)
-
-- Base rate: 12 of 131 winters = 9%.
-- Analogs: 2 of 9 strong El Niño winters (1982-83, 1997-98) = 22%.
-- Conditional on the winter being top-20% wet: 10 of 27 = 37%; otherwise
-  2 of 104 = 2%.
-- Our number: 0.65 x 37% + 0.35 x 2% = 25%, using tile 1 for the 0.65.
-
-### 4. Megaflood, ARkStorm-scale month-long megastorm: ~3% (range 2-8%)
+### 3. Megaflood, ARkStorm-scale month-long megastorm: ~3% (range 2-8%)
 
 We would count it as a yes if: roughly 447 mm (17.6 in) or more of precipitation averaged over
 the whole state in 30 days, the "ARkHist" scenario of ARkStorm 2.0 (Huang &
