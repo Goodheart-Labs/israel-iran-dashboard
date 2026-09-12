@@ -39,6 +39,11 @@ what it means for California, prompted by a tweet claiming ~2.5% megaflood odds.
   NOAA Climate at a Glance, NOAA CO-OPS high-tide-flooding counts and the CPC
   RONI table and prints the tables; `docs/elnino-estimates.md` holds the
   working plus that output, dated 2026-09-11.
+- Shipped 2026-09-11 evening on Nathan's "put it live, don't put it in the
+  top bar": /elnino is reachable by URL only (no tab, like /hantavirus).
+  Branch merged fast-forward into main and pushed; Vercel prod build runs
+  `convex deploy`; then prod seeded with `seedInitialMarkets {only:[...]}`
+  and `fetchAllMarketHistory` (see commands above).
 - Nathan does not want a PR flow on this repo: branch `elnino-page` is pushed,
   PR #1 closed unmerged, draft shown via `vite --port 5173` in his browser.
   Vercel preview builds fail by design (prod Convex deploy key refused

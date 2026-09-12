@@ -31,7 +31,6 @@ const TABS = [
   { to: "/", label: "Iran" },
   { to: "/ipo", label: "AI IPOs" },
   { to: "/agi", label: "AGI" },
-  { to: "/elnino", label: "El Niño" },
   { to: "/wishlist", label: "Requests" },
 ] as const;
 
