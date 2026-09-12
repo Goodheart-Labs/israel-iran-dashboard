@@ -2,6 +2,7 @@ import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute } from "@tanstack/react-router";
 import { ExternalLink } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import {
   TopicDashboard,
@@ -119,79 +120,169 @@ const GROUP_RESOLUTION: Record<string, GroupResolution> = {
 };
 
 // ---------------------------------------------------------------------------
-// California this winter: nothing on any exchange prices these directly, so
-// the headline tiles are our estimates from published forecasts and research.
-// Each carries a resolvable definition so a market could be written from it.
+// California this winter. Nothing on any exchange prices these, so the tiles
+// are our own numbers: a definition in physical units, the base rate over the
+// whole record, the rate in the nine strong El Niño winters since 1950, the
+// official forecasts where they exist, and the arithmetic. All computed by
+// scripts/elnino_estimates.py; the working is docs/elnino-estimates.md.
 // ---------------------------------------------------------------------------
+
+const REPO = "https://github.com/Goodheart-Labs/israel-iran-dashboard/blob/main";
+const WORKING_URL = `${REPO}/docs/elnino-estimates.md`;
+const SCRIPT_URL = `${REPO}/scripts/elnino_estimates.py`;
+
+type Row = { label: string; value: string; detail?: string };
 
 type Estimate = {
   key: string;
   label: string;
-  probability: string; // headline
+  headline: string;
   range: string;
   definition: string;
-  reasoning: string;
+  rows: Row[]; // base rate, analogs, forecasts, in that order
+  method: string; // how the rows become the headline
   sources: { label: string; url: string }[];
 };
+
+const ANALOGS = "the 9 strong El Niño winters since 1950 (peak RONI ≥ 1.5)";
 
 const CALIFORNIA_ESTIMATES: Estimate[] = [
   {
     key: "wet",
     label: "Very wet winter",
-    probability: "~75%",
-    range: "60–90%",
+    headline: "~55%",
+    range: "35–75%",
     definition:
-      "California's Dec–Feb 2026-27 precipitation ranks in the wettest 20% of winters on record (statewide average).",
-    reasoning:
-      "The August ECMWF seasonal ensemble gave 70–100% odds, depending on location, of a top-quintile wet winter and the same for above-average precipitation (Daniel Swain's reading of the map). Very strong El Niños are the best single predictor of a wet California winter, but not a guarantee: 1982-83 and 1997-98 were among the wettest on record, 2015-16 was ordinary. We shade the ensemble down for that miss.",
+      "California's statewide Dec–Feb 2026-27 precipitation is at least 15.1 inches: the wettest 20% of the 131 winters on record (median 10.8 in).",
+    rows: [
+      { label: "Base rate, all 131 winters", value: "20%", detail: "by construction" },
+      { label: `Rate in ${ANALOGS}`, value: "33%", detail: "3 of 9: 1957-58, 1982-83, 1997-98. Above the median: 6 of 9." },
+      { label: "ECMWF August ensemble", value: "70–100%", detail: "odds of a top-20% winter, by location (Swain, 10 Aug)" },
+      { label: "NOAA CPC outlook, 20 Aug", value: ">50%", detail: "odds of above-normal (top-third) precipitation for coastal California" },
+    ],
+    method:
+      "Roughly the midpoint of the analog rate (33%) and the ECMWF ensemble (~80%). We lean toward the model because this event is forecast to peak near RONI 3.0, beyond every analog (max 2.4), and away from it because 2015-16 was a record-class event that delivered an ordinary 12.3-inch winter.",
     sources: [
+      { label: "NOAA Climate at a Glance, California Dec–Feb precipitation", url: "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/statewide/time-series/4/pcp/3/2/1895-2026" },
       { label: "Swain on the ECMWF August ensemble", url: "https://x.com/Weather_West/status/2085473752268021774" },
-      { label: "Weather West special update, June 2026", url: "https://weatherwest.com/archives/43880" },
+      { label: "NOAA CPC seasonal outlook discussion", url: "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/fxus05.html" },
     ],
   },
   {
     key: "coast",
     label: "Coastal flooding",
-    probability: "~90%",
-    range: "75–95%",
+    headline: "~60%",
+    range: "40–80%",
     definition:
-      "The National Weather Service issues at least one Coastal Flood Warning (not merely an advisory) for a California coastal zone between November 2026 and March 2027.",
-    reasoning:
-      "El Niño raises sea level along the US West Coast by roughly 15–25 cm for the season, on top of the long-term rise. Stack that on king tides and a storm's surge and wave run-up and ocean levels can run 60–90 cm above normal during big winter storms. Warnings were issued in the 2015-16 and 2023-24 El Niño winters and in several ordinary recent winters, so this is close to the ceiling.",
+      "The Los Angeles tide gauge (NOAA 9410660) records at least 3 days between Nov 2026 and Apr 2027 at or above NOAA's minor coastal flood level: 11.18 ft on the station datum, 1.9 ft above mean higher high water.",
+    rows: [
+      { label: "Base rate, 72 winters since 1950", value: "10%", detail: "7 of 72. Last 11 winters: 3 of 11 (2025-26 had 6 days with no El Niño)." },
+      { label: `Rate in ${ANALOGS}`, value: "38%", detail: "3 of 8 with data: 1982-83 (6 days), 2015-16 (5), 1997-98 (3). At least 1 day: 7 of 8." },
+      { label: "El Niño sea-level lift", value: "6–10 in", detail: "NOAA: seasonal rise on the US West Coast, a third to a half of the 22-inch margin between mean higher high water and the flood level" },
+    ],
+    method:
+      "The analog rate, raised because the two most recent analogs both cleared 3 days easily, last winter cleared it with no El Niño at all, and this event is forecast to lift the ocean more than any of them.",
     sources: [
-      { label: "NOAA: El Niño and high-tide flooding, May 2026", url: "https://oceanservice.noaa.gov/news/may26/el-nino-flooding.html" },
-      { label: "Weather West on sea level and surge", url: "https://weatherwest.com/archives/43880" },
+      { label: "NOAA high tide flooding, Los Angeles gauge", url: "https://tidesandcurrents.noaa.gov/high-tide-flooding/" },
+      { label: "NOAA flood levels for station 9410660", url: "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/9410660/floodlevels.json" },
+      { label: "NOAA Ocean Service: El Niño and high tide flooding, May 2026", url: "https://oceanservice.noaa.gov/news/may26/el-nino-flooding.html" },
     ],
   },
   {
     key: "megastorm",
-    label: "Megastorm",
-    probability: "~70%",
-    range: "50–85%",
+    label: "Megastorm month",
+    headline: "~20%",
+    range: "12–35%",
     definition:
-      "FEMA issues a Major Disaster Declaration for California covering winter storms, flooding, mudslides or debris flows that occur between November 2026 and April 2027.",
-    reasoning:
-      "A winter-storm declaration is the closest resolvable proxy for 'a storm sequence bad enough to matter'. California has had one in about six of the last ten winters, and in two of the three very strong El Niño winters since 1980 (1982-83 and 1997-98 yes, 2015-16 no). Conditioning on the wet-winter odds above lands around 70%.",
+      "Some calendar month from Nov 2026 to Mar 2027 delivers at least 9 inches of precipitation averaged over the whole state. Twelve winters in 131 have done it: Dec 1955, Jan 1969, Mar 1983, Feb 1986, Jan 1995 (the record, 12.5 in), Feb 1998, Jan 2017 and five before 1920.",
+    rows: [
+      { label: "Base rate, all 131 winters", value: "9%", detail: "12 of 131" },
+      { label: `Rate in ${ANALOGS}`, value: "22%", detail: "2 of 9: Mar 1983 (9.0 in), Feb 1998 (11.5 in)" },
+      { label: "If the winter is top-20% wet", value: "37%", detail: "10 of 27; otherwise 2 of 104 = 2%" },
+    ],
+    method:
+      "0.55 × 37% + 0.45 × 2% = 21%, taking the 55% from the very-wet-winter tile.",
     sources: [
-      { label: "FEMA disaster declarations, California", url: "https://www.fema.gov/disaster/declarations?field_dv2_state_territory_tribal_value=CA" },
+      { label: "NOAA Climate at a Glance, California monthly precipitation", url: "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/statewide/time-series/4/pcp/1/0/1895-2026" },
     ],
   },
   {
     key: "megaflood",
     label: "Megaflood",
-    probability: "~3%",
-    range: "1–5%",
+    headline: "~3%",
+    range: "1–6%",
     definition:
-      "An ARkStorm-scale event: a weeks-long storm sequence producing flooding on the scale of the winter of 1861-62, the Central Valley inundated, with damage in the hundreds of billions of dollars.",
-    reasoning:
-      "Huang & Swain (Science Advances, 2022) put the historical rate at five to seven such events per thousand years, about 0.5–0.7% a year, and find warming to date has already roughly doubled it, so 1–1.4% a year now. In the ARkStorm 2.0 simulations, seven of the eight most extreme month-long storm sequences occurred during moderate-to-strong El Niño conditions, which cover roughly a third of years, an enrichment of two to three times. That gives 2–4% for a winter like this one; we round to 3% and widen the range for how thin the evidence is. The 2.5% figure circulating online is inside this range, not a published number.",
+      "An ARkStorm-scale event: a weeks-long storm sequence whose 30-day statewide precipitation exceeds anything in the 131-year record (biggest month: 12.5 in, Jan 1995) and approaches the winter of 1861-62. ARkStorm 2.0's historical scenario, which brings slightly less rain than 1862 did.",
+    rows: [
+      { label: "Base rate", value: "~1% / yr", detail: "Huang & Swain 2022: a 1-in-90-to-100-year event in the 1995–2005 climate, already double the pre-industrial rate. Cross-check: a stationary 131-year record is beaten with probability 1/132 = 0.8%." },
+      { label: "El Niño multiplier", value: "×2–3", detail: "7 of the 8 largest simulated 30-day sequences fell in moderate-to-strong El Niño years, which are a quarter to a third of years. Our record: 2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall (2.4×)." },
+    ],
+    method:
+      "1% × 2.5 = 2.5%, rounded up to 3% because this event is forecast beyond every analog. The 2.5% figure circulating online sits inside the range but is not a published number.",
     sources: [
       { label: "Huang & Swain 2022, Science Advances", url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
-      { label: "NCAR summary of the study", url: "https://news.ucar.edu/132857/california-faces-heightened-risk-megafloods" },
+      { label: "Weather West summary of ARkStorm 2.0", url: "https://weatherwest.com/archives/16626" },
       { label: "USGS ARkStorm scenario", url: "https://www.usgs.gov/programs/science-application-for-risk-reduction/science/arkstorm-scenario" },
     ],
   },
 ];
+
+function EstimateTile({ e }: { e: Estimate }) {
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const id = useId();
+  const open = hovered || pinned;
+  useEffect(() => {
+    if (!open) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!ref.current?.contains(event.target as Node)) { setPinned(false); setHovered(false); }
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [open]);
+  const [base, analogs] = e.rows;
+  return (
+    <div ref={ref} className="relative"
+      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
+      onKeyDown={(event) => { if (event.key === "Escape") { setPinned(false); setHovered(false); } }}>
+      <button type="button" aria-expanded={open} aria-controls={id}
+        onClick={() => { setPinned(!pinned); setHovered(false); }}
+        className="card bg-base-100 w-full text-left cursor-pointer hover:shadow-md transition-shadow">
+        <div className="card-body p-4">
+          <div className="text-sm font-medium opacity-70">{e.label}</div>
+          <div className="text-3xl font-bold leading-tight">{e.headline}</div>
+          <div className="text-xs opacity-50">range {e.range}</div>
+          <div className="text-xs mt-2 leading-snug">
+            <span className="opacity-60">base rate</span> <span className="font-medium">{base.value}</span>
+            <span className="opacity-40"> · </span>
+            <span className="opacity-60">El Niño winters</span> <span className="font-medium">{analogs.value}</span>
+          </div>
+        </div>
+      </button>
+      <div id={id} hidden={!open}
+        className="absolute left-0 z-30 mt-1 w-[min(28rem,90vw)] rounded-md border border-base-300 bg-base-100 p-4 shadow-lg text-sm space-y-2">
+        <p><span className="font-medium">Resolves Yes if:</span> {e.definition}</p>
+        <table className="w-full text-xs">
+          <tbody>
+            {e.rows.map((r) => (
+              <tr key={r.label} className="align-top">
+                <td className="pr-2 py-0.5 opacity-70">{r.label}</td>
+                <td className="py-0.5 font-medium whitespace-nowrap">{r.value}</td>
+              </tr>
+            ))}
+            <tr className="align-top border-t border-base-300">
+              <td className="pr-2 py-0.5 opacity-70">Our number</td>
+              <td className="py-0.5 font-bold whitespace-nowrap">{e.headline}</td>
+            </tr>
+          </tbody>
+        </table>
+        <p className="text-xs opacity-80">{e.method}</p>
+        <a href={`#working-${e.key}`} className="text-xs underline">Full working and sources below</a>
+      </div>
+    </div>
+  );
+}
 
 function CaliforniaEstimates() {
   return (
@@ -199,37 +290,67 @@ function CaliforniaEstimates() {
       <div className="mb-3">
         <h2 className="text-xl font-semibold tracking-tight">California this winter</h2>
         <p className="text-sm opacity-60">
-          No exchange prices these directly. These are Goodheart Labs estimates from published
-          forecasts and research, each with a definition a market could be written from.
+          No exchange prices these, so they are our numbers. Hover a tile for the definition and
+          the base rates; the full working is below and in{" "}
+          <a href={WORKING_URL} target="_blank" rel="noopener noreferrer" className="underline">docs/elnino-estimates.md</a>.
           Disagree? Add a caveat below or{" "}
           <a href="/wishlist" className="underline">request a market</a>.
         </p>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        {CALIFORNIA_ESTIMATES.map((e) => <EstimateTile key={e.key} e={e} />)}
+      </div>
+    </section>
+  );
+}
+
+function Working() {
+  return (
+    <section className="mt-10 not-prose">
+      <h2 className="text-xl font-semibold tracking-tight mb-1">How the California numbers are made</h2>
+      <p className="text-sm opacity-60 mb-4">
+        Same recipe for each tile: a definition in physical units, the base rate over the whole
+        record, the rate in the nine strong El Niño winters since 1950 (peak RONI ≥ 1.5: 1957-58,
+        1965-66, 1972-73, 1982-83, 1986-87, 1991-92, 1997-98, 2009-10, 2015-16), the official
+        forecasts where they exist, then the arithmetic. This event is forecast to peak near RONI
+        3.0, beyond every analog, so the analog rates are a floor for the El Niño effect. The data
+        section is generated by{" "}
+        <a href={SCRIPT_URL} target="_blank" rel="noopener noreferrer" className="underline">scripts/elnino_estimates.py</a>
+        {" "}(NOAA Climate at a Glance, NOAA tide gauges, NOAA CPC RONI), computed 11 Sep 2026.
+      </p>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {CALIFORNIA_ESTIMATES.map((e) => (
-          <details key={e.key} className="card bg-base-100 group">
-            <summary className="card-body p-4 cursor-pointer list-none">
-              <div className="text-sm font-medium opacity-70">{e.label}</div>
-              <div className="text-3xl font-bold leading-tight">{e.probability}</div>
-              <div className="text-xs opacity-50">range {e.range} · estimate, not a market</div>
-              <div className="text-xs underline decoration-dotted underline-offset-4 opacity-60 mt-1">
-                Definition and reasoning
-              </div>
-            </summary>
-            <div className="px-4 pb-4 text-sm space-y-2">
+          <div key={e.key} id={`working-${e.key}`} className="card bg-base-100 scroll-mt-4">
+            <div className="card-body p-5 text-sm">
+              <h3 className="card-title text-base">{e.label}: {e.headline} <span className="text-xs font-normal opacity-50">range {e.range}</span></h3>
               <p><span className="font-medium">Resolves Yes if:</span> {e.definition}</p>
-              <p className="opacity-80">{e.reasoning}</p>
-              <ul className="text-xs space-y-1">
-                {e.sources.map((s) => (
-                  <li key={s.url}>
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-1">
-                      {s.label} <ExternalLink className="w-3 h-3" />
+              <table className="w-full text-xs mt-1">
+                <tbody>
+                  {e.rows.map((r) => (
+                    <tr key={r.label} className="align-top border-t border-base-200">
+                      <td className="pr-2 py-1 opacity-70 w-2/5">{r.label}</td>
+                      <td className="pr-2 py-1 font-medium whitespace-nowrap">{r.value}</td>
+                      <td className="py-1 opacity-70">{r.detail}</td>
+                    </tr>
+                  ))}
+                  <tr className="align-top border-t border-base-300">
+                    <td className="pr-2 py-1 opacity-70">Our number</td>
+                    <td className="pr-2 py-1 font-bold whitespace-nowrap">{e.headline}</td>
+                    <td className="py-1 opacity-80">{e.method}</td>
+                  </tr>
+                </tbody>
+              </table>
+              <ul className="text-xs mt-2 space-y-1">
+                {e.sources.map((src) => (
+                  <li key={src.url}>
+                    <a href={src.url} target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-1">
+                      {src.label} <ExternalLink className="w-3 h-3" />
                     </a>
                   </li>
                 ))}
               </ul>
             </div>
-          </details>
+          </div>
         ))}
       </div>
     </section>
@@ -253,7 +374,7 @@ function EnsoContext() {
 const simpleMarketsQuery = convexQuery(api.simple.getMarkets, {});
 
 export const Route = createFileRoute("/elnino")({
-  staticData: { title: "El Niño" },
+  staticData: { title: "California El Niño" },
   loader: async ({ context: { queryClient } }) => {
     await queryClient.ensureQueryData(simpleMarketsQuery);
   },
@@ -266,15 +387,15 @@ function ElNinoPage() {
   return (
     <TopicDashboard
       topic="elnino"
-      title="El Niño 2026-27 Risk Dashboard"
-      subtitle="Record-strength El Niño · what it means for California · Forecasting from Polymarket, Kalshi, and Metaculus"
+      title="California El Niño '26-'27"
+      subtitle="What a record El Niño means for California · base rates, analog winters, and the markets that price the event"
       markets={markets as Market[]}
       groupTitles={GROUP_TITLES}
       groupResolutions={GROUP_RESOLUTION}
       groupKeys={ELNINO_GROUPS}
       groupDaysToShow={{ hottest_2026: 180 }}
       intro={<><CaliforniaEstimates /><EnsoContext /></>}
-      footer={<><Caveats topic="elnino" /><SuggestionsPanel topic="elnino" /></>}
+      footer={<><Working /><div className="mt-6"><Caveats topic="elnino" /></div><SuggestionsPanel topic="elnino" /></>}
     />
   );
 }

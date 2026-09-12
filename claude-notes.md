@@ -25,6 +25,24 @@ what it means for California, prompted by a tweet claiming ~2.5% megaflood odds.
 - Metaculus group sub-questions supported via `?sub-question=<id>` in
   sourceUrl (post 21095 "warmest year" group, subs 21098 = 2026, 45424 = 2027).
 - Header tagline "The world, in probabilities." removed (nav + meta descriptions).
+- Second pass (same day) after Nathan's review: title is "California El Niño
+  '26-'27"; the four tiles now carry their base rate and analog rate on the
+  face, hover/click opens a popover with the definition in physical units
+  (inches statewide Dec–Feb, days above the LA tide gauge's NOAA minor flood
+  level, inches in a calendar month, ARkStorm-scale 30-day total) plus the
+  rows and arithmetic; a "How the California numbers are made" section sits
+  above the caveats. Numbers moved a lot once computed from data: very wet
+  winter 75% → 55% (only 3 of 9 strong El Niño winters were top-20%),
+  coastal 90% → 60% (definition tightened to ≥3 flood days at LA), megastorm
+  70% → 20% (physical 9-inch-month definition instead of a FEMA proxy),
+  megaflood 3% unchanged. `scripts/elnino_estimates.py` (stdlib only) pulls
+  NOAA Climate at a Glance, NOAA CO-OPS high-tide-flooding counts and the CPC
+  RONI table and prints the tables; `docs/elnino-estimates.md` holds the
+  working plus that output, dated 2026-09-11.
+- Nathan does not want a PR flow on this repo: branch `elnino-page` is pushed,
+  PR #1 closed unmerged, draft shown via `vite --port 5173` in his browser.
+  Vercel preview builds fail by design (prod Convex deploy key refused
+  outside production), so pushing a branch never touches prod.
 - Verified on the DEV deployment: seeded 8 markets, imported history (Polymarket
   CLOB, Kalshi candlesticks, Metaculus), both pollers 0 failures, `pnpm run
   lint` clean, headless screenshot of /elnino via `vite preview`.
@@ -42,6 +60,7 @@ California flooding; the tiles link readers to /wishlist to request one.
 ## Commits this session
 
 - feat: El Niño 2026-27 dashboard with California estimates; fix Kalshi poller
+- feat: base-rate tiles with hover definitions, working section, estimates script
 
 ---
 
