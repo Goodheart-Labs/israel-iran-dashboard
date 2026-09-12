@@ -304,6 +304,20 @@ function EstimateTile({ e }: { e: Estimate }) {
   );
 }
 
+function Byline() {
+  return (
+    <p className="text-sm -mt-6 mb-6 not-prose">
+      <span className="opacity-70">By </span>
+      <a href="https://x.com/NathanpmYoung" target="_blank" rel="noopener noreferrer" className="underline">Nathan Young</a>
+      <span className="opacity-70"> and </span>
+      <a href="https://x.com/Just_Curius" target="_blank" rel="noopener noreferrer" className="underline">Belikewater</a>
+      <span className="opacity-70"> · </span>
+      <span className="badge badge-outline badge-sm align-middle">alpha</span>
+      <span className="opacity-70"> first pass, likely has errors. Vote on the pieces below and add caveats.</span>
+    </p>
+  );
+}
+
 function CaliforniaEstimates() {
   return (
     <section className="mb-8 not-prose">
@@ -438,7 +452,7 @@ function ElNinoPage() {
       groupResolutions={GROUP_RESOLUTION}
       groupKeys={ELNINO_GROUPS}
       groupDaysToShow={{ hottest_2026: 180 }}
-      intro={<><CaliforniaEstimates /><EnsoContext /></>}
+      intro={<><Byline /><CaliforniaEstimates /><EnsoContext /></>}
       footer={<><Working /><div className="mt-6"><Caveats topic="elnino" /></div><SuggestionsPanel topic="elnino" /></>}
     />
   );
