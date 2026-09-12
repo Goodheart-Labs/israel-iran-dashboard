@@ -279,7 +279,7 @@ function EstimateTile({ e }: { e: Estimate }) {
       </button>
       <div id={id} hidden={!open}
         className="absolute left-0 z-30 mt-1 w-[min(28rem,90vw)] rounded-md border border-base-300 bg-base-100 p-4 shadow-lg text-sm space-y-2">
-        <p className="grow-0"><span className="font-medium">We would count it as a yes if</span> {e.definition}</p>
+        <p className="grow-0"><span className="font-medium">We would resolve to yes:</span> {e.definition}</p>
         <table className="w-full text-xs">
           <tbody>
             {e.rows.map((r) => (
@@ -358,7 +358,7 @@ function Working() {
           <div key={e.key} id={`working-${e.key}`} className="card bg-base-100 scroll-mt-4">
             <div className="card-body p-5 text-sm">
               <h3 className="card-title text-base">{e.label}: {e.headline} <span className="text-xs font-normal opacity-50">range {e.range}</span></h3>
-              <p className="grow-0"><span className="font-medium">We would count it as a yes if</span> {e.definition}</p>
+              <p className="grow-0"><span className="font-medium">We would resolve to yes:</span> {e.definition}</p>
               <table className="w-full text-xs mt-1">
                 <tbody>
                   {e.rows.map((r) => (
