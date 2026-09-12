@@ -148,6 +148,8 @@ type Estimate = {
 };
 
 const ANALOGS = "the 9 strong El Niño winters since 1950 (peak RONI ≥ 1.5)";
+const SW_SEP = "https://www.youtube.com/watch?v=2v4k0nbUU1s";
+const SW_AUG = "https://www.youtube.com/watch?v=0THLEMorMDI";
 const SWAIN_SEP = "Daniel Swain, Weather West September update, 10 Sep 2026";
 const SWAIN_AUG = "Daniel Swain, Weather West August update, 10 Aug 2026";
 const HS = "Huang & Swain 2022, Science Advances";
@@ -438,7 +440,7 @@ function ElNinoPage() {
     <TopicDashboard
       topic="elnino"
       title="California El Niño '26-'27"
-      subtitle="What a record El Niño means for California · base rates, analog winters, and the markets that price the event"
+      subtitle="What a record El Niño means for California · base rates and related markets"
       markets={markets as Market[]}
       groupTitles={GROUP_TITLES}
       groupResolutions={GROUP_RESOLUTION}
