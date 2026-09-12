@@ -2,6 +2,9 @@
 
 import { action } from "./_generated/server";
 import { api, internal } from "./_generated/api";
+import { kalshiPrice, parseKalshiSourceUrl } from "./sourceParsing";
+
+const KALSHI_API = "https://api.elections.kalshi.com/trade-api/v2";
 
 export const pollKalshiPrices = action({
   args: {},
@@ -25,73 +28,51 @@ export const pollKalshiPrices = action({
 
       for (const prediction of kalshiPredictions) {
         try {
-          // Extract ticker from sourceUrl — format: https://kalshi.com/markets/kxusairanagreement
-          // We need the actual ticker stored in the market. Let's extract from the slug pattern.
-          // The sourceUrl base is the series, but we need the specific ticker.
-          // We'll search the series markets to find the matching one.
           if (!prediction.sourceUrl) {
             throw new Error("No source URL");
           }
 
-          // For Kalshi, sourceUrl is like: https://kalshi.com/markets/kxusairanagreement
-          // We find all markets in that series and match by title
-          const urlParts = prediction.sourceUrl.split("/");
-          const seriesPart = urlParts[urlParts.length - 1];
+          // sourceUrl is the series page, optionally with the exact ticker as
+          // a fragment (seeded markets). Older rows have no fragment, so fall
+          // back to matching the series' markets by title.
+          const { series, ticker } = parseKalshiSourceUrl(prediction.sourceUrl);
+          let match: any;
 
-          const resp = await fetch(
-            `https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=${seriesPart.toUpperCase()}&limit=20`
-          );
-          if (!resp.ok) {
-            throw new Error(`Kalshi API ${resp.status}`);
+          if (ticker) {
+            const resp = await fetch(`${KALSHI_API}/markets/${ticker}`);
+            if (!resp.ok) throw new Error(`Kalshi API ${resp.status}`);
+            match = (await resp.json()).market;
+          } else {
+            const resp = await fetch(`${KALSHI_API}/markets?series_ticker=${series}&limit=20`);
+            if (!resp.ok) throw new Error(`Kalshi API ${resp.status}`);
+            const markets: any[] = (await resp.json()).markets || [];
+            const byTitle = markets.filter(
+              (m) =>
+                m.title === prediction.title ||
+                prediction.title.includes(m.title) ||
+                m.title.includes(prediction.title.replace(/\?$/, ""))
+            );
+            // Series can list twins with identical titles; take the most traded.
+            const volume = (m: any) => Number(m.volume_fp ?? m.volume ?? 0);
+            match =
+              byTitle.sort((a, b) => volume(b) - volume(a))[0] ||
+              markets.find((m) => m.status === "active");
           }
 
-          const data = await resp.json();
-          const markets = data.markets || [];
+          if (!match) throw new Error("No matching Kalshi market");
+          const probability = kalshiPrice(match);
+          if (probability === null) throw new Error(`No price on ${match.ticker}`);
 
-          // Find the market that matches this prediction's title
-          const match = markets.find(
-            (m: any) =>
-              m.title === prediction.title ||
-              prediction.title.includes(m.title) ||
-              m.title.includes(prediction.title.replace(/\?$/, ""))
-          );
-
-          if (!match) {
-            // Fallback: just take the first active one (the headline market)
-            const active = markets.find((m: any) => m.status === "active");
-            if (active) {
-              const probability = active.last_price; // Already 0-100
-              if (prediction.probability !== probability) {
-                await ctx.runMutation(
-                  internal.priceMutations.updateCurrentPrice,
-                  {
-                    predictionId: prediction._id,
-                    probability,
-                    timestamp: Date.now(),
-                  }
-                );
-                console.log(
-                  `[KALSHI POLL] Updated ${prediction.title}: ${prediction.probability}% → ${probability}%`
-                );
-                updated++;
-              }
-            }
-          } else {
-            const probability = match.last_price;
-            if (prediction.probability !== probability) {
-              await ctx.runMutation(
-                internal.priceMutations.updateCurrentPrice,
-                {
-                  predictionId: prediction._id,
-                  probability,
-                  timestamp: Date.now(),
-                }
-              );
-              console.log(
-                `[KALSHI POLL] Updated ${prediction.title}: ${prediction.probability}% → ${probability}%`
-              );
-              updated++;
-            }
+          if (prediction.probability !== probability) {
+            await ctx.runMutation(internal.priceMutations.updateCurrentPrice, {
+              predictionId: prediction._id,
+              probability,
+              timestamp: Date.now(),
+            });
+            console.log(
+              `[KALSHI POLL] Updated ${prediction.title}: ${prediction.probability}% → ${probability}%`
+            );
+            updated++;
           }
         } catch (error) {
           console.error(

@@ -1,5 +1,50 @@
 # Claude session notes
 
+## Current work: El Niño 2026-27 dashboard at /elnino (2026-09-11)
+
+Nathan asked for a Global Risk Odds page on the record-strength El Niño and
+what it means for California, prompted by a tweet claiming ~2.5% megaflood odds.
+
+- `src/routes/elnino.tsx`: new topic page. Top strip = four "California this
+  winter" tiles (very wet winter ~75%, coastal flooding ~90%, megastorm ~70%,
+  megaflood ~3%). Nothing on any exchange prices these, so they are Goodheart
+  Labs estimates, each with a resolvable definition, the reasoning and sources
+  behind a `<details>`. Below: five market cards (peak RONI ≥2.5 = strongest
+  since 1950, Super El Niño ≥2.0, the 2.0–2.5 ladder bands, 2026 and 2027
+  hottest year on record). Caveats + SuggestionsPanel scoped to topic "elnino".
+- `TopicDashboard` gained an `intro` slot (between title block and grid).
+- `convex/predictions.ts`: 8 El Niño configs (category "climate", added to
+  schema); `seedInitialMarkets` takes `{ only: [chartGroups] }` so one page can
+  be seeded without re-creating retired markets from the others.
+- Kalshi API moved to dollar-string fields (`last_price_dollars`,
+  `price.mean_dollars` in candlesticks) and left the old cent fields null, so
+  the poller had silently stopped in March (prod Kalshi market 184 days
+  stale). `convex/sourceParsing.ts` holds the shared parsers; kalshiPoller,
+  seed and history import now use them. Seeded Kalshi sourceUrls carry the
+  exact ticker as a `#FRAGMENT` so the poller no longer matches by title.
+- Metaculus group sub-questions supported via `?sub-question=<id>` in
+  sourceUrl (post 21095 "warmest year" group, subs 21098 = 2026, 45424 = 2027).
+- Header tagline "The world, in probabilities." removed (nav + meta descriptions).
+- Verified on the DEV deployment: seeded 8 markets, imported history (Polymarket
+  CLOB, Kalshi candlesticks, Metaculus), both pollers 0 failures, `pnpm run
+  lint` clean, headless screenshot of /elnino via `vite preview`.
+
+Next steps (after merge — Vercel's build runs `convex deploy` to prod, and the
+new "climate" category must exist there before seeding):
+
+    pnpx convex run predictions:seedInitialMarkets '{"only":["enso_record","enso_super","enso_peak_band","hottest_2026","hottest_2027"]}' --prod
+    pnpx convex run predictions:fetchAllMarketHistory --prod
+
+Not included: Manifold "strongest El Niño ever" (54%, no poller for Manifold);
+Kalshi monthly LA/SF rain (winter months not listed yet). No market exists for
+California flooding; the tiles link readers to /wishlist to request one.
+
+## Commits this session
+
+- feat: El Niño 2026-27 dashboard with California estimates; fix Kalshi poller
+
+---
+
 ## Current work: site title / link-preview rebrand (2026-09-07)
 
 Nathan flagged that the page title and link preview still read "Iran

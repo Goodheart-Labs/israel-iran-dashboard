@@ -2,6 +2,7 @@ import { v } from "convex/values";
 import { query, mutation, action } from "./_generated/server";
 import { api, internal } from "./_generated/api";
 import { predictionCategories, predictionSources } from "./schema";
+import { kalshiPrice, parseKalshiSourceUrl, parseMetaculusSourceUrl, pickMetaculusQuestion } from "./sourceParsing";
 
 // Deactivate all current predictions - used before re-seeding
 export const deactivateAll = mutation({
@@ -125,7 +126,7 @@ function parseOutcomePrices(outcomePrices: unknown): number[] {
 
 type MarketConfig = {
   source: "polymarket" | "kalshi" | "metaculus";
-  category: "military_action" | "nuclear_program" | "regime_stability" | "sanctions" | "regional_conflict" | "israel_relations" | "protests" | "pandemic";
+  category: "military_action" | "nuclear_program" | "regime_stability" | "sanctions" | "regional_conflict" | "israel_relations" | "protests" | "pandemic" | "climate";
   chartGroup: string; // Markets with same chartGroup render on one chart
   chartColor: string; // Hex color for this line
   sortOrder: number;  // Display order
@@ -134,7 +135,8 @@ type MarketConfig = {
   slug?: string;           // Polymarket event slug (for single-market events)
   marketSlug?: string;     // Polymarket market slug (for specific markets within multi-outcome events)
   kalshiTicker?: string;   // Kalshi ticker
-  metaculusId?: number;    // Metaculus question ID
+  metaculusId?: number;    // Metaculus question ID (for a group question: the post id)
+  metaculusSubQuestionId?: number; // Sub-question id inside a Metaculus group post
   // Date question config
   questionType?: "binary" | "date";
   scalingRangeMin?: number;
@@ -271,6 +273,70 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     category: "pandemic", chartGroup: "hanta_vaccine",
     chartColor: SOURCE_COLORS.polymarket, sortOrder: 15,
     shortLabel: "Polymarket",
+  },
+  // ============================================================
+  // EL NIÑO DASHBOARD (rendered at /elnino)
+  // RONI = NOAA CPC's Relative Oceanic Niño Index (climate-trend adjusted).
+  // CPC's table peaks: 1982-83 at 2.4, 1997-98 and 2015-16 at 2.3, so a
+  // peak of 2.5+ is "strongest since 1950" by construction.
+  // ============================================================
+
+  // --- Standalone: peak RONI 2.5 or above = strongest since 1950 (Polymarket) ---
+  {
+    source: "polymarket", marketSlug: "will-the-peak-roni-for-the-202627-el-nino-be-2pt5-or-above",
+    category: "climate", chartGroup: "enso_record",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 20,
+    shortLabel: "Polymarket",
+  },
+
+  // --- Standalone: Super El Niño, peak RONI 2.0 or above (Polymarket) ---
+  {
+    source: "polymarket", slug: "will-there-be-a-super-el-nino-this-winter-202627-20260721221614682",
+    category: "climate", chartGroup: "enso_super",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 21,
+    shortLabel: "Polymarket",
+  },
+
+  // --- Combined: the rest of the Polymarket peak-RONI ladder ---
+  {
+    source: "polymarket", marketSlug: "will-the-peak-roni-for-the-202627-el-nino-be-at-least-2pt25-but-below-2pt5",
+    category: "climate", chartGroup: "enso_peak_band",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 22,
+    shortLabel: "2.25–2.5 · Polymarket",
+  },
+  {
+    source: "polymarket", marketSlug: "will-the-peak-roni-for-the-202627-el-nino-be-at-least-2pt0-but-below-2pt25",
+    category: "climate", chartGroup: "enso_peak_band",
+    chartColor: "#93C5FD", sortOrder: 22,
+    shortLabel: "2.0–2.25 · Polymarket",
+  },
+
+  // --- Combined: 2026 hottest year on record, NASA GISS (Polymarket + Kalshi + Metaculus) ---
+  {
+    source: "polymarket", marketSlug: "will-2026-be-the-hottest-year-on-record",
+    category: "climate", chartGroup: "hottest_2026",
+    chartColor: SOURCE_COLORS.polymarket, sortOrder: 23,
+    shortLabel: "Polymarket",
+  },
+  {
+    source: "kalshi", kalshiTicker: "KXGTEMP-26-P0",
+    category: "climate", chartGroup: "hottest_2026",
+    chartColor: SOURCE_COLORS.kalshi, sortOrder: 23,
+    shortLabel: "Kalshi",
+  },
+  {
+    source: "metaculus", metaculusId: 21095, metaculusSubQuestionId: 21098,
+    category: "climate", chartGroup: "hottest_2026",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 23,
+    shortLabel: "Metaculus",
+  },
+
+  // --- Standalone: 2027 hottest year on record, NASA GISS (Metaculus) ---
+  {
+    source: "metaculus", metaculusId: 21095, metaculusSubQuestionId: 45424,
+    category: "climate", chartGroup: "hottest_2027",
+    chartColor: SOURCE_COLORS.metaculus, sortOrder: 24,
+    shortLabel: "Metaculus",
   },
 ];
 
@@ -844,10 +910,10 @@ export const fetchAllMarketHistory = action({
       try {
         if (!prediction.sourceUrl) continue;
 
-        // Extract series ticker from sourceUrl (format: https://kalshi.com/markets/kxusairanagreement)
-        const urlParts = prediction.sourceUrl.split("/");
-        const seriesSlug = urlParts[urlParts.length - 1];
-        const seriesTicker = seriesSlug.toUpperCase();
+        // sourceUrl: https://kalshi.com/markets/<series>[#<TICKER>]
+        const parsed = parseKalshiSourceUrl(prediction.sourceUrl);
+        const seriesTicker = parsed.series;
+        const seriesSlug = seriesTicker.toLowerCase();
 
         console.log(`[HISTORY] Kalshi: ${prediction.title} (series: ${seriesTicker})`);
 
@@ -860,8 +926,9 @@ export const fetchAllMarketHistory = action({
         const seriesData = await seriesResp.json();
         const kalshiMarkets = seriesData.markets || [];
 
-        // Find matching market by title, or fallback to first active
+        // Exact ticker when the sourceUrl pins one; else match by title, else first active
         const matchedMarket =
+          (parsed.ticker && kalshiMarkets.find((m: any) => m.ticker === parsed.ticker)) ||
           kalshiMarkets.find(
             (m: any) =>
               m.title === prediction.title ||
@@ -903,16 +970,20 @@ export const fetchAllMarketHistory = action({
         const candleData = await candleResp.json();
         const candlesticks = candleData.candlesticks || [];
 
-        // Convert to our {p, t} format — price.mean is in cents (0-100)
+        // Convert to our {p, t} format. Kalshi now reports dollar strings
+        // (price.mean_dollars, 0-1); older responses had integer cents (price.mean).
+        const candleMean = (c: any): number | null => {
+          const dollars = c.price?.mean_dollars;
+          if (dollars !== undefined && dollars !== null) {
+            const n = Number(dollars);
+            return Number.isFinite(n) ? n : null;
+          }
+          const cents = c.price?.mean;
+          return typeof cents === "number" ? cents / 100 : null;
+        };
         const historyData = candlesticks
-          .filter((c: any) => {
-            const mean = c.price?.mean;
-            return mean !== null && mean !== undefined && mean > 0;
-          })
-          .map((c: any) => ({
-            p: c.price.mean / 100, // Convert cents → 0-1 (storeMarketHistory will × 100)
-            t: c.end_period_ts,
-          }));
+          .map((c: any) => ({ p: candleMean(c), t: c.end_period_ts }))
+          .filter((c: { p: number | null; t: number }): c is { p: number; t: number } => c.p !== null && c.p > 0);
 
         if (historyData.length === 0) {
           throw new Error("No valid candlestick data points");
@@ -955,11 +1026,10 @@ export const fetchAllMarketHistory = action({
       try {
         if (!prediction.sourceUrl) continue;
 
-        const match = prediction.sourceUrl.match(/questions\/(\d+)/);
-        if (!match) throw new Error("Could not extract question ID");
-        const questionId = match[1];
+        const { postId: questionId, subQuestionId } = parseMetaculusSourceUrl(prediction.sourceUrl);
+        if (!questionId) throw new Error("Could not extract question ID");
 
-        console.log(`[HISTORY] Metaculus: ${prediction.title} (Q${questionId})`);
+        console.log(`[HISTORY] Metaculus: ${prediction.title} (Q${questionId}${subQuestionId ? `/${subQuestionId}` : ""})`);
 
         const metaculusToken = process.env.METACULUS_API_KEY || "";
         const headers: Record<string, string> = { Accept: "application/json" };
@@ -972,7 +1042,7 @@ export const fetchAllMarketHistory = action({
         if (!resp.ok) throw new Error(`Metaculus API ${resp.status}`);
 
         const data = await resp.json();
-        const history = data.question?.aggregations?.recency_weighted?.history;
+        const history = pickMetaculusQuestion(data, subQuestionId)?.aggregations?.recency_weighted?.history;
 
         if (!history || !Array.isArray(history)) {
           throw new Error("No history in aggregations.recency_weighted");
@@ -1026,17 +1096,22 @@ export const fetchAllMarketHistory = action({
 
 // Seed all dashboard markets (Polymarket + Kalshi + Metaculus)
 export const seedInitialMarkets = action({
-  args: {},
-  handler: async (ctx): Promise<{ message: string; created: number; errors: string[] }> => {
+  // `only`: restrict to these chartGroups, so one dashboard can be seeded
+  // without re-creating retired markets from the others.
+  args: { only: v.optional(v.array(v.string())) },
+  handler: async (ctx, args): Promise<{ message: string; created: number; errors: string[] }> => {
     "use node";
 
-    console.log("[SEED] Seeding all dashboard markets...");
+    const configs = args.only
+      ? DASHBOARD_MARKETS.filter((c) => args.only!.includes(c.chartGroup))
+      : DASHBOARD_MARKETS;
+    console.log(`[SEED] Seeding ${configs.length} dashboard markets...`);
 
     let created = 0;
     const errors: string[] = [];
     const existing = await ctx.runQuery(api.predictions.getActive);
 
-    for (const config of DASHBOARD_MARKETS) {
+    for (const config of configs) {
       try {
         let title = "";
         let description = "";
@@ -1090,10 +1165,13 @@ export const seedInitialMarkets = action({
 
           const data = await resp.json();
           const m = data.market;
-          probability = m.last_price; // Kalshi prices are already 0-100 (cents)
+          const price = kalshiPrice(m);
+          if (price === null) throw new Error(`Kalshi market ${m.ticker} has no price`);
+          probability = price;
           title = m.title;
           description = m.rules_primary?.slice(0, 500);
-          sourceUrl = `https://kalshi.com/markets/${m.ticker.split('-')[0].toLowerCase()}`;
+          // The fragment pins the exact ticker for the poller; kalshi.com ignores it.
+          sourceUrl = `https://kalshi.com/markets/${m.ticker.split('-')[0].toLowerCase()}#${m.ticker}`;
           resolveDate = m.expiration_time ? new Date(m.expiration_time).getTime() : undefined;
 
         } else if (config.source === "metaculus" && config.metaculusId) {
@@ -1107,12 +1185,15 @@ export const seedInitialMarkets = action({
           if (!resp.ok) throw new Error(`Metaculus API ${resp.status}`);
 
           const data = await resp.json();
-          title = data.title;
-          description = data.question?.description?.slice(0, 500) || "";
-          sourceUrl = `https://www.metaculus.com/questions/${config.metaculusId}/`;
+          const q = pickMetaculusQuestion(data, config.metaculusSubQuestionId);
+          if (!q) throw new Error(`Metaculus post ${config.metaculusId} has no question ${config.metaculusSubQuestionId ?? ""}`);
+          title = q.title || data.title;
+          description = (q.description || data.group_of_questions?.description || "").slice(0, 500);
+          sourceUrl = config.metaculusSubQuestionId
+            ? `https://www.metaculus.com/questions/${config.metaculusId}/?sub-question=${config.metaculusSubQuestionId}`
+            : `https://www.metaculus.com/questions/${config.metaculusId}/`;
 
           // Extract community prediction
-          const q = data.question;
           if (q?.aggregations?.recency_weighted?.latest?.centers?.[0] !== undefined) {
             probability = Math.round(q.aggregations.recency_weighted.latest.centers[0] * 100);
           } else if (q?.my_forecasts?.latest?.forecast_values?.[1] !== undefined) {
@@ -1121,7 +1202,8 @@ export const seedInitialMarkets = action({
             probability = 0; // No community prediction yet
           }
 
-          resolveDate = data.scheduled_close_time ? new Date(data.scheduled_close_time).getTime() : undefined;
+          const closeTime = q.scheduled_close_time || data.scheduled_close_time;
+          resolveDate = closeTime ? new Date(closeTime).getTime() : undefined;
         }
 
         if (!title) {

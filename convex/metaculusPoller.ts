@@ -2,6 +2,7 @@
 
 import { action } from "./_generated/server";
 import { api, internal } from "./_generated/api";
+import { parseMetaculusSourceUrl, pickMetaculusQuestion } from "./sourceParsing";
 
 export const pollMetaculusPrices = action({
   args: {},
@@ -29,12 +30,12 @@ export const pollMetaculusPrices = action({
             throw new Error("No source URL");
           }
 
-          // Extract question ID from URL: https://www.metaculus.com/questions/5253/
-          const match = prediction.sourceUrl.match(/questions\/(\d+)/);
-          if (!match) {
+          // https://www.metaculus.com/questions/5253/ or, for a group
+          // sub-question, .../questions/21095/?sub-question=21098
+          const { postId: questionId, subQuestionId } = parseMetaculusSourceUrl(prediction.sourceUrl);
+          if (!questionId) {
             throw new Error("Could not extract question ID from URL");
           }
-          const questionId = match[1];
 
           const metaculusToken = process.env.METACULUS_API_KEY || "";
           const mcHeaders: Record<string, string> = { Accept: "application/json" };
@@ -49,7 +50,7 @@ export const pollMetaculusPrices = action({
           }
 
           const data = await resp.json();
-          const q = data.question;
+          const q = pickMetaculusQuestion(data, subQuestionId);
 
           let probability = 0;
           let lowerBound: number | undefined;

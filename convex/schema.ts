@@ -11,7 +11,8 @@ export const predictionCategories = [
   "regime_stability",
   "pandemic",
   "ai_companies",
-  "ai_timelines"
+  "ai_timelines",
+  "climate"
 ] as const;
 
 export const predictionSources = [
@@ -63,7 +64,8 @@ export default defineSchema({
       v.literal("regime_stability"),
       v.literal("pandemic"),
       v.literal("ai_companies"),
-      v.literal("ai_timelines")
+      v.literal("ai_timelines"),
+      v.literal("climate")
     ),
     title: v.string(),
     description: v.optional(v.string()),

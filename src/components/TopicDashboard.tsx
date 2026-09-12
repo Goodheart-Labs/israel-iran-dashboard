@@ -66,6 +66,7 @@ export function TopicDashboard({
   groupResolutions,
   groupDaysToShow,
   groupKeys,
+  intro,
   footer,
 }: {
   /** Prefix for editable-text and vote slots, e.g. "iran". */
@@ -78,6 +79,8 @@ export function TopicDashboard({
   groupDaysToShow?: Record<string, number>;
   /** Optional allowlist of chartGroup keys to render. If omitted, render all groups. */
   groupKeys?: string[];
+  /** Rendered between the title block and the chart grid. */
+  intro?: ReactNode;
   footer?: ReactNode;
 }) {
   const votes = useQuery(api.chartVotes.listAll);
@@ -178,6 +181,8 @@ export function TopicDashboard({
             "Forecasting data from Polymarket, Kalshi, and Metaculus"}
         </p>
       </div>
+
+      {intro}
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {currentGroups.map(renderGroup)}

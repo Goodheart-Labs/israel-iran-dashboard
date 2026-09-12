@@ -31,6 +31,7 @@ const TABS = [
   { to: "/", label: "Iran" },
   { to: "/ipo", label: "AI IPOs" },
   { to: "/agi", label: "AGI" },
+  { to: "/elnino", label: "El Niño" },
   { to: "/wishlist", label: "Requests" },
 ] as const;
 
@@ -91,9 +92,6 @@ function RootComponent() {
                   GLOBAL RISK <strong>ODDS</strong>
                 </span>
               </Link>
-              <span className="hidden text-xs tracking-wide opacity-70 sm:block">
-                The world, in probabilities.
-              </span>
             </div>
           </header>
           <main className="flex-1 container mx-auto p-4 max-w-none">
