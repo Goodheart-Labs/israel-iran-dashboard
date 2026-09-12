@@ -11,6 +11,8 @@ import {
 } from "@/components/TopicDashboard";
 import { SuggestionsPanel } from "@/components/SuggestionsPanel";
 import { Caveats } from "@/components/Caveats";
+import { VotableList } from "@/components/ItemVote";
+import { itemId } from "@/lib/helpfulness";
 
 // RONI = NOAA CPC's Relative Oceanic Niño Index: the Niño-3.4 anomaly minus
 // the warming shared by the whole tropical ocean, so events from different
@@ -381,25 +383,35 @@ function Working() {
                 </tbody>
               </table>
               <div className="mt-3">
-                <div className="text-xs font-medium opacity-70 mb-1">What the sources say, verbatim</div>
-                <ul className="space-y-2">
-                  {e.quotes.map((q) => (
-                    <li key={q.url + q.text.slice(0, 24)} className="border-l-2 border-base-300 pl-3 text-xs">
+                <div className="text-xs font-medium opacity-70 mb-1">
+                  What the sources say, verbatim <span className="font-normal opacity-70">· vote on each; readers' votes order them</span>
+                </div>
+                <VotableList
+                  items={e.quotes}
+                  slotFor={(q) => `elnino:quote:${e.key}:${itemId(q.url, q.text.slice(0, 60))}`}
+                  className="space-y-2"
+                  itemClassName="border-l-2 border-base-300 pl-3 text-xs"
+                  render={(q) => (
+                    <>
                       “{q.text}”{" "}
                       <a href={q.url} target="_blank" rel="noopener noreferrer" className="underline opacity-70 whitespace-nowrap">— {q.who}</a>
-                    </li>
-                  ))}
-                </ul>
+                    </>
+                  )}
+                />
               </div>
-              <ul className="text-xs mt-2 space-y-1">
-                {e.sources.map((src) => (
-                  <li key={src.url}>
+              <div className="mt-3">
+                <div className="text-xs font-medium opacity-70 mb-1">Sources</div>
+                <VotableList
+                  items={e.sources}
+                  slotFor={(src) => `elnino:source:${e.key}:${itemId(src.url)}`}
+                  className="text-xs space-y-1"
+                  render={(src) => (
                     <a href={src.url} target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-1">
                       {src.label} <ExternalLink className="w-3 h-3" />
                     </a>
-                  </li>
-                ))}
-              </ul>
+                  )}
+                />
+              </div>
             </div>
           </div>
         ))}

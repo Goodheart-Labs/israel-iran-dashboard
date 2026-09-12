@@ -20,3 +20,10 @@ export function chartScore(votes: { rating: string }[]) {
     0,
   );
 }
+
+/** Short stable id for a votable item, so slots survive redeploys while the text is unchanged. */
+export function itemId(...parts: string[]): string {
+  let h = 5381;
+  for (const ch of parts.join("|")) h = ((h << 5) + h + ch.charCodeAt(0)) | 0;
+  return (h >>> 0).toString(36);
+}
