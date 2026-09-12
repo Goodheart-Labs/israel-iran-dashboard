@@ -18,7 +18,7 @@ so analogs are a floor for the El Niño effect, not a ceiling.
 
 ### 1. Very wet winter: ~65% (range 45-85%)
 
-Definition: California's Dec-Feb 2026-27 statewide precipitation is at least
+We would count it as a yes if: California's Dec-Feb 2026-27 statewide precipitation is at least
 15.1 inches, the top 20% of the 131 winters on record (median 10.8 in).
 
 - Base rate: 20% by construction.
@@ -37,7 +37,7 @@ Definition: California's Dec-Feb 2026-27 statewide precipitation is at least
 
 ### 2. Coastal flooding: ~75% (range 55-90%)
 
-Definition: the Los Angeles tide gauge (NOAA station 9410660) records at least
+We would count it as a yes if: the Los Angeles tide gauge (NOAA station 9410660) records at least
 3 days between Nov 2026 and Apr 2027 at or above NOAA's minor coastal flood
 level, 11.18 ft on the station datum = 1.9 ft above mean higher high water.
 
@@ -55,7 +55,7 @@ level, 11.18 ft on the station datum = 1.9 ft above mean higher high water.
 
 ### 3. Major storm month: ~25% (range 15-40%)
 
-Definition: some calendar month from Nov 2026 to Mar 2027 delivers at least
+We would count it as a yes if: some calendar month from Nov 2026 to Mar 2027 delivers at least
 9 inches of precipitation averaged over the whole state. Twelve winters in 131
 have done it: Dec 1955, Jan 1969, Mar 1983, Feb 1986, Jan 1995 (the record,
 12.5 in), Feb 1998, Jan 2017 and five before 1920. (Not the "month-long
@@ -69,7 +69,7 @@ megastorm" of Huang & Swain, which is tile 4.)
 
 ### 4. Megaflood, ARkStorm-scale month-long megastorm: ~3% (range 2-8%)
 
-Definition: roughly 447 mm (17.6 in) or more of precipitation averaged over
+We would count it as a yes if: roughly 447 mm (17.6 in) or more of precipitation averaged over
 the whole state in 30 days, the "ARkHist" scenario of ARkStorm 2.0 (Huang &
 Swain 2022), which brings slightly less rain than the winter of 1861-62 did.
 The biggest calendar month in the 131-year record is 12.5 in (Jan 1995).
