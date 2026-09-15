@@ -1,5 +1,6 @@
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
+import { outcomeValidator, ratingValidator } from "./aiRiskValidation";
 
 export const predictionCategories = [
   "military_action",
@@ -184,6 +185,47 @@ export default defineSchema({
   })
     .index("by_slot", ["slot"])
     .index("by_slot_voter", ["slot", "voterKey"]),
+
+  // AI risk responses use private tables: public queries return only aggregate
+  // counts and the requesting browser's own answers, never other voting tokens.
+  aiRiskForecasts: defineTable({
+    voterKey: v.string(),
+    outcomeId: outcomeValidator,
+    value: v.number(), // 0–100, normalized to one decimal place
+    updatedAt: v.number(),
+    deletedAt: v.optional(v.number()),
+  })
+    .index("by_voter_outcome", ["voterKey", "outcomeId"])
+    .index("by_voter", ["voterKey"]),
+
+  aiRiskDistributions: defineTable({
+    outcomeId: outcomeValidator,
+    counts: v.array(v.number()), // 1001 bins: 0%, 0.1%, …, 100%
+    n: v.number(),
+    updatedAt: v.number(),
+  }).index("by_outcome", ["outcomeId"]),
+
+  aiRiskFeedback: defineTable({
+    voterKey: v.string(),
+    slot: v.string(),
+    rating: ratingValidator,
+    updatedAt: v.number(),
+    deletedAt: v.optional(v.number()),
+  }).index("by_voter_slot", ["voterKey", "slot"]),
+
+  aiRiskFeedbackTotals: defineTable({
+    slot: v.string(),
+    useful: v.number(),
+    somewhat_useful: v.number(),
+    not_useful: v.number(),
+    updatedAt: v.number(),
+  }).index("by_slot", ["slot"]),
+
+  aiRiskActivity: defineTable({
+    voterKey: v.string(),
+    forecastsAt: v.optional(v.number()),
+    feedbackAt: v.optional(v.number()),
+  }).index("by_voter", ["voterKey"]),
 
   // Append-only revision log for any editable text. slot is "caveat:<id>",
   // or a chart explanation like "iran:hormuz:info".

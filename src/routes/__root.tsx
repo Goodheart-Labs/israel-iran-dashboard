@@ -31,6 +31,7 @@ const TABS = [
   { to: "/", label: "Iran" },
   { to: "/ipo", label: "AI IPOs" },
   { to: "/agi", label: "AGI" },
+  { to: "/ai-risk", label: "AI risk" },
   { to: "/wishlist", label: "Requests" },
 ] as const;
 
@@ -42,6 +43,8 @@ function TopicTabs() {
           <Link
             key={tab.to}
             to={tab.to}
+            reloadDocument={tab.to === "/ai-risk"}
+            preload={tab.to === "/ai-risk" ? false : undefined}
             role="tab"
             className="tab"
             activeProps={{ className: "tab tab-active" }}

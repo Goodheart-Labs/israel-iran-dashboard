@@ -1,0 +1,458 @@
+{
+  "checkedAt": "2026-09-15",
+  "figures": [
+    {
+      "id": "daniel-kokotajlo",
+      "name": "Daniel Kokotajlo",
+      "role": "AI forecaster",
+      "portrait": {
+        "src": "/ai-risk/portraits/daniel-kokotajlo.jpg",
+        "sourceUrl": "https://www.aifutures.org/about",
+        "credit": "AI Futures Project · Public team portrait; reuse license not stated"
+      }
+    },
+    {
+      "id": "scott-alexander",
+      "name": "Scott Alexander",
+      "role": "Writer, Astral Codex Ten",
+      "portrait": {
+        "src": "/ai-risk/portraits/scott-alexander.jpg",
+        "sourceUrl": "https://www.dwarkesh.com/p/scott-daniel",
+        "credit": "Dwarkesh Podcast · Cropped from the official episode thumbnail; reuse license not stated"
+      }
+    },
+    {
+      "id": "geoffrey-hinton",
+      "name": "Geoffrey Hinton",
+      "role": "AI researcher, Turing Award recipient",
+      "portrait": {
+        "src": "/ai-risk/portraits/geoffrey-hinton.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Geoffrey_Hinton_in_2026.jpg",
+        "credit": "Cmichel67 · CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/ · Displayed as a cropped portrait"
+      }
+    },
+    {
+      "id": "paul-christiano",
+      "name": "Paul Christiano",
+      "role": "AI alignment researcher",
+      "portrait": {
+        "src": "/ai-risk/portraits/paul-christiano.jpg",
+        "sourceUrl": "https://80000hours.org/podcast/episodes/paul-christiano-ai-alignment-solutions/",
+        "credit": "80,000 Hours · Public interview portrait; reuse license not stated"
+      }
+    },
+    {
+      "id": "yoshua-bengio",
+      "name": "Yoshua Bengio",
+      "role": "AI researcher, Turing Award recipient",
+      "portrait": {
+        "src": "/ai-risk/portraits/yoshua-bengio.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:ICLR_2025_-_Yoshua_Bengio_02.jpg",
+        "credit": "Xuthoria · CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/ · Displayed as a cropped portrait"
+      }
+    },
+    {
+      "id": "lina-khan",
+      "name": "Lina Khan",
+      "role": "Former FTC chair",
+      "portrait": {
+        "src": "/ai-risk/portraits/lina-khan.jpg",
+        "sourceUrl": "https://www.ftc.gov/about-ftc/commissioners-staff/lina-m-khan",
+        "credit": "Federal Trade Commission · Public domain, US government · Cropped and resized"
+      }
+    },
+    {
+      "id": "elon-musk",
+      "name": "Elon Musk",
+      "role": "Technology entrepreneur",
+      "portrait": {
+        "src": "/ai-risk/portraits/elon-musk.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Elon_Musk_Royal_Society_%28cropped%29.jpg",
+        "credit": "Debbie Rowe / The Royal Society · CC BY-SA 3.0: https://creativecommons.org/licenses/by-sa/3.0/ · Displayed as a cropped portrait"
+      }
+    },
+    {
+      "id": "dario-amodei",
+      "name": "Dario Amodei",
+      "role": "Anthropic co-founder",
+      "portrait": {
+        "src": "/ai-risk/portraits/dario-amodei.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Dario_Amodei_at_TechCrunch_Disrupt_2023_01_%28cropped%29.jpg",
+        "credit": "TechCrunch / Kimberly White · CC BY 2.0: https://creativecommons.org/licenses/by/2.0/ · Displayed as a cropped portrait"
+      }
+    },
+    {
+      "id": "eli-lifland",
+      "name": "Eli Lifland",
+      "role": "AI forecaster",
+      "portrait": {
+        "src": "/ai-risk/portraits/eli-lifland.jpg",
+        "sourceUrl": "https://www.elilifland.com/",
+        "credit": "Eli Lifland · Public personal-site portrait; reuse license not stated"
+      }
+    },
+    {
+      "id": "nate-silver",
+      "name": "Nate Silver",
+      "role": "Writer and forecaster",
+      "portrait": {
+        "src": "/ai-risk/portraits/nate-silver.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Natesilver.jpg",
+        "credit": "Bbsrock; brightened by Tktktk · CC BY-SA 3.0: https://creativecommons.org/licenses/by-sa/3.0/ · Displayed as a cropped portrait"
+      }
+    },
+    {
+      "id": "lee-cronin",
+      "name": "Lee Cronin",
+      "role": "Chemist",
+      "portrait": {
+        "src": "/ai-risk/portraits/lee-cronin.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lee_Cronin_2022.jpg",
+        "credit": "Alfienoakes · CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/ · Displayed as a cropped portrait"
+      }
+    },
+    {
+      "id": "lex-fridman",
+      "name": "Lex Fridman",
+      "role": "Computer scientist and podcast host",
+      "portrait": {
+        "src": "/ai-risk/portraits/lex-fridman.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Lex_Fridman_teaching_at_MIT_in_2018.png",
+        "credit": "lexfridman · CC0: https://creativecommons.org/publicdomain/zero/1.0/ · Displayed as a cropped portrait"
+      }
+    },
+    {
+      "id": "yann-lecun",
+      "name": "Yann LeCun",
+      "role": "AI researcher, Turing Award recipient",
+      "portrait": {
+        "src": "/ai-risk/portraits/yann-lecun.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Yann_LeCun_-_2018_%28cropped%29.jpg",
+        "credit": "Jérémy Barande / Ecole polytechnique Université Paris-Saclay · CC BY-SA 2.0: https://creativecommons.org/licenses/by-sa/2.0/ · Displayed as a cropped portrait"
+      }
+    },
+    {
+      "id": "andrew-ng",
+      "name": "Andrew Ng",
+      "role": "AI researcher and entrepreneur",
+      "portrait": {
+        "src": "/ai-risk/portraits/andrew-ng.jpg",
+        "sourceUrl": "https://commons.wikimedia.org/wiki/File:Andrew_Ng_WSJ_%282%29.jpg",
+        "credit": "Steve Jurvetson · CC BY 2.0: https://creativecommons.org/licenses/by/2.0/ · Displayed as a cropped portrait"
+      }
+    }
+  ],
+  "quotes": [
+    {
+      "id": "daniel-70-2025",
+      "figureId": "daniel-kokotajlo",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 70
+      },
+      "quote": "my P(doom) is sort of infamously high, like 70%.",
+      "sourceTitle": "Dwarkesh Podcast: AI 2027",
+      "sourceUrl": "https://www.dwarkesh.com/p/scott-daniel",
+      "date": "2025-04-03",
+      "originalOutcome": "AI doom, including loss of control and concentration of power",
+      "context": "His definition includes dictatorship or oligarchy. No fixed horizon is attached to the 70% estimate. See the Race with China section, from 1:32:30.",
+      "comparison": "related"
+    },
+    {
+      "id": "scott-20-2025",
+      "figureId": "scott-alexander",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 20
+      },
+      "quote": "I’m more like 20%.",
+      "sourceTitle": "Dwarkesh Podcast: AI 2027",
+      "sourceUrl": "https://www.dwarkesh.com/p/scott-daniel",
+      "date": "2025-04-03",
+      "originalOutcome": "AI doom",
+      "context": "Alexander explicitly says he does not count oligarchy as doom. No fixed horizon is attached to this estimate. It is not the probability of the specific AI 2027 scenario.",
+      "comparison": "related"
+    },
+    {
+      "id": "hinton-10-20-2025",
+      "figureId": "geoffrey-hinton",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "range",
+        "low": 10,
+        "high": 20
+      },
+      "quote": "10% to 20% seemed like reasonable numbers to me.",
+      "sourceTitle": "WBUR On Point interview",
+      "sourceUrl": "https://www.wbur.org/onpoint/2025/01/10/ai-geoffrey-hinton-physics-nobel-prize",
+      "date": "2025-01-10",
+      "originalOutcome": "AI leading to human extinction within 30 years",
+      "context": "Responding to a question framed around the next 30 years. He emphasizes uncertainty and that the numbers might change. Historical statement, not asserted to be his latest view.",
+      "comparison": "related"
+    },
+    {
+      "id": "christiano-future-46-2023",
+      "figureId": "paul-christiano",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 46
+      },
+      "quote": "irreversibly messed up our future",
+      "sourceTitle": "Paul Christiano: My views on doom",
+      "sourceUrl": "https://www.lesswrong.com/posts/xWMqsvHapP3nwdSW8/my-views-on-doom",
+      "date": "2023-04-27",
+      "originalOutcome": "Humanity irreversibly ruins its future within 10 years after powerful AI",
+      "context": "Powerful AI means AI that makes human labor obsolete. Includes AI takeover, additional extinction risk and other permanent bad outcomes; 46% is not extinction alone.",
+      "comparison": "related"
+    },
+    {
+      "id": "christiano-takeover-22-2023",
+      "figureId": "paul-christiano",
+      "outcomeIds": [
+        "loss-of-control"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 22
+      },
+      "quote": "Probability of an AI takeover: 22%",
+      "sourceTitle": "Paul Christiano: My views on doom",
+      "sourceUrl": "https://www.lesswrong.com/posts/xWMqsvHapP3nwdSW8/my-views-on-doom",
+      "date": "2023-04-27",
+      "originalOutcome": "AI takeover",
+      "context": "World governed by AI systems without adequately aligned values. Not necessarily human extinction. Includes takeover by later AI systems; no fixed calendar horizon.",
+      "comparison": "related"
+    },
+    {
+      "id": "christiano-deaths-20-2023",
+      "figureId": "paul-christiano",
+      "outcomeIds": [
+        "extremely-bad"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 20
+      },
+      "quote": "Probability that most humans die within 10 years",
+      "sourceTitle": "Paul Christiano: My views on doom",
+      "sourceUrl": "https://www.lesswrong.com/posts/xWMqsvHapP3nwdSW8/my-views-on-doom",
+      "date": "2023-04-27",
+      "originalOutcome": "Most humans die within 10 years after powerful AI",
+      "context": "Powerful AI means AI that makes human labor obsolete. Includes takeover and non-takeover causes during rapid change. Most humans dying is not identical to extinction.",
+      "comparison": "related"
+    },
+    {
+      "id": "bengio-20-2023",
+      "figureId": "yoshua-bengio",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 20
+      },
+      "quote": "I got around, like, 20 per cent probability that it turns out catastrophic.",
+      "sourceTitle": "ABC Background Briefing interview",
+      "sourceUrl": "https://www.abc.net.au/news/2023-07-15/whats-your-pdoom-ai-researchers-worry-catastrophe/102591340",
+      "date": "2023-07-15",
+      "originalOutcome": "AI catastrophe",
+      "context": "Historical 2023 estimate. His reasoning included human-level AI within a decade and AI or humans using it against humanity. In a May 2026 80,000 Hours interview he declined to give an updated p(doom), so this must not be presented as his current estimate.",
+      "comparison": "related",
+      "findingConsensusUrl": "https://findingconsensus.ai/will-sb-1047-reduce-existential-risk"
+    },
+    {
+      "id": "bengio-no-update-2026",
+      "figureId": "yoshua-bengio",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "qualitative",
+        "label": "No updated number"
+      },
+      "quote": "I’d rather stay out of the p(doom) game.",
+      "sourceTitle": "80,000 Hours interview #243",
+      "sourceUrl": "https://80000hours.org/podcast/episodes/yoshua-bengio-scientist-ai/",
+      "date": "2026-05-07",
+      "originalOutcome": "Whether to update his earlier AI catastrophe estimate",
+      "context": "Asked whether his 2023 estimate of 20% had changed, he declined to give a new probability. Recorded April 16, 2026; published May 7. His concerns remain substantial, but this is not a new numerical forecast.",
+      "comparison": "related"
+    },
+    {
+      "id": "khan-15-2023",
+      "figureId": "lina-khan",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 15
+      },
+      "quote": "No, no, not zero. Maybe, like, 15 percent.",
+      "sourceTitle": "Hard Fork interview, reproduced by co-host Casey Newton",
+      "sourceUrl": "https://www.platformer.news/how-banning-one-palestinian-slogan-roiled-etsy/",
+      "date": "2023-11-10",
+      "originalOutcome": "Probability that AI kills us all",
+      "context": "Answer to Kevin Roose asking the probability that AI will kill us all. No time horizon stated. Platformer reproduces the interview exchange and links the original episode.",
+      "comparison": "related"
+    },
+    {
+      "id": "musk-10-20-2024",
+      "figureId": "elon-musk",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "range",
+        "low": 10,
+        "high": 20
+      },
+      "quote": "the probability of such a dystopian future is something like 10% or 20%.",
+      "sourceTitle": "Peter Diamandis: Elon on Abundance, AI & Human Survival",
+      "sourceUrl": "https://www.diamandis.com/blog/elon-abundance-ai-human-survival",
+      "date": "2024-03-19",
+      "originalOutcome": "Digital superintelligence could end humanity",
+      "context": "Approximate range as stated in an Abundance Summit conversation. No fixed risk horizon. Musk says the positive scenario is more probable than the negative.",
+      "comparison": "related"
+    },
+    {
+      "id": "amodei-25-2025",
+      "figureId": "dario-amodei",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 25
+      },
+      "quote": "There's a 25% chance that things go really, really badly",
+      "sourceTitle": "Axios AI+ DC Summit",
+      "sourceUrl": "https://www.axios.com/2025/09/17/anthropic-dario-amodei-p-doom-25-percent",
+      "date": "2025-09-17",
+      "originalOutcome": "AI disaster",
+      "context": "No horizon stated.",
+      "comparison": "related"
+    },
+    {
+      "id": "lifland-35-40-2023",
+      "figureId": "eli-lifland",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "range",
+        "low": 35,
+        "high": 40
+      },
+      "quote": "35 to 40% for any AI-mediated existential catastrophe.",
+      "sourceTitle": "Eli Lifland interview with Ozzie Gooen",
+      "sourceUrl": "https://forum.effectivealtruism.org/posts/QeLE22fefLqKfYTW6/eli-lifland-on-navigating-the-ai-alignment-landscape",
+      "date": "2023-02-01",
+      "originalOutcome": "AI-mediated existential catastrophe",
+      "context": "Historical estimate in a discussion of risk by 2070. He distinguishes his earlier 30% estimate for intent misalignment from 35–40% for any AI-mediated existential catastrophe, and suggests possible revisions. Do not label it 35% exactly.",
+      "comparison": "related"
+    },
+    {
+      "id": "silver-agnostic-2025",
+      "figureId": "nate-silver",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "qualitative",
+        "label": "In line with 5–10%"
+      },
+      "quote": "well in line with the expert consensus",
+      "sourceTitle": "Nate Silver: It’s time to come to grips with AI",
+      "sourceUrl": "https://www.natesilver.net/p/its-time-to-come-to-grips-with-ai",
+      "date": "2025-01-27",
+      "originalOutcome": "Civilization destroys itself or enters a dystopia because of misaligned AI",
+      "context": "He describes his own estimate as in line with a 5–10% expert range, rather than directly stating exact personal bounds. Kept qualitative rather than assigning an invented numeric point.",
+      "comparison": "related"
+    },
+    {
+      "id": "cronin-0-2023",
+      "figureId": "lee-cronin",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 0
+      },
+      "quote": "I think there’s a 0% chance of AGI doom. Zero.",
+      "sourceTitle": "Lex Fridman Podcast #404",
+      "sourceUrl": "https://lexfridman.com/lee-cronin-3-transcript/",
+      "date": "2023-12-09",
+      "originalOutcome": "AGI doom",
+      "context": "At 2:29:30. In context he distinguishes autonomous AGI doom from humans misusing technology. No fixed time horizon stated.",
+      "comparison": "related"
+    },
+    {
+      "id": "lex-10-2025",
+      "figureId": "lex-fridman",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "point",
+        "value": 10
+      },
+      "quote": "I would say my p(doom) is about 10%.",
+      "sourceTitle": "Lex Fridman Podcast #471",
+      "sourceUrl": "https://lexfridman.com/sundar-pichai-transcript/",
+      "date": "2025-06-05",
+      "originalOutcome": "AGI or ASI destroys all human civilization",
+      "context": "At 44:34, Fridman supplies his own probability before asking Sundar Pichai. This is Fridman’s estimate, not Pichai’s. No fixed horizon stated.",
+      "comparison": "related"
+    },
+    {
+      "id": "lecun-context-2023",
+      "figureId": "yann-lecun",
+      "outcomeIds": [
+        "extinction"
+      ],
+      "estimate": {
+        "kind": "qualitative",
+        "label": "Premature"
+      },
+      "quote": "The debate on existential risk is very premature",
+      "sourceTitle": "Financial Times; excerpt collected by Finding Consensus",
+      "sourceUrl": "https://www.ft.com/content/30fa44a1-7623-499f-93b0-81e26e22f2a6",
+      "date": "2023-10-19",
+      "originalOutcome": "Whether current AI development warrants existential-risk concerns",
+      "context": "Qualitative statement. Finding Consensus’s 0 value was an editorial position on a different policy question, not a personal 0% extinction forecast. Original article is paywalled; excerpt verified against the existing public Finding Consensus record.",
+      "comparison": "related",
+      "findingConsensusUrl": "https://findingconsensus.ai/will-sb-1047-reduce-existential-risk"
+    },
+    {
+      "id": "ng-context-sb1047-2024",
+      "figureId": "andrew-ng",
+      "outcomeIds": [],
+      "estimate": {
+        "kind": "qualitative",
+        "label": "Open-model concern"
+      },
+      "quote": "this will discourage the release of open models, and make AI less competitive and less safe.",
+      "sourceTitle": "TIME; excerpt collected by Finding Consensus",
+      "sourceUrl": "https://time.com/collection/time100-voices/7016134/california-sb-1047-ai/",
+      "date": "2024-08-29",
+      "originalOutcome": "Whether SB1047 makes AI safer",
+      "context": "Policy quote about open-model regulation. It does not state a probability of AI doom. Original page could not be fetched; excerpt verified against the public Finding Consensus record.",
+      "comparison": "related",
+      "findingConsensusUrl": "https://findingconsensus.ai/will-sb-1047-reduce-existential-risk"
+    }
+  ],
+  "researchNote": "Historical public statements from 2023–2026, checked 2026-09-15. Public figures did not answer the AI Impacts survey question; all comparisons are related, with original outcomes and horizons retained. Finding Consensus’s 63 public records across six questions concern SB1047; its editorial values must never be treated as p(doom). Shared-source direct quote totals are limited to 25 words."
+}
