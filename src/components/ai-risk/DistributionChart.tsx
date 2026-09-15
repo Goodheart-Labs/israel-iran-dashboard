@@ -66,7 +66,7 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
   return <div ref={container} className="air-distribution">
     {n === 0 ? <div className="air-empty-chart"><p>No viewer forecasts for this outcome yet.</p><a href="#your-forecast" className="air-text-link">Add your forecast</a></div> : <>
       {hovered !== null && <div className="air-chart-hover" aria-live="polite"><strong>{formatProbability(activeValue)}</strong><span>{Math.round(activeRank?.below ?? 0)}% gave a lower estimate</span></div>}
-      <svg className="air-chart-svg" viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Risk estimates from ${n} ${audience}, ordered ${descending ? "highest to lowest" : "lowest to highest"}. Select a face for its quote, or use the slider below to inspect answers.`}>
+      <svg className="air-chart-svg" viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Risk estimates from ${n} ${audience}, ordered ${descending ? "highest to lowest" : "lowest to highest"}. Select a face for its quote.`}>
         <defs>{markers.map(({ id }) => <clipPath key={id} id={`face-${id}`}><circle r={radius - 2} /></clipPath>)}</defs>
         {[0, 25, 50, 75, 100].map(value => <g key={value}>
           <line x1={left} x2={right} y1={yAt(value)} y2={yAt(value)} stroke="#e2e8eb" />
@@ -112,7 +112,6 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
         <text x={right} y={plotBottom + 28} fill="#657782" fontSize="11" textAnchor="end">{descending ? "Lowest" : "Highest"} estimate</text>
       </svg>
       {selected && quoteContent && <QuotePopover key={selected.id} x={selected.center} y={selected.cy + radius} width={width} quoteId={selected.id} label={`${selected.figure.name}’s quote`} onClose={onCloseQuote}>{quoteContent}</QuotePopover>}
-      <label className="air-inspect"><span>Inspect answers</span><input type="range" min="0" max={Math.max(0, lines.length - 1)} value={index} onChange={event => setHovered(Number(event.target.value))} onBlur={() => setHovered(null)} aria-label={`Inspect ${audience}' answers`} aria-valuetext={hovered === null ? "Select an answer" : `${formatProbability(activeValue)}, ${Math.round(activeRank?.below ?? 0)} percent gave a lower estimate`} /></label>
     </>}
   </div>;
 }

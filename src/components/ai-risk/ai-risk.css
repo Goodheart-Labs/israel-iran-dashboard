@@ -44,9 +44,6 @@
 .air-chart-marker:focus { outline: none; }
 .air-chart-marker:focus-visible > circle { stroke: #507a94; stroke-width: 4; }
 .air-chart-hitarea { cursor: crosshair; touch-action: pan-y; }
-.air-inspect { display: flex; align-items: center; gap: 12px; max-width: 350px; margin: 0 auto 10px; }
-.air-inspect span { font-size: 10px; white-space: nowrap; color: var(--air-muted); }
-.air-inspect input { width: 100%; height: 28px; min-width: 0; }
 .air-chart-note { font-size: 11px; color: var(--air-muted); }
 .air-empty-chart { min-height: 270px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; padding: 28px; font-size: 14px; color: var(--air-muted); }
 .air-empty-chart p { margin-bottom: 12px; }
@@ -135,7 +132,6 @@
   .air-segmented button span { font-size: 9px; margin-left: 3px; }
   .air-sort-label { margin-left: auto; }
   .air-sort-label select { font-size: 10px; padding: 6px 16px 6px 0; }
-  .air-inspect { max-width: 260px; }
   .air-chart-source { font-size: 9px; padding: 14px 0; }
   .air-selected-quote { padding-top: 16px; }
   .air-person-heading { gap: 9px; }
