@@ -22,7 +22,7 @@ export function ForecastForm({ question, outcomeQuestions, mine, voterKey, acces
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
   useEffect(() => {
-    if (!dirty) setDraft(Object.fromEntries(questions.map(item => [item.id, mine[item.id] === undefined ? "" : String(mine[item.id])])));
+    if (!dirty) setDraft(Object.fromEntries(questions.map(item => [item.id, mine[item.id] === undefined ? family ? "0" : "" : String(mine[item.id])])));
   // The form is keyed by question/family; preserve edits when live totals refresh.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mine, dirty]);
@@ -48,16 +48,15 @@ export function ForecastForm({ question, outcomeQuestions, mine, voterKey, acces
     finally { setPending(false); }
   }
   const hasAnswers = Object.keys(mine).length > 0;
-  return <section id="your-forecast" className="air-forecast">
-    <div className="air-forecast-intro"><h2>Your forecast</h2><p>Added to “Viewers to this site”.</p></div>
+  return <section id="your-forecast" className="air-forecast" aria-labelledby="your-forecast-heading">
+    <div className="air-forecast-intro"><h2 id="your-forecast-heading">Your forecast</h2><p>Share with “Viewers to this site”.</p></div>
     <form onSubmit={event => void submit(event)} className="air-forecast-form">
       <p className="air-form-question">{family ? "If human-level AI is eventually developed, how likely is each long-run effect on humanity?" : question.description}</p>
       {questions.map(item => <div key={item.id} className="air-probability-input">
-        <label htmlFor={`forecast-${item.id}`}>{family ? item.shortLabel : "Your estimated chance"}</label>
+        <label htmlFor={`forecast-${item.id}`}>{family ? item.shortLabel : "Your chance"}</label>
         <div className="air-input-row"><input type="range" min="0" max="100" step="0.1" disabled={pending} value={Number(draft[item.id]) || 0} onChange={event => update(item.id, event.target.value)} aria-label={`${item.shortLabel} chance slider`} aria-valuetext={draft[item.id] ? formatProbability(Number(draft[item.id])) : "Not answered"} /><span className="air-number-field"><input id={`forecast-${item.id}`} type="number" min="0" max="100" step="0.1" inputMode="decimal" required disabled={pending} placeholder="—" value={draft[item.id] ?? ""} onChange={event => update(item.id, event.target.value)} /><span>%</span></span></div>
       </div>)}
-      {family && <div className={`air-total ${total === 100 ? "is-complete" : ""}`} role="status"><span>Total</span><b>{total}% / 100%</b></div>}
-      {family && <p className="air-small">Allocate 100% across these five possible outcomes.</p>}
+      {family && <div className={`air-total ${total === 100 ? "is-complete" : ""}`} role="status"><span>Total · must add to 100%</span><b>{total}% / 100%</b></div>}
       <div className="air-form-actions"><button type="submit" className="air-primary-button" disabled={!valid || pending || !ready}>{pending ? "Saving…" : questions.some(item => mine[item.id] !== undefined) ? "Update my forecast" : "Add my forecast"}<span aria-hidden="true">↗</span></button>{hasAnswers && <button type="button" className="air-clear-button" disabled={pending || !ready} onClick={() => void remove()}>Remove my forecasts</button>}</div>
       {!ready && <p className="air-small" role="status">Connecting…</p>}
       {message && <p className="air-success" role="status">{message}</p>}

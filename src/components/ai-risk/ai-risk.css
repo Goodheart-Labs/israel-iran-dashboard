@@ -86,17 +86,18 @@
 .air-statement-row > b { font-size: 13px; font-weight: 500; text-align: right; max-width: 110px; }
 .air-statement-row[aria-pressed="true"] { color: var(--air-green); }
 .air-statement-row .air-portrait { width: 34px; height: 34px; flex-basis: 34px; }
-.air-forecast { display: grid; grid-template-columns: .65fr 1.35fr; gap: 40px; padding: 28px 0; scroll-margin-top: 20px; }
-.air-forecast-intro > p { font-size: 12px; color: var(--air-muted); margin-top: 8px; }
-.air-form-question { font-size: 12px; margin-bottom: 16px; color: var(--air-muted); }
-.air-probability-input { margin-bottom: 14px; }
-.air-probability-input > label { font-size: 12px; display: block; margin-bottom: 6px; }
-.air-input-row { display: flex; align-items: center; gap: 18px; }
-.air-input-row > input { flex: 1; width: 100%; min-width: 0; height: 32px; }
-.air-number-field { display: inline-flex; align-items: center; background: #fff; border: 1px solid var(--air-line); border-radius: 3px; padding-right: 10px; width: 96px; flex-shrink: 0; }
-.air-number-field input { width: 72px; padding: 8px 3px 8px 10px; border: 0; background: transparent; font-size: 17px; -moz-appearance: textfield; }
+.air-forecast { display: grid; grid-template-columns: minmax(150px, .55fr) minmax(0, 1.45fr); gap: 24px; padding: 18px 0 22px; border-top: 1px solid var(--air-line); scroll-margin-top: 20px; }
+.air-page .air-forecast-intro h2 { font-size: 16px; letter-spacing: 0; }
+.air-forecast-intro > p { font-size: 11px; color: var(--air-muted); margin-top: 6px; }
+.air-form-question { font-size: 11px; margin-bottom: 12px; color: var(--air-muted); }
+.air-probability-input { display: grid; grid-template-columns: 82px minmax(0, 1fr); gap: 12px; align-items: center; margin-bottom: 6px; }
+.air-probability-input > label { font-size: 12px; }
+.air-input-row { display: flex; align-items: center; gap: 12px; min-width: 0; }
+.air-input-row > input { flex: 1; width: 100%; min-width: 0; height: 30px; }
+.air-number-field { display: inline-flex; align-items: center; background: #fff; border: 1px solid var(--air-line); border-radius: 3px; padding-right: 6px; width: 66px; flex-shrink: 0; }
+.air-number-field input { width: 48px; padding: 5px 2px 5px 6px; border: 0; background: transparent; font-size: 12px; line-height: 18px; -moz-appearance: textfield; }
 .air-number-field input::-webkit-inner-spin-button { -webkit-appearance: none; }
-.air-number-field > span { font-size: 13px; color: var(--air-muted); }
+.air-number-field > span { font-size: 11px; color: var(--air-muted); }
 .air-form-actions { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; margin-top: 16px; }
 .air-page .air-primary-button { display: inline-flex; justify-content: space-between; align-items: center; gap: 12px; padding: 6px 10px; background: var(--air-ink); color: white; font-size: 12px; line-height: 18px; border: 0; border-radius: 3px; }
 .air-clear-button { font-size: 11px; text-decoration: underline; color: var(--air-muted); }
@@ -136,8 +137,9 @@
   .air-statement-list { grid-template-columns: 1fr; }
   .air-quote-controls label { flex: 1; min-width: 0; }
   .air-quote-controls select { width: 100%; font-size: 10px; padding-left: 6px; }
-  .air-forecast { grid-template-columns: 1fr; gap: 18px; padding: 24px 0; }
-  .air-forecast-intro h2 { font-size: 22px; }
+  .air-forecast { grid-template-columns: 1fr; gap: 12px; padding: 16px 0; }
+  .air-probability-input { grid-template-columns: 70px minmax(0, 1fr); gap: 8px; }
+  .air-input-row { gap: 8px; }
   .air-empty-chart { padding: 24px 6px; min-height: 230px; }
 }
 @media (prefers-reduced-motion: reduce) {

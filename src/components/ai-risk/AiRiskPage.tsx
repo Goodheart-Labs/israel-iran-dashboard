@@ -119,6 +119,7 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
 
       {selected?.estimate.kind === "qualitative" && quoteContent}
       <p className="air-chart-source">{audience === "viewers" ? "Answers: Viewers to this site. Question source: " : "Source: "}<a href={survey.sourceUrl} target="_blank" rel="noreferrer">{survey.sourceLabel}</a></p>
+      <ForecastForm key={question.group === "outcomes" ? "outcomes" : outcome} question={question} outcomeQuestions={outcomeQuestions} mine={mine} voterKey={voterKey} accessToken={accessToken} ready={!!summary} />
     </section>
 
     <details className="air-statements">
@@ -136,8 +137,6 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
         }}><Portrait figure={figure} /><span>{figure.name}<small>{dateLabel(quote.date)} · {quote.originalOutcome}</small></span><b>{estimateLabel(quote.estimate)}</b></button>;
       })}</div>
     </details>
-
-    <ForecastForm key={question.group === "outcomes" ? "outcomes" : outcome} question={question} outcomeQuestions={outcomeQuestions} mine={mine} voterKey={voterKey} accessToken={accessToken} ready={!!summary} />
 
     <details className="air-methods"><summary>Data & methods</summary><div className="air-methods-content">
       <h3>The researcher survey</h3>
