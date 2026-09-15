@@ -28,6 +28,13 @@ Three risk questions are kept separate. Each concerns human extinction or simila
 
 The five long-run outcome categories are a different question. They are conditional on high-level machine intelligence eventually existing. Respondents allocated 100% probability among these five outcomes; each complete vector contributes one answer to each category.
 
+The chart's five labelled slider stops run from Bad to Good. These short labels
+map in order to Extremely bad, On balance bad, Approximately neutral, On balance
+good and Extremely good. The subtitle retains the selected survey category and
+its human-level-AI condition. The same short labels/order are used in the viewer
+allocation form. The direct risk questions are available in the Extinction risk
+tab, without combining them with this five-category distribution.
+
 | Outcome ID | Source field | Category | Valid complete vectors | Mean |
 | --- | --- | --- | ---: | ---: |
 | `extremely-good` | `vb_1_1` | Extremely good | 1,538 | 23.8677% |

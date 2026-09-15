@@ -23,10 +23,6 @@
 .air-intro { padding: 0 0 22px; }
 .risk-publication .air-page h1 { font-size: clamp(32px, 4.5vw, 52px); margin: 0 0 12px; max-width: 1040px; }
 .air-question-description { max-width: 850px; font-size: 13px; color: var(--air-muted); }
-.air-outcome-panel { display: flex; align-items: center; gap: 40px; border-bottom: 1px solid var(--air-line); padding: 0 0 14px; margin-bottom: 8px; }
-.air-outcome-select { display: flex; align-items: center; gap: 12px; font-size: 12px; }
-.air-outcome-slider { display: block; flex: 1; max-width: 400px; }
-.air-outcome-slider input { display: block; width: 100%; height: 28px; }
 .air-page select { padding: 9px 26px 9px 10px; font-size: 12px; border: 1px solid var(--air-line); border-radius: 3px; background-color: #fff; color: var(--air-ink); max-width: 100%; }
 .air-chart-panel { background: #fff; padding: 16px 24px 0; border-top: 1px solid var(--air-line); border-bottom: 1px solid var(--air-line); scroll-margin-top: 20px; }
 .air-chart-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
@@ -121,10 +117,6 @@
   .air-page .air-eyebrow { font-size: 9px; letter-spacing: .06em; }
   .air-intro { padding-bottom: 18px; }
   .air-question-description { font-size: 12px; }
-  .air-outcome-panel { flex-wrap: wrap; gap: 6px; padding: 10px 0; }
-  .air-outcome-select { width: 100%; gap: 10px; font-size: 11px; }
-  .air-outcome-select select { flex: 1; min-width: 0; font-size: 11px; }
-  .air-outcome-slider { flex: 1 0 100%; max-width: none; }
   .air-chart-panel { padding: 8px 8px 0; margin: 0 -8px; }
   .air-chart-toolbar { gap: 0; margin-bottom: 10px; }
   .air-segmented { gap: 14px; flex: 1; }

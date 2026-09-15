@@ -7,13 +7,25 @@ import { estimateLabel, sortQuotes } from "@/lib/ai-risk/public-estimates";
 import type { OutcomeId, PublicFiguresData, SurveyData } from "@/lib/ai-risk/types";
 import { DistributionChart } from "./DistributionChart";
 import { ForecastForm } from "./ForecastForm";
+import { OutcomeSelector } from "./OutcomeSelector";
+import { OUTCOME_STOPS } from "./outcome-options";
 import { Portrait } from "./Portrait";
 import { AccuracyVote } from "./AccuracyVote";
 import "./ai-risk.css";
 
 const survey = surveyJson as SurveyData;
 const people = peopleJson as PublicFiguresData;
-const outcomeQuestions = survey.questions.filter(question => question.group === "outcomes");
+const outcomeQuestions = OUTCOME_STOPS.map(stop => ({
+  ...survey.questions.find(question => question.id === stop.id)!,
+  shortLabel: stop.label,
+}));
+const officialOutcomeLabels: Partial<Record<OutcomeId, string>> = {
+  "extremely-bad": "Extremely bad",
+  bad: "On balance bad",
+  neutral: "Approximately neutral",
+  good: "On balance good",
+  "extremely-good": "Extremely good",
+};
 const emptyMine: Record<string, number> = {};
 
 function browserKey() {
@@ -33,14 +45,13 @@ function dateLabel(date: string | null) {
 
 export function AiRiskPage({ accessToken }: { accessToken: string }) {
   const [voterKey] = useState(browserKey);
-  const [outcome, setOutcome] = useState<OutcomeId>("extinction");
+  const [outcome, setOutcome] = useState<OutcomeId>("extremely-bad");
   const [audience, setAudience] = useState<"researchers" | "viewers">("researchers");
   const [descending, setDescending] = useState(false);
   const [quoteSort, setQuoteSort] = useState("high");
   const [showAll, setShowAll] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
   const question = survey.questions.find(item => item.id === outcome)!;
-  const questionIndex = survey.questions.indexOf(question);
   const summary = useQuery(api.aiRisk.getSummary, { voterKey, accessToken });
   const rate = useMutation(api.aiRisk.rate);
   // Accuracy votes have separate slots so earlier usefulness votes retain their meaning.
@@ -90,20 +101,12 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
   return <div className="air-page not-prose">
     <header className="air-intro">
       <p className="air-eyebrow">AI IMPACTS · 2024 EXPERT SURVEY ON PROGRESS IN AI</p>
-      <h1>{outcome === "extinction" ? (audience === "researchers" ? "AI researchers’ p(doom)" : "Site viewers’ p(doom)") : question.label}</h1>
-      <p className="air-question-description">{question.description}</p>
+      <h1>{question.group === "outcomes" ? (audience === "researchers" ? "AI researchers’ outcome estimates" : "Site viewers’ outcome estimates") : outcome === "extinction" ? (audience === "researchers" ? "AI researchers’ p(doom)" : "Site viewers’ p(doom)") : question.label}</h1>
+      <p className="air-question-description">{question.group === "outcomes" ? `Chance of an “${officialOutcomeLabels[outcome]!.toLowerCase()}” long-run impact on humanity, assuming human-level AI is developed.` : question.description}</p>
     </header>
 
     <section className="air-chart-panel" aria-label="AI risk distribution">
-    <div className="air-outcome-panel" aria-label="Choose a survey outcome">
-      <label className="air-outcome-select">Outcome
-        <select value={outcome} onChange={event => chooseOutcome(event.target.value as OutcomeId)}>
-          <optgroup label="Catastrophic risk">{survey.questions.filter(item => item.group === "risk").map(item => <option key={item.id} value={item.id}>{item.shortLabel}</option>)}</optgroup>
-          <optgroup label="Long-run impact, assuming human-level AI">{outcomeQuestions.map(item => <option key={item.id} value={item.id}>{item.shortLabel}</option>)}</optgroup>
-        </select>
-      </label>
-      <label className="air-outcome-slider"><span className="sr-only">Slide through outcomes</span><input type="range" min="0" max={survey.questions.length - 1} step="1" value={questionIndex} onChange={event => chooseOutcome(survey.questions[Number(event.target.value)].id)} aria-valuetext={question.shortLabel} /></label>
-    </div>
+      <OutcomeSelector value={outcome} onChange={chooseOutcome} />
 
       <div className="air-chart-toolbar">
         <div className="air-segmented" aria-label="Whose answers to display">
@@ -138,7 +141,7 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
 
     <details className="air-methods"><summary>Data & methods</summary><div className="air-methods-content">
       <h3>The researcher survey</h3>
-      <p>Source: <a href={survey.sourceUrl} target="_blank" rel="noreferrer">{survey.sourceLabel}</a>. The three risk questions were randomly assigned and are shown separately. Each chart uses valid answers to its question; denominators vary. The five long-run effects use complete responses that sum to 100% and are conditional on human-level AI eventually existing.</p>
+      <p>Source: <a href={survey.sourceUrl} target="_blank" rel="noreferrer">{survey.sourceLabel}</a>. The three risk questions were randomly assigned and are shown separately. Each chart uses valid answers to its question; denominators vary. The five long-run effects use complete responses that sum to 100% and are conditional on human-level AI eventually existing. The slider labels Bad, Quite bad, Middle, Quite good and Good correspond to the survey’s categories Extremely bad, On balance bad, Approximately neutral, On balance good and Extremely good.</p>
       <p>{question.wordingNote}</p>
       <p>The 100 lines sample observed values at evenly spaced ranks. Hover statistics and public-figure positions use every valid answer. Tied estimates are placed at the middle of the tied group. Portraits are nudged slightly to avoid overlaps. A range or bound connects to its endpoints; no midpoint probability is attributed to the speaker.</p>
       <h3>Public statements</h3>

@@ -1,25 +1,36 @@
 # Claude session notes
 
-## Compact AI risk buttons (2026-09-15)
+## Five labelled outcome stops (2026-09-15)
 
-Nathan said the buttons were too big. Reduced Yes / Somewhat / No buttons to
-26px high with content-sized widths, smaller padding, tighter gaps and a thin
-border. Removed larger mobile/popover overrides. Reduced the forecast action
-to 30px high and tightened the audience tab padding. Lowered the font reset's
-specificity so individual controls' intended font sizes actually apply.
+Nathan requested a slider with Bad, Quite bad, Middle, Quite good and Good.
+Replaced the dropdown/unlabelled eight-question slider with five labelled,
+clickable stops and compact Outcomes / Extinction risk tabs.
 
-Validation: production build and full lint pass. Chrome for Testing measured
-26px voting buttons and a 30px forecast action at 1200, 768 and 375 pixels,
-with no overflow or page errors. Mobile screenshot reviewed. Only CSS changed;
-quote interaction, voting logic, outcomes and the password gate are unchanged.
-A read-only review confirmed the inheritance/override issue. Live verification
-follows the production push.
+- The stops map to extremely-bad, bad, neutral, good, extremely-good in that
+  order. Native range supports dragging and keyboard control; labels are also
+  buttons. OutcomeSelector.tsx + outcome-selector.css own the selector;
+  outcome-options.ts exports the shared order/labels for the forecast form.
+- Five outcomes are the default (initially Bad). An optional question about
+  keeping extinction risk as default received no reply; root stated this
+  assumption after allowing time to respond. Extinction risk still provides
+  the three original risk questions and their sourced public figure quotes.
+- These five distributions use their actual conditional survey categories,
+  not the direct extinction-risk answers. Subtitle retains official category
+  wording and the human-level-AI condition. Docs/methods explain short labels.
+- Viewer allocation fields use the same Bad-to-Good order and original outcome
+  IDs. Five values still sum to 100%; no backend or survey data changes.
 
-Commit: feat: make AI risk buttons compact
+Validation: production build and full lint pass. Chrome for Testing verified
+all five labels and question mappings, click/drag/keyboard controls, all three
+risk variants, face quote popovers, correctly stored five-value allocations,
+and non-overlapping labels at 1200/768/375 pixels. Screenshots reviewed; test
+forecast removed. Live verification follows the push.
+
+Commit: feat: add labelled five-step AI outcome slider
 Live: https://www.globalriskodds.com/ai-risk
 Share: /ai-risk-access#password=ENCODED_PASSWORD
-Password/session secrets remain in server environment variables. Private chart
-code stays in ai-risk-* bundles. See docs/ai-risk-access.md.
+Server environment holds password/session secrets. Private chart remains in
+ai-risk-* bundles. See docs/ai-risk-access.md and docs/ai-risk-survey.md.
 Production: Vercel goodheart/israel-iran-dashboard; Convex striped-gopher-860.
 Use pnpm --ignore-workspace and Chrome for Testing, never real Google Chrome.
-Local password gate on 4177 forwards built preview on 4176.
+Local gate 4177 forwards built preview on 4176.
