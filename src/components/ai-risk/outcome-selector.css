@@ -110,28 +110,15 @@
 }
 .air-outcome-labels button:hover,
 .air-outcome-tabs button:hover { color: var(--air-ink, #1d303c); }
-.air-outcome-risk-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  padding-top: 5px;
+.air-outcome-scale.is-risk .air-outcome-track { margin: 0 16.6667%; }
+.air-outcome-scale.is-risk .air-outcome-labels { min-height: 42px; }
+.air-outcome-scale.is-risk .air-outcome-labels button {
+  width: calc(50% - 4px);
+  max-width: 190px;
+  overflow-wrap: anywhere;
 }
-.air-outcome-risk-options button {
-  padding: 4px 8px;
-  border: 1px solid #b5c3cb;
-  border-radius: 3px;
-  background: #f7f9fa;
-  color: var(--air-muted, #657782);
-  font-size: 11px;
-  line-height: 16px;
-}
-.air-outcome-risk-options button[aria-pressed="true"] {
-  border-color: var(--air-green, #2d795b);
-  background: #edf5f0;
-  color: #245b43;
-}
-.air-outcome-risk-options button:hover { border-color: var(--air-ink, #1d303c); }
 @media (max-width: 520px) {
   .air-outcome-labels { min-height: 38px; }
   .air-outcome-labels button { width: 54px; font-size: 11px; }
+  .air-outcome-scale.is-risk .air-outcome-labels { min-height: 54px; }
 }

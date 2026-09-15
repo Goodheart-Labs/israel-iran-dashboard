@@ -17,6 +17,9 @@ interface Props {
 export function OutcomeSelector({ value, onChange }: Props) {
   const selectedStop = OUTCOME_STOPS.findIndex(stop => stop.id === value);
   const isOutcomes = selectedStop !== -1;
+  const stops = isOutcomes ? OUTCOME_STOPS : RISK_OPTIONS;
+  const selectedIndex = stops.findIndex(stop => stop.id === value);
+  const position = (index: number) => `${index / (stops.length - 1) * 100}%`;
 
   return <div className="air-outcome-selector" aria-label="Choose a survey outcome">
     <div className="air-outcome-tabs" aria-label="Question group">
@@ -24,31 +27,29 @@ export function OutcomeSelector({ value, onChange }: Props) {
       <button type="button" aria-pressed={!isOutcomes} onClick={() => { if (isOutcomes) onChange("extinction"); }}>Extinction risk</button>
     </div>
 
-    {isOutcomes ? <div className="air-outcome-scale">
+    <div className={`air-outcome-scale${isOutcomes ? "" : " is-risk"}`}>
       <div className="air-outcome-track">
-        <div className="air-outcome-ticks" aria-hidden="true">{OUTCOME_STOPS.map((stop, index) => <span key={stop.id} style={{ left: `${index * 25}%` }} />)}</div>
+        <div className="air-outcome-ticks" aria-hidden="true">{stops.map((stop, index) => <span key={stop.id} style={{ left: position(index) }} />)}</div>
         <input
           type="range"
           min="0"
-          max="4"
+          max={stops.length - 1}
           step="1"
-          value={selectedStop}
-          onChange={event => onChange(OUTCOME_STOPS[Number(event.target.value)].id)}
-          aria-label="AI outcome"
-          aria-valuetext={OUTCOME_STOPS[selectedStop].label}
+          value={selectedIndex}
+          onChange={event => onChange(stops[Number(event.target.value)].id)}
+          aria-label={isOutcomes ? "AI outcome" : "Extinction risk question"}
+          aria-valuetext={stops[selectedIndex].label}
         />
         <div className="air-outcome-labels">
-          {OUTCOME_STOPS.map((stop, index) => <button
+          {stops.map((stop, index) => <button
             key={stop.id}
             type="button"
-            style={{ "--stop-position": `${index * 25}%` } as CSSProperties}
-            aria-pressed={selectedStop === index}
+            style={{ "--stop-position": position(index) } as CSSProperties}
+            aria-pressed={selectedIndex === index}
             onClick={() => onChange(stop.id)}
           >{stop.label}</button>)}
         </div>
       </div>
-    </div> : <div className="air-outcome-risk-options" aria-label="Extinction risk question">
-      {RISK_OPTIONS.map(option => <button key={option.id} type="button" aria-pressed={value === option.id} onClick={() => onChange(option.id)}>{option.label}</button>)}
-    </div>}
+    </div>
   </div>;
 }

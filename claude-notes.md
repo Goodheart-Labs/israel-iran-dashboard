@@ -1,5 +1,29 @@
 # Claude session notes
 
+## Word-labelled slider in both chart views (2026-09-15)
+
+Nathan requested a slider with words at each position, like the local dashboard.
+Asked which control he meant; with no response, stated the above-chart selector
+interpretation. The existing five-outcome view already had this design, while
+the extinction-risk view still used three pill buttons.
+
+- OutcomeSelector now shares the same labelled range control across both
+  groups. Five outcomes remain Bad through Good; risk positions are Extinction /
+  disempowerment, Within 100 years, and From loss of control.
+- Each label is clickable; the range snaps between the corresponding original
+  survey questions and supports dragging and keyboard navigation. Accessible
+  value text reflects the selected words.
+- Risk labels receive enough room to wrap on mobile; obsolete pill styles
+  removed. Five-outcome layout, quotes/arrows, and submission controls unchanged.
+- Files: OutcomeSelector.tsx and outcome-selector.css.
+
+Validation: build and full lint pass. Chrome for Testing verified all eight
+question mappings/counts, clicks, dragging, Home/End/arrows, label bounds and
+overlap at 1200/768/375px, and clearing the selected arrow on question change.
+Screenshots inspected. Live verification follows deployment.
+
+Commit: feat: use word-labelled sliders for every AI risk chart view
+
 ## Pinned person arrow and hover quotes (2026-09-15)
 
 Nathan clarified that clicking a person should keep their main connector,
