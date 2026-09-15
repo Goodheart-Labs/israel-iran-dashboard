@@ -1,21 +1,25 @@
 # Claude session notes
 
-## Remove Inspect answers (2026-09-15)
+## Compact AI risk buttons (2026-09-15)
 
-Nathan asked to remove “Inspect answers”. Removed that label and range control,
-its unused CSS, and the SVG accessibility text pointing to the removed slider.
-The outcome slider at the top, chart hover, and anchored quote popovers remain.
+Nathan said the buttons were too big. Reduced Yes / Somewhat / No buttons to
+26px high with content-sized widths, smaller padding, tighter gaps and a thin
+border. Removed larger mobile/popover overrides. Reduced the forecast action
+to 30px high and tightened the audience tab padding. Lowered the font reset's
+specificity so individual controls' intended font sizes actually apply.
 
-Validation: production build and full lint pass. Chrome for Testing checks at
-1200, 768 and 375 pixels confirm removal, working outcome control, chart hover,
-quote popovers, and no page errors or horizontal overflow. A read-only second
-review found no leftover references. Live verification follows the push.
+Validation: production build and full lint pass. Chrome for Testing measured
+26px voting buttons and a 30px forecast action at 1200, 768 and 375 pixels,
+with no overflow or page errors. Mobile screenshot reviewed. Only CSS changed;
+quote interaction, voting logic, outcomes and the password gate are unchanged.
+A read-only review confirmed the inheritance/override issue. Live verification
+follows the production push.
 
-Commit: feat: remove AI risk answer inspection slider
+Commit: feat: make AI risk buttons compact
 Live: https://www.globalriskodds.com/ai-risk
-Share format: /ai-risk-access#password=ENCODED_PASSWORD
-Existing password gate and vote storage unchanged. Server environment holds
-password/session secrets; private chart code stays in the ai-risk-* bundle.
-See docs/ai-risk-access.md. Production: Vercel goodheart/israel-iran-dashboard;
-Convex striped-gopher-860. Use pnpm --ignore-workspace and Chrome for Testing,
-never real Google Chrome. Local gate 4177 forwards built preview on 4176.
+Share: /ai-risk-access#password=ENCODED_PASSWORD
+Password/session secrets remain in server environment variables. Private chart
+code stays in ai-risk-* bundles. See docs/ai-risk-access.md.
+Production: Vercel goodheart/israel-iran-dashboard; Convex striped-gopher-860.
+Use pnpm --ignore-workspace and Chrome for Testing, never real Google Chrome.
+Local password gate on 4177 forwards built preview on 4176.
