@@ -1,16 +1,19 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useEffect, useId, useMemo, useRef, useState, type ReactNode } from "react";
 import { formatProbability, percentileAt, representativeValues } from "@/lib/ai-risk/distribution";
 import { estimateBounds, estimateLabel } from "@/lib/ai-risk/public-estimates";
 import { packPortraits } from "@/lib/ai-risk/portrait-layout";
 import type { ProbabilityCount, PublicFigure, PublicQuote } from "@/lib/ai-risk/types";
 import { QuotePopover } from "./QuotePopover";
 
-export function DistributionChart({ values, figures, quotes, selectedQuote, onSelectQuote, onCloseQuote, quoteContent, descending, audience, mine }: {
+export function DistributionChart({ values, figures, quotes, selectedQuote, visibleQuote, quoteFocus, onSelectQuote, onShowQuote, onCloseQuote, quoteContent, descending, audience, mine }: {
   values: ProbabilityCount[];
   figures: PublicFigure[];
   quotes: PublicQuote[];
   selectedQuote: string | null;
-  onSelectQuote: (id: string) => void;
+  visibleQuote: string | null;
+  quoteFocus: boolean;
+  onSelectQuote: (id: string, focus?: boolean) => void;
+  onShowQuote: (id: string) => void;
   onCloseQuote: () => void;
   quoteContent: ReactNode;
   descending: boolean;
@@ -20,6 +23,17 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
   const container = useRef<HTMLDivElement>(null);
   const [width, setWidth] = useState(950);
   const [hovered, setHovered] = useState<number | null>(null);
+  const closeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const arrowId = `air-arrow-${useId().replace(/[^a-zA-Z0-9_-]/g, "")}`;
+  function keepQuoteOpen() { clearTimeout(closeTimer.current); }
+  function previewQuote(id: string) { keepQuoteOpen(); setHovered(null); onShowQuote(id); }
+  function leaveQuote() {
+    keepQuoteOpen();
+    if (!quoteFocus) closeTimer.current = setTimeout(() => {
+      if (!document.activeElement?.closest(".air-quote-popover")) onCloseQuote();
+    }, 200);
+  }
+  useEffect(() => () => clearTimeout(closeTimer.current), [visibleQuote, values]);
   useEffect(() => {
     if (!container.current) return;
     const observer = new ResizeObserver(entries => setWidth(Math.max(270, entries[0].contentRect.width)));
@@ -59,6 +73,7 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
   const activeRank = activeValue === undefined ? null : percentileAt(values, activeValue);
   const activeX = left + (index + 0.5) / Math.max(1, lines.length) * plotWidth;
   const selected = markers.find(marker => marker.id === selectedQuote);
+  const preview = markers.find(marker => marker.id === visibleQuote);
   function inspect(clientX: number, rect: DOMRect) {
     const x = (clientX - rect.left) / rect.width * width;
     setHovered(Math.max(0, Math.min(lines.length - 1, Math.floor((x - left) / plotWidth * lines.length))));
@@ -66,8 +81,11 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
   return <div ref={container} className="air-distribution">
     {n === 0 ? <div className="air-empty-chart"><p>No viewer forecasts for this outcome yet.</p><a href="#your-forecast" className="air-text-link">Add your forecast</a></div> : <>
       {hovered !== null && <div className="air-chart-hover" aria-live="polite"><strong>{formatProbability(activeValue)}</strong><span>{Math.round(activeRank?.below ?? 0)}% gave a lower estimate</span></div>}
-      <svg className="air-chart-svg" viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Risk estimates from ${n} ${audience}, ordered ${descending ? "highest to lowest" : "lowest to highest"}. Select a face for its quote.`}>
-        <defs>{markers.map(({ id }) => <clipPath key={id} id={`face-${id}`}><circle r={radius - 2} /></clipPath>)}</defs>
+      <svg className="air-chart-svg" viewBox={`0 0 ${width} ${height}`} role="group" aria-label={`Risk estimates from ${n} ${audience}, ordered ${descending ? "highest to lowest" : "lowest to highest"}. Select a face to pin its arrow; hover for its quote.`}>
+        <defs>
+          <marker id={arrowId} viewBox="0 0 8 8" refX="7" refY="4" markerWidth="7" markerHeight="7" orient="auto"><path d="M 0 0 L 8 4 L 0 8 Z" fill="#ae743b" /></marker>
+          {markers.map(({ id }) => <clipPath key={id} id={`face-${id}`}><circle r={radius - 2} /></clipPath>)}
+        </defs>
         {[0, 25, 50, 75, 100].map(value => <g key={value}>
           <line x1={left} x2={right} y1={yAt(value)} y2={yAt(value)} stroke="#e2e8eb" />
           <text x={left - 9} y={yAt(value) + 4} textAnchor="end" fill="#657782" fontSize="11">{value}%</text>
@@ -85,7 +103,7 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
           const otherX = xAtPercentile(rankHigh);
           const otherY = yAt(bounds[1]);
           return <g className="air-active-connector" data-quote-id={quote.id} pointerEvents="none">
-            <path d={`M ${center} ${cy + radius} C ${center} ${plotTop - 8}, ${targetX} ${plotTop - 8}, ${targetX} ${targetY}`} stroke="#ae743b" strokeWidth="2" fill="none" strokeDasharray={isPoint ? undefined : "4 3"} />
+            <path d={`M ${center} ${cy + radius} C ${center} ${plotTop - 8}, ${targetX} ${plotTop - 8}, ${targetX} ${targetY - 6}`} stroke="#ae743b" strokeWidth="2.5" fill="none" markerEnd={`url(#${arrowId})`} strokeDasharray={isPoint ? undefined : "4 3"} />
             {!isPoint && <><line x1={targetX} y1={targetY} x2={otherX} y2={otherY} stroke="#ae743b" strokeWidth="6" opacity="0.35" /><circle cx={otherX} cy={otherY} r="4" fill="white" stroke="#ae743b" strokeWidth="2" /></>}
             <circle cx={targetX} cy={targetY} r="5" fill={isPoint ? "#ae743b" : "white"} stroke="#ae743b" strokeWidth="2" />
           </g>;
@@ -97,11 +115,14 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
         {hovered !== null && <circle cx={activeX} cy={yAt(activeValue)} r="4.5" fill="#173e31" stroke="white" strokeWidth="2" />}
         {markers.map(({ quote, center, cy, figure }) => {
           const active = quote.id === selectedQuote;
-          const label = `${figure.name}: ${estimateLabel(quote.estimate)}. Select to read the quote.`;
-          const toggle = () => { setHovered(null); if (active) onCloseQuote(); else onSelectQuote(quote.id); };
-          return <g key={quote.id} id={`person-${quote.id}`} transform={`translate(${center}, ${cy})`} className={`air-chart-marker ${active ? "is-selected" : ""}`} data-quote-id={quote.id} data-anchor-x={anchors.find(anchor => anchor.id === quote.id)!.x} role="button" tabIndex={0} aria-label={label} aria-pressed={active} aria-haspopup="dialog" aria-expanded={active} aria-controls={active ? `quote-popover-${quote.id}` : undefined}
-            onClick={toggle} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggle(); } }}>
-            <title>{label}</title>
+          const expanded = quote.id === visibleQuote;
+          const label = `${figure.name}: ${estimateLabel(quote.estimate)}. Select to pin the arrow. Hover for the quote.`;
+          const select = (focus: boolean) => { keepQuoteOpen(); setHovered(null); onSelectQuote(quote.id, focus); };
+          return <g key={quote.id} id={`person-${quote.id}`} transform={`translate(${center}, ${cy})`} className={`air-chart-marker ${active ? "is-selected" : ""}`} data-quote-id={quote.id} data-anchor-x={anchors.find(anchor => anchor.id === quote.id)!.x} role="button" tabIndex={0} aria-label={label} aria-pressed={active} aria-haspopup="dialog" aria-expanded={expanded} aria-controls={expanded ? `quote-popover-${quote.id}` : undefined}
+            onPointerEnter={event => { if (event.pointerType !== "touch") previewQuote(quote.id); }} onPointerLeave={leaveQuote}
+            onFocus={() => previewQuote(quote.id)} onBlur={event => { if (!(event.relatedTarget instanceof Element) || !event.relatedTarget.closest(".air-chart-marker, .air-quote-popover")) leaveQuote(); }}
+            onClick={event => select(event.detail === 0 || (event.nativeEvent instanceof PointerEvent && event.nativeEvent.pointerType === "touch"))}
+            onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); select(true); } }}>
             <circle r={radius} fill="white" stroke={active ? "#ae743b" : "#d3dce1"} strokeWidth={active ? 3 : 1.5} />
             <text y="4" textAnchor="middle" fontSize="12" fill="#1d303c">{figure.name.split(" ").map(part => part[0]).slice(0, 2).join("")}</text>
             {figure.portrait.src && <image href={figure.portrait.src} x={2 - radius} y={2 - radius} width={(radius - 2) * 2} height={(radius - 2) * 2} preserveAspectRatio="xMidYMid slice" clipPath={`url(#face-${quote.id})`} />}
@@ -111,7 +132,7 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
         <text x={left} y={plotBottom + 28} fill="#657782" fontSize="11">{descending ? "Highest" : "Lowest"} estimate</text>
         <text x={right} y={plotBottom + 28} fill="#657782" fontSize="11" textAnchor="end">{descending ? "Lowest" : "Highest"} estimate</text>
       </svg>
-      {selected && quoteContent && <QuotePopover key={selected.id} x={selected.center} y={selected.cy + radius} width={width} quoteId={selected.id} label={`${selected.figure.name}’s quote`} onClose={onCloseQuote}>{quoteContent}</QuotePopover>}
+      {preview && quoteContent && <QuotePopover key={preview.id} x={preview.center} y={preview.cy + radius} width={width} quoteId={preview.id} label={`${preview.figure.name}’s quote`} autoFocus={quoteFocus} onPointerEnter={keepQuoteOpen} onPointerLeave={leaveQuote} onClose={onCloseQuote}>{quoteContent}</QuotePopover>}
     </>}
   </div>;
 }

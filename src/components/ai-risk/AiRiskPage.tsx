@@ -51,6 +51,7 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
   const [quoteSort, setQuoteSort] = useState("high");
   const [showAll, setShowAll] = useState(false);
   const [selectedQuote, setSelectedQuote] = useState<string | null>(null);
+  const [visibleQuote, setVisibleQuote] = useState<{ id: string; focus: boolean } | null>(null);
   const question = survey.questions.find(item => item.id === outcome)!;
   const summary = useQuery(api.aiRisk.getSummary, { voterKey, accessToken });
   const rate = useMutation(api.aiRisk.rate);
@@ -61,8 +62,8 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
   const quoteVotes = Object.fromEntries(people.quotes.map(quote => [quote.id, feedbackBySlot[`ai-risk:number-accuracy:${quote.id}`]?.useful ?? 0]));
   const relatedQuotes = people.quotes.filter(quote => quote.outcomeIds.includes(outcome));
   const quotes = sortQuotes(showAll ? people.quotes : relatedQuotes, quoteSort, quoteVotes);
-  const selected = people.quotes.find(quote => quote.id === selectedQuote);
-  const selectedFigure = people.figures.find(figure => figure.id === selected?.figureId);
+  const shownQuote = people.quotes.find(quote => quote.id === visibleQuote?.id);
+  const shownFigure = people.figures.find(figure => figure.id === shownQuote?.figureId);
   const viewers = summary?.distributions.find(item => item.outcomeId === outcome);
   const values = audience === "researchers" ? question.values : viewers?.values ?? [];
   const mine = summary?.mine ?? emptyMine;
@@ -70,31 +71,33 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
   function chooseOutcome(next: OutcomeId) {
     setOutcome(next);
     setSelectedQuote(null);
+    setVisibleQuote(null);
   }
 
-  function selectQuote(id: string) {
+  function selectQuote(id: string, focus = true) {
     const quote = people.quotes.find(item => item.id === id)!;
     if (!quote.outcomeIds.includes(outcome) && quote.outcomeIds.length) setOutcome(quote.outcomeIds[0]);
     setSelectedQuote(id);
+    setVisibleQuote({ id, focus });
     setAudience("researchers");
   }
 
   function closeQuote() {
-    if (selectedQuote) document.getElementById(`person-${selectedQuote}`)?.focus({ preventScroll: true });
-    setSelectedQuote(null);
+    if (visibleQuote && document.activeElement?.closest(".air-quote-popover")) document.getElementById(`person-${visibleQuote.id}`)?.focus({ preventScroll: true });
+    setVisibleQuote(null);
   }
 
-  const quoteContent = audience === "researchers" && selected && selectedFigure && <article className="air-selected-quote" id={`quote-${selected.id}`} aria-label={`${selectedFigure.name}’s statement`}>
+  const quoteContent = audience === "researchers" && shownQuote && shownFigure && <article className="air-selected-quote" id={`quote-${shownQuote.id}`} aria-label={`${shownFigure.name}’s statement`}>
         <div className="air-person-heading">
-          <Portrait figure={selectedFigure} />
-          <div><h2>{selectedFigure.name}</h2><time dateTime={selected.date ?? undefined}>{dateLabel(selected.date)}</time></div>
+          <Portrait figure={shownFigure} />
+          <div><h2>{shownFigure.name}</h2><time dateTime={shownQuote.date ?? undefined}>{dateLabel(shownQuote.date)}</time></div>
           <button className="air-dismiss" type="button" aria-label="Close quote" onClick={closeQuote}>×</button>
         </div>
-        <blockquote>“{selected.quote}”</blockquote>
-        <div className="air-quote-number"><strong>{estimateLabel(selected.estimate)}</strong><a href={selected.sourceUrl} target="_blank" rel="noreferrer">{selected.sourceTitle} ↗</a></div>
+        <blockquote>“{shownQuote.quote}”</blockquote>
+        <div className="air-quote-number"><strong>{estimateLabel(shownQuote.estimate)}</strong><a href={shownQuote.sourceUrl} target="_blank" rel="noreferrer">{shownQuote.sourceTitle} ↗</a></div>
         <div className="air-accuracy-questions">
-          {selected.estimate.kind !== "qualitative" && <AccuracyVote key={`number-${selected.id}`} question="Is the number we give an accurate summary of this quote?" tally={feedbackBySlot[`ai-risk:number-accuracy:${selected.id}`]} loading={!feedback} onRate={rating => rate({ voterKey, accessToken, slot: `ai-risk:number-accuracy:${selected.id}`, rating })} />}
-          <AccuracyVote key={`quote-${selected.id}`} question="Is the quote accurate?" tally={feedbackBySlot[`ai-risk:quote-accuracy:${selected.id}`]} loading={!feedback} onRate={rating => rate({ voterKey, accessToken, slot: `ai-risk:quote-accuracy:${selected.id}`, rating })} />
+          {shownQuote.estimate.kind !== "qualitative" && <AccuracyVote key={`number-${shownQuote.id}`} question="Is the number we give an accurate summary of this quote?" tally={feedbackBySlot[`ai-risk:number-accuracy:${shownQuote.id}`]} loading={!feedback} onRate={rating => rate({ voterKey, accessToken, slot: `ai-risk:number-accuracy:${shownQuote.id}`, rating })} />}
+          <AccuracyVote key={`quote-${shownQuote.id}`} question="Is the quote accurate?" tally={feedbackBySlot[`ai-risk:quote-accuracy:${shownQuote.id}`]} loading={!feedback} onRate={rating => rate({ voterKey, accessToken, slot: `ai-risk:quote-accuracy:${shownQuote.id}`, rating })} />
         </div>
       </article>;
 
@@ -111,13 +114,13 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
       <div className="air-chart-toolbar">
         <div className="air-segmented" aria-label="Whose answers to display">
           <button type="button" aria-pressed={audience === "researchers"} onClick={() => setAudience("researchers")}>AI researchers <span>{question.n.toLocaleString()}</span></button>
-          <button type="button" aria-pressed={audience === "viewers"} onClick={() => { setAudience("viewers"); setSelectedQuote(null); }}>Viewers to this site <span>{viewers?.n ?? "…"}</span></button>
+          <button type="button" aria-pressed={audience === "viewers"} onClick={() => { setAudience("viewers"); setSelectedQuote(null); setVisibleQuote(null); }}>Viewers to this site <span>{viewers?.n ?? "…"}</span></button>
         </div>
         <label className="air-sort-label"><span className="sr-only">Order chart answers</span><select value={descending ? "high" : "low"} onChange={event => setDescending(event.target.value === "high")}><option value="low">Lowest first</option><option value="high">Highest first</option></select></label>
       </div>
-      {audience === "viewers" && !summary ? <div className="air-empty-chart" role="status">Loading viewer forecasts…</div> : <DistributionChart values={values} figures={people.figures} quotes={audience === "researchers" ? relatedQuotes : []} selectedQuote={selectedQuote} onSelectQuote={selectQuote} onCloseQuote={closeQuote} quoteContent={quoteContent} descending={descending} audience={audience} mine={mine[outcome]} />}
+      {audience === "viewers" && !summary ? <div className="air-empty-chart" role="status">Loading viewer forecasts…</div> : <DistributionChart values={values} figures={people.figures} quotes={audience === "researchers" ? relatedQuotes : []} selectedQuote={selectedQuote} visibleQuote={visibleQuote?.id ?? null} quoteFocus={visibleQuote?.focus ?? false} onSelectQuote={selectQuote} onShowQuote={id => setVisibleQuote({ id, focus: false })} onCloseQuote={closeQuote} quoteContent={quoteContent} descending={descending} audience={audience} mine={mine[outcome]} />}
 
-      {selected?.estimate.kind === "qualitative" && quoteContent}
+      {shownQuote?.estimate.kind === "qualitative" && quoteContent}
       <p className="air-chart-source">{audience === "viewers" ? "Answers: Viewers to this site. Question source: " : "Source: "}<a href={survey.sourceUrl} target="_blank" rel="noreferrer">{survey.sourceLabel}</a></p>
       <ForecastForm key={question.group === "outcomes" ? "outcomes" : outcome} question={question} outcomeQuestions={outcomeQuestions} mine={mine} voterKey={voterKey} accessToken={accessToken} ready={!!summary} />
     </section>

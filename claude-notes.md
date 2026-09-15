@@ -1,5 +1,32 @@
 # Claude session notes
 
+## Pinned person arrow and hover quotes (2026-09-15)
+
+Nathan clarified that clicking a person should keep their main connector,
+while hovering any face should show that person's quote. Only other people's
+faded connectors should be absent.
+
+- AiRiskPage separates selectedQuote (pinned arrow) from visibleQuote (quote
+  card and focus mode). Dismissing a card preserves the selected arrow.
+- DistributionChart renders one stronger connector with an arrowhead for the
+  selected person. Hover/focus previews another quote without changing the pin.
+  A 200ms exit grace lets the pointer cross into the card for links/votes; it
+  rechecks keyboard focus before hiding. Range/bound endpoints retain their
+  existing semantics. No background public-figure connectors are rendered.
+- QuotePopover skips focus and scrolling for hover previews. Keyboard/touch
+  activation still opens and focuses the card; Escape returns focus when the
+  card had focus. aria-pressed reflects the pin; expanded/controls the preview.
+- Changing outcome/audience clears stale selection and preview. Green survey
+  stems, forecast sliders, source credit, and backend are unchanged.
+
+Validation: build and full lint pass. Chrome for Testing checks pin persistence,
+independent hover cards, no hover scroll/focus movement, pointer gap crossing,
+correct hovered-person vote storage, dismissal, keyboard/touch, sort/audience
+and outcome changes, and 1200/768/375px layouts. Screenshots reviewed; temporary
+test votes removed. Local/live completion is checked before the final reply.
+
+Commit: feat: keep selected person arrow with independent hover quotes
+
 ## Chart submission sliders (2026-09-15)
 
 Nathan requested sliders for viewers to submit probabilities for the chart's

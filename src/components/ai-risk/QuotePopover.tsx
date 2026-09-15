@@ -1,12 +1,15 @@
 import { useEffect, useLayoutEffect, useRef, type CSSProperties, type ReactNode } from "react";
 
-export function QuotePopover({ x, y, width, quoteId, label, onClose, children }: {
+export function QuotePopover({ x, y, width, quoteId, label, onClose, autoFocus = true, onPointerEnter, onPointerLeave, children }: {
   x: number;
   y: number;
   width: number;
   quoteId: string;
   label: string;
   onClose: () => void;
+  autoFocus?: boolean;
+  onPointerEnter?: () => void;
+  onPointerLeave?: () => void;
   children: ReactNode;
 }) {
   const panel = useRef<HTMLDivElement>(null);
@@ -14,10 +17,11 @@ export function QuotePopover({ x, y, width, quoteId, label, onClose, children }:
   const left = Math.max(0, Math.min(width - cardWidth, x - cardWidth / 2));
 
   useLayoutEffect(() => {
+    if (!autoFocus) return;
     const element = panel.current;
     element?.focus({ preventScroll: true });
     element?.scrollIntoView({ block: "nearest", inline: "nearest" });
-  }, [quoteId]);
+  }, [quoteId, autoFocus]);
 
   useEffect(() => {
     function outside(event: PointerEvent) {
@@ -37,6 +41,7 @@ export function QuotePopover({ x, y, width, quoteId, label, onClose, children }:
   }, [onClose]);
 
   return <div ref={panel} id={`quote-popover-${quoteId}`} className="air-quote-popover" role="dialog" aria-label={label} tabIndex={-1}
+    onPointerEnter={onPointerEnter} onPointerLeave={onPointerLeave}
     style={{ left, top: y + 12, width: cardWidth, "--air-quote-tip": `${x - left}px` } as CSSProperties}>
     <div className="air-quote-popover-scroll">{children}</div>
   </div>;
