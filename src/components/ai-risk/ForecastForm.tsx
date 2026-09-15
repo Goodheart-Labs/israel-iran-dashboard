@@ -37,19 +37,19 @@ export function ForecastForm({ question, outcomeQuestions, mine, voterKey, acces
     try {
       await save({ voterKey, accessToken, values: questions.map(item => ({ outcomeId: item.id, value: Number(draft[item.id]) })) });
       setDirty(false);
-      setMessage(family ? "Your five forecasts are saved. See them in “Viewers to this site” above." : "Your forecast is saved. See it in “Viewers to this site” above.");
+      setMessage("Saved.");
     } catch { setError("Your forecast wasn’t saved. Check your connection and try again."); }
     finally { setPending(false); }
   }
   async function remove() {
     setPending(true); setError("");
-    try { await clear({ voterKey, accessToken }); setDirty(false); setDraft({}); setMessage("Your forecasts have been removed from the totals."); }
+    try { await clear({ voterKey, accessToken }); setDirty(false); setDraft({}); setMessage("Forecasts removed."); }
     catch { setError("Your forecasts couldn’t be removed. Please try again."); }
     finally { setPending(false); }
   }
   const hasAnswers = Object.keys(mine).length > 0;
   return <section id="your-forecast" className="air-forecast">
-    <div className="air-forecast-intro"><p className="air-eyebrow">YOUR TURN</p><h2>Where do you stand?</h2><p>Add your estimate to <strong>Viewers to this site</strong>. Come back and revise it when your view changes.</p><p className="air-small">One answer per browser, per question. These are voluntary visitor responses, not a representative survey. Your browser remembers your answers; changing devices may count twice.</p></div>
+    <div className="air-forecast-intro"><h2>Your forecast</h2><p>Added to “Viewers to this site”.</p></div>
     <form onSubmit={event => void submit(event)} className="air-forecast-form">
       <p className="air-form-question">{family ? "If human-level AI is eventually developed, how likely is each long-run effect on humanity?" : question.description}</p>
       {questions.map(item => <div key={item.id} className="air-probability-input">
@@ -59,7 +59,7 @@ export function ForecastForm({ question, outcomeQuestions, mine, voterKey, acces
       {family && <div className={`air-total ${total === 100 ? "is-complete" : ""}`} role="status"><span>Total</span><b>{total}% / 100%</b></div>}
       {family && <p className="air-small">Allocate 100% across these five possible outcomes.</p>}
       <div className="air-form-actions"><button type="submit" className="air-primary-button" disabled={!valid || pending || !ready}>{pending ? "Saving…" : questions.some(item => mine[item.id] !== undefined) ? "Update my forecast" : "Add my forecast"}<span aria-hidden="true">↗</span></button>{hasAnswers && <button type="button" className="air-clear-button" disabled={pending || !ready} onClick={() => void remove()}>Remove my forecasts</button>}</div>
-      {!ready && <p className="air-small" role="status">Connecting to the voting service…</p>}
+      {!ready && <p className="air-small" role="status">Connecting…</p>}
       {message && <p className="air-success" role="status">{message}</p>}
       {error && <p className="air-error" role="alert">{error}</p>}
     </form>

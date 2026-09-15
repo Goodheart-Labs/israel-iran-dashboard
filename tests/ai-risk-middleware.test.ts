@@ -1,5 +1,6 @@
 import assert from "node:assert/strict";
 import test, { type TestContext } from "node:test";
+import { runInNewContext } from "node:vm";
 import middleware from "../middleware";
 import { requireAiRiskAccess, verifyAiRiskAccessToken } from "../convex/aiRiskAccess";
 import { AI_RISK_COOKIE, SESSION_SECONDS, createSession, verifySession } from "../server/aiRiskSession";
@@ -41,6 +42,31 @@ function assertPrivate(response: Response) {
   assert.match(response.headers.get("x-robots-tag") ?? "", /noindex/);
 }
 
+function runFragmentLogin(html: string, hash: string, available = true) {
+  const script = html.match(/<script nonce="[^"]+">([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(script, "the password page includes its fragment login script");
+  const events: string[] = [];
+  class PasswordInput { value = ""; }
+  const input = new PasswordInput();
+  class PasswordForm { requestSubmit() { events.push(`submit:${input.value}`); } }
+  const form = new PasswordForm();
+  runInNewContext(script, {
+    URLSearchParams,
+    HTMLFormElement: PasswordForm,
+    HTMLInputElement: PasswordInput,
+    window: {
+      addEventListener: () => undefined,
+      location: { hash, pathname: "/ai-risk-access", search: "" },
+      history: { replaceState(_state: unknown, _unused: string, url: string) { events.push(`replace:${url}`); } },
+    },
+    document: {
+      querySelector: () => available ? form : null,
+      getElementById: () => available ? input : null,
+    },
+  });
+  return events;
+}
+
 await test("unauthenticated chart pages, portraits, chart bundles and session data remain private", async (t) => {
   fixture(t);
   for (const path of ["/ai-risk", "/ai-risk/", "/ai-risk/portraits/example.jpg"]) {
@@ -75,6 +101,41 @@ await test("the password form contains neither a password nor an access token", 
   assertPrivate(response);
 });
 
+await test("shared-link fragments are removed before submitting the ordinary password form", async (t) => {
+  fixture(t);
+  const response = await middleware(request("/ai-risk-access"));
+  const html = await response.text();
+  assert.deepEqual(runFragmentLogin(html, `#password=${PASSWORD}`), ["replace:/ai-risk-access", `submit:${PASSWORD}`]);
+  const special = "words & symbols+#";
+  assert.deepEqual(runFragmentLogin(html, `#password=${encodeURIComponent(special)}`), ["replace:/ai-risk-access", `submit:${special}`]);
+  assert.deepEqual(runFragmentLogin(html, ""), []);
+  assert.deepEqual(runFragmentLogin(html, "#other=value"), []);
+  for (const fragment of ["#password=", `#password=${"a".repeat(129)}`]) {
+    assert.deepEqual(runFragmentLogin(html, fragment), ["replace:/ai-risk-access"]);
+  }
+  const nonce = html.match(/<script nonce="([^"]+)">/)?.[1];
+  assert.ok(nonce);
+  assert.ok(response.headers.get("content-security-policy")?.includes(`script-src 'nonce-${nonce}'`));
+  assert.ok(!response.headers.get("content-security-policy")?.includes("script-src 'unsafe-inline'"));
+  const second = await middleware(request("/ai-risk-access"));
+  assert.notEqual(second.headers.get("content-security-policy"), response.headers.get("content-security-policy"));
+});
+
+await test("shared links cannot skip verification or missing gate configuration", async (t) => {
+  fixture(t);
+  const response = await middleware(request(`/ai-risk-access?password=${PASSWORD}`));
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("set-cookie"), null);
+  const denied = await login("incorrect");
+  assert.equal(denied.status, 401);
+  assert.deepEqual(runFragmentLogin(await denied.text(), ""), []);
+  delete process.env.AI_RISK_PASSWORD;
+  const unavailable = await middleware(request("/ai-risk-access"));
+  assert.equal(unavailable.status, 503);
+  assert.deepEqual(runFragmentLogin(await unavailable.text(), `#password=${PASSWORD}`, false), ["replace:/ai-risk-access"]);
+  assert.equal(unavailable.headers.get("set-cookie"), null);
+});
+
 await test("a correct password sets a secure host-only session accepted by both middleware and Convex", async (t) => {
   fixture(t);
   const denied = await login("incorrect");
@@ -107,7 +168,7 @@ await test("a correct password sets a secure host-only session accepted by both 
   assertPrivate(session);
   const form = await middleware(request("/ai-risk-access", { headers: { cookie } }));
   assert.equal(form.status, 303);
-  assert.equal(form.headers.get("location"), "/ai-risk");
+  assert.equal(form.headers.get("location"), "/ai-risk#");
 });
 
 await test("tampered, expired and incorrectly named cookies cannot unlock protected content", async (t) => {

@@ -6,6 +6,14 @@ Successful login sets a Secure, HttpOnly, host-only, SameSite=Lax cookie for
 seven days. Passwords and signing secrets are server environment variables,
 not Vite variables or client-side constants.
 
+Shared links can use `/ai-risk-access#password=ENCODED_PASSWORD`, with the
+password encoded using `encodeURIComponent`. A nonce-authorized script
+removes the fragment from browser history before submitting the ordinary
+password form. The server still validates the password and issues the same
+session cookie; it does not accept passwords in GET query strings. Existing
+sessions redirect with an explicit empty fragment so the shared password
+does not carry into the chart URL. Manual password entry remains available.
+
 ## Configuration
 
 - Vercel Production: `AI_RISK_PASSWORD` and `AI_RISK_SESSION_SECRET` (sensitive).

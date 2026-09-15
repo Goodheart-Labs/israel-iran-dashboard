@@ -298,3 +298,18 @@ await test("every public AI risk handler rejects an unauthorized caller before r
   await assert.rejects(call(clearFeedback, { ...denied, slots: [SLOT] }), message);
   assert.equal(db.rows.size, 0);
 });
+
+await test("number and quote accuracy votes remain independent of each other and legacy usefulness votes", async (t) => {
+  const { call, advance } = fixture(t);
+  const oldSlot = "ai-risk:quote:daniel-70-2025";
+  const numberSlot = "ai-risk:number-accuracy:daniel-70-2025";
+  const quoteSlot = "ai-risk:quote-accuracy:daniel-70-2025";
+  await call(rate, { voterKey: ALICE, slot: oldSlot, rating: "useful" });
+  assert.deepEqual(await call(getFeedback, { voterKey: ALICE, slots: [numberSlot, quoteSlot] }), [numberSlot, quoteSlot].map(slot => ({ slot, useful: 0, somewhat_useful: 0, not_useful: 0 })));
+  advance();
+  await call(rate, { voterKey: ALICE, slot: numberSlot, rating: "somewhat_useful" });
+  advance();
+  await call(rate, { voterKey: ALICE, slot: quoteSlot, rating: "not_useful" });
+  const tallies = await call(getFeedback, { voterKey: ALICE, slots: [oldSlot, numberSlot, quoteSlot] });
+  assert.deepEqual(tallies.map(tally => tally.mine), ["useful", "somewhat_useful", "not_useful"]);
+});

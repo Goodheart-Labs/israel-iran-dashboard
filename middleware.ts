@@ -16,11 +16,29 @@ const privateHeaders = {
 
 function passwordPage(error = false, unavailable = false): Response {
   const message = unavailable ? "Access is being set up. Please try again shortly." : error ? "That password didn’t match. Try again." : "Enter the password to explore the AI risk page.";
+  const nonce = btoa(crypto.randomUUID());
+  // A shared password stays in the URL fragment until this page removes it.
+  // It then uses the same POST and server-side verification as manual login.
+  const fragmentLogin = `(() => {
+  function loginFromFragment() {
+    const parameters = new URLSearchParams(window.location.hash.slice(1));
+    if (!parameters.has("password")) return;
+    const password = parameters.get("password");
+    window.history.replaceState(null, "", window.location.pathname + window.location.search);
+    const form = document.querySelector("form");
+    const input = document.getElementById("password");
+    if (!password || password.length > 128 || !(form instanceof HTMLFormElement) || !(input instanceof HTMLInputElement)) return;
+    input.value = password;
+    form.requestSubmit();
+  }
+  window.addEventListener("hashchange", loginFromFragment);
+  loginFromFragment();
+  })();`;
   return new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><meta name="robots" content="noindex,nofollow"><title>AI risk · Global Risk Odds</title><style>
     *{box-sizing:border-box}body{margin:0;background:#f5f1e8;color:#193e32;font-family:Arial,sans-serif;min-height:100svh;display:grid;place-items:center;padding:24px}main{width:100%;max-width:410px}header{font-size:11px;letter-spacing:.12em;font-weight:700;margin-bottom:48px}h1{font-family:Georgia,serif;font-size:44px;font-weight:400;letter-spacing:-.04em;margin:0 0 18px}p{font-size:14px;line-height:1.6;color:#62766b;margin:0 0 24px}label{display:block;font-size:12px;margin-bottom:9px}input{display:block;width:100%;border:1px solid #b9c8ae;background:#fffdf7;color:#193e32;border-radius:5px;font-size:18px;padding:13px;margin-bottom:14px}button{display:flex;justify-content:space-between;width:100%;background:#193e32;color:#f5f1e8;border:0;border-radius:5px;padding:14px 16px;font-size:14px;cursor:pointer}input:focus-visible,button:focus-visible,a:focus-visible{outline:3px solid #bd783c;outline-offset:3px}a{display:inline-block;color:#62766b;font-size:12px;margin-top:28px;text-underline-offset:3px}.error{color:#a43826}
-  </style></head><body><main><header>GLOBAL RISK ODDS</header><h1>The AI risk explorer.</h1><p${error ? ' class="error" role="alert"' : ""}>${message}</p>${unavailable ? "" : '<form method="post" action="/ai-risk-access"><label for="password">Password</label><input id="password" name="password" type="password" required maxlength="128" autocomplete="current-password" autofocus><button type="submit">Open the explorer <span aria-hidden="true">↗</span></button></form>'}<a href="/">← Back to Global Risk Odds</a></main></body></html>`, {
+  </style></head><body><main><header>GLOBAL RISK ODDS</header><h1>The AI risk explorer.</h1><p${error ? ' class="error" role="alert"' : ""}>${message}</p>${unavailable ? "" : '<form method="post" action="/ai-risk-access"><label for="password">Password</label><input id="password" name="password" type="password" required maxlength="128" autocomplete="current-password" autofocus><button type="submit">Open the explorer <span aria-hidden="true">↗</span></button></form>'}<a href="/">← Back to Global Risk Odds</a></main><script nonce="${nonce}">${fragmentLogin}</script></body></html>`, {
     status: unavailable ? 503 : error ? 401 : 200,
-    headers: { ...privateHeaders, "Content-Type": "text/html; charset=utf-8", "Content-Security-Policy": "default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'" },
+    headers: { ...privateHeaders, "Content-Type": "text/html; charset=utf-8", "Content-Security-Policy": `default-src 'none'; script-src 'nonce-${nonce}'; style-src 'unsafe-inline'; form-action 'self'; base-uri 'none'; frame-ancestors 'none'` },
   });
 }
 
@@ -58,7 +76,8 @@ export default async function middleware(request: Request): Promise<Response> {
   const authorized = await verifySession(token, secret);
   if (access) {
     if (request.method === "GET" || request.method === "HEAD") {
-      return authorized ? new Response(null, { status: 303, headers: { ...privateHeaders, Location: "/ai-risk" } }) : passwordPage();
+      // An explicit empty fragment also clears shared passwords for existing sessions.
+      return authorized ? new Response(null, { status: 303, headers: { ...privateHeaders, Location: "/ai-risk#" } }) : passwordPage();
     }
     if (request.method !== "POST") return new Response("Method not allowed", { status: 405, headers: { ...privateHeaders, Allow: "GET, POST" } });
     const origin = request.headers.get("origin");

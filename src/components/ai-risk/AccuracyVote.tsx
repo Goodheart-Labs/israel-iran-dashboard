@@ -1,16 +1,18 @@
 import { useState } from "react";
 import type { UsefulnessRating, UsefulnessTally } from "@/lib/ai-risk/types";
 
+// The existing three-value storage format is scoped to new number-accuracy and quote-accuracy slots.
+// No earlier usefulness votes are reinterpreted as accuracy votes.
 const ratings: { id: UsefulnessRating; label: string }[] = [
-  { id: "useful", label: "Useful" },
-  { id: "somewhat_useful", label: "Somewhat useful" },
-  { id: "not_useful", label: "Not useful" },
+  { id: "useful", label: "Yes" },
+  { id: "somewhat_useful", label: "Somewhat" },
+  { id: "not_useful", label: "No" },
 ];
 
-export function UsefulnessBar({ tally, onRate, label, loading = false }: {
+export function AccuracyVote({ tally, onRate, question, loading = false }: {
   tally?: UsefulnessTally;
   onRate: (rating: UsefulnessRating) => Promise<unknown>;
-  label: string;
+  question: string;
   loading?: boolean;
 }) {
   const [pending, setPending] = useState(false);
@@ -23,8 +25,8 @@ export function UsefulnessBar({ tally, onRate, label, loading = false }: {
     catch { setError("Your vote wasn’t saved. Please try again."); }
     finally { setPending(false); }
   }
-  return <div className="air-feedback" role="group" aria-label={label}>
-    <div className="air-feedback-heading"><span>Was this useful?</span><span>{loading ? "Connecting…" : `${total} vote${total === 1 ? "" : "s"}`}</span></div>
+  return <div className="air-feedback" role="group" aria-label={question}>
+    <div className="air-feedback-heading"><span>{question}</span><span>{loading ? "Connecting…" : `${total} vote${total === 1 ? "" : "s"}`}</span></div>
     <div className="air-vote-options">
       {ratings.map(({ id, label: ratingLabel }) => <button key={id} type="button"
         aria-pressed={tally?.mine === id} disabled={pending || loading}
