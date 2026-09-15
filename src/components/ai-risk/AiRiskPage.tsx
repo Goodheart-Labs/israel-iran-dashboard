@@ -68,6 +68,25 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
     setAudience("researchers");
   }
 
+  function closeQuote() {
+    if (selectedQuote) document.getElementById(`person-${selectedQuote}`)?.focus({ preventScroll: true });
+    setSelectedQuote(null);
+  }
+
+  const quoteContent = audience === "researchers" && selected && selectedFigure && <article className="air-selected-quote" id={`quote-${selected.id}`} aria-label={`${selectedFigure.name}’s statement`}>
+        <div className="air-person-heading">
+          <Portrait figure={selectedFigure} />
+          <div><h2>{selectedFigure.name}</h2><time dateTime={selected.date ?? undefined}>{dateLabel(selected.date)}</time></div>
+          <button className="air-dismiss" type="button" aria-label="Close quote" onClick={closeQuote}>×</button>
+        </div>
+        <blockquote>“{selected.quote}”</blockquote>
+        <div className="air-quote-number"><strong>{estimateLabel(selected.estimate)}</strong><a href={selected.sourceUrl} target="_blank" rel="noreferrer">{selected.sourceTitle} ↗</a></div>
+        <div className="air-accuracy-questions">
+          {selected.estimate.kind !== "qualitative" && <AccuracyVote key={`number-${selected.id}`} question="Is the number we give an accurate summary of this quote?" tally={feedbackBySlot[`ai-risk:number-accuracy:${selected.id}`]} loading={!feedback} onRate={rating => rate({ voterKey, accessToken, slot: `ai-risk:number-accuracy:${selected.id}`, rating })} />}
+          <AccuracyVote key={`quote-${selected.id}`} question="Is the quote accurate?" tally={feedbackBySlot[`ai-risk:quote-accuracy:${selected.id}`]} loading={!feedback} onRate={rating => rate({ voterKey, accessToken, slot: `ai-risk:quote-accuracy:${selected.id}`, rating })} />
+        </div>
+      </article>;
+
   return <div className="air-page not-prose">
     <header className="air-intro">
       <p className="air-eyebrow">AI IMPACTS · 2024 EXPERT SURVEY ON PROGRESS IN AI</p>
@@ -89,25 +108,13 @@ export function AiRiskPage({ accessToken }: { accessToken: string }) {
       <div className="air-chart-toolbar">
         <div className="air-segmented" aria-label="Whose answers to display">
           <button type="button" aria-pressed={audience === "researchers"} onClick={() => setAudience("researchers")}>AI researchers <span>{question.n.toLocaleString()}</span></button>
-          <button type="button" aria-pressed={audience === "viewers"} onClick={() => setAudience("viewers")}>Viewers to this site <span>{viewers?.n ?? "…"}</span></button>
+          <button type="button" aria-pressed={audience === "viewers"} onClick={() => { setAudience("viewers"); setSelectedQuote(null); }}>Viewers to this site <span>{viewers?.n ?? "…"}</span></button>
         </div>
         <label className="air-sort-label"><span className="sr-only">Order chart answers</span><select value={descending ? "high" : "low"} onChange={event => setDescending(event.target.value === "high")}><option value="low">Lowest first</option><option value="high">Highest first</option></select></label>
       </div>
-      {audience === "viewers" && !summary ? <div className="air-empty-chart" role="status">Loading viewer forecasts…</div> : <DistributionChart values={values} figures={people.figures} quotes={audience === "researchers" ? relatedQuotes : []} selectedQuote={selectedQuote} onSelectQuote={selectQuote} descending={descending} audience={audience} mine={mine[outcome]} />}
+      {audience === "viewers" && !summary ? <div className="air-empty-chart" role="status">Loading viewer forecasts…</div> : <DistributionChart values={values} figures={people.figures} quotes={audience === "researchers" ? relatedQuotes : []} selectedQuote={selectedQuote} onSelectQuote={selectQuote} onCloseQuote={closeQuote} quoteContent={quoteContent} descending={descending} audience={audience} mine={mine[outcome]} />}
 
-      {audience === "researchers" && selected && selectedFigure && <article className="air-selected-quote" id={`quote-${selected.id}`} aria-label={`${selectedFigure.name}’s statement`}>
-        <div className="air-person-heading">
-          <Portrait figure={selectedFigure} />
-          <div><h2>{selectedFigure.name}</h2><time dateTime={selected.date ?? undefined}>{dateLabel(selected.date)}</time></div>
-          <button className="air-dismiss" type="button" aria-label="Close quote" onClick={() => setSelectedQuote(null)}>×</button>
-        </div>
-        <blockquote>“{selected.quote}”</blockquote>
-        <div className="air-quote-number"><strong>{estimateLabel(selected.estimate)}</strong><a href={selected.sourceUrl} target="_blank" rel="noreferrer">{selected.sourceTitle} ↗</a></div>
-        <div className="air-accuracy-questions">
-          {selected.estimate.kind !== "qualitative" && <AccuracyVote key={`number-${selected.id}`} question="Is the number we give an accurate summary of this quote?" tally={feedbackBySlot[`ai-risk:number-accuracy:${selected.id}`]} loading={!feedback} onRate={rating => rate({ voterKey, accessToken, slot: `ai-risk:number-accuracy:${selected.id}`, rating })} />}
-          <AccuracyVote key={`quote-${selected.id}`} question="Is the quote accurate?" tally={feedbackBySlot[`ai-risk:quote-accuracy:${selected.id}`]} loading={!feedback} onRate={rating => rate({ voterKey, accessToken, slot: `ai-risk:quote-accuracy:${selected.id}`, rating })} />
-        </div>
-      </article>}
+      {selected?.estimate.kind === "qualitative" && quoteContent}
       <p className="air-chart-source">{audience === "viewers" ? "Answers: Viewers to this site. Question source: " : "Source: "}<a href={survey.sourceUrl} target="_blank" rel="noreferrer">{survey.sourceLabel}</a></p>
     </section>
 

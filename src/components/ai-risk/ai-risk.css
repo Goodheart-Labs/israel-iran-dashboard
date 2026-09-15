@@ -165,3 +165,21 @@
 .air-accuracy-questions .air-feedback { min-width: 0; }
 .air-feedback-heading { min-height: 34px; align-items: flex-start; }
 @media (max-width: 900px) { .air-accuracy-questions { grid-template-columns: 1fr; gap: 0; } .air-feedback-heading { min-height: 0; } }
+
+.air-quote-popover { position: absolute; z-index: 5; background: white; border: 1px solid #b8c7cf; border-radius: 5px; box-shadow: 0 6px 24px #152c392b; }
+.air-quote-popover::before { content: ""; position: absolute; top: -7px; left: var(--air-quote-tip); width: 12px; height: 12px; background: white; border-top: 1px solid #b8c7cf; border-left: 1px solid #b8c7cf; transform: translateX(-50%) rotate(45deg); }
+.air-quote-popover:focus { outline: none; }
+.air-quote-popover-scroll { max-height: min(500px, 72svh); overflow-y: auto; overscroll-behavior: contain; padding: 18px; border-radius: inherit; }
+.air-quote-popover .air-selected-quote { border: 0; margin: 0; padding: 0; }
+.air-quote-popover .air-person-heading .air-portrait { display: none; }
+.air-quote-popover .air-person-heading h2 { font-size: 15px; }
+.air-quote-popover .air-selected-quote blockquote { font-size: 21px; margin: 14px 0 8px; }
+.air-quote-popover .air-quote-number { gap: 4px 14px; }
+.air-quote-popover .air-quote-number strong { font-size: 24px; }
+.air-quote-popover .air-quote-number a { font-size: 10px; }
+.air-quote-popover .air-accuracy-questions { grid-template-columns: 1fr; gap: 0; }
+.air-quote-popover .air-feedback-heading { min-height: 0; font-size: 11px; gap: 4px 10px; }
+.air-quote-popover .air-feedback-heading > span:last-child { font-size: 9px; }
+.air-quote-popover .air-vote { padding: 9px 11px; min-width: 78px; }
+.air-quote-popover .air-vote > span:not(.air-vote-fill) { font-size: 11px; }
+@media (max-width: 420px) { .air-quote-popover-scroll { padding: 14px; } }

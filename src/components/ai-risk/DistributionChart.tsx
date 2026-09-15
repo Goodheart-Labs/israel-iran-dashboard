@@ -1,15 +1,18 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { formatProbability, percentileAt, representativeValues } from "@/lib/ai-risk/distribution";
 import { estimateBounds, estimateLabel } from "@/lib/ai-risk/public-estimates";
 import { packPortraits } from "@/lib/ai-risk/portrait-layout";
 import type { ProbabilityCount, PublicFigure, PublicQuote } from "@/lib/ai-risk/types";
+import { QuotePopover } from "./QuotePopover";
 
-export function DistributionChart({ values, figures, quotes, selectedQuote, onSelectQuote, descending, audience, mine }: {
+export function DistributionChart({ values, figures, quotes, selectedQuote, onSelectQuote, onCloseQuote, quoteContent, descending, audience, mine }: {
   values: ProbabilityCount[];
   figures: PublicFigure[];
   quotes: PublicQuote[];
   selectedQuote: string | null;
   onSelectQuote: (id: string) => void;
+  onCloseQuote: () => void;
+  quoteContent: ReactNode;
   descending: boolean;
   audience: "researchers" | "viewers";
   mine?: number;
@@ -95,8 +98,9 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
         {markers.map(({ quote, center, cy, figure }) => {
           const active = quote.id === selectedQuote;
           const label = `${figure.name}: ${estimateLabel(quote.estimate)}. Select to read the quote.`;
-          return <g key={quote.id} transform={`translate(${center}, ${cy})`} className={`air-chart-marker ${active ? "is-selected" : ""}`} data-quote-id={quote.id} data-anchor-x={anchors.find(anchor => anchor.id === quote.id)!.x} role="button" tabIndex={0} aria-label={label} aria-pressed={active}
-            onClick={() => onSelectQuote(quote.id)} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); onSelectQuote(quote.id); } }}>
+          const toggle = () => { setHovered(null); if (active) onCloseQuote(); else onSelectQuote(quote.id); };
+          return <g key={quote.id} id={`person-${quote.id}`} transform={`translate(${center}, ${cy})`} className={`air-chart-marker ${active ? "is-selected" : ""}`} data-quote-id={quote.id} data-anchor-x={anchors.find(anchor => anchor.id === quote.id)!.x} role="button" tabIndex={0} aria-label={label} aria-pressed={active} aria-haspopup="dialog" aria-expanded={active} aria-controls={active ? `quote-popover-${quote.id}` : undefined}
+            onClick={toggle} onKeyDown={event => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); toggle(); } }}>
             <title>{label}</title>
             <circle r={radius} fill="white" stroke={active ? "#ae743b" : "#d3dce1"} strokeWidth={active ? 3 : 1.5} />
             <text y="4" textAnchor="middle" fontSize="12" fill="#1d303c">{figure.name.split(" ").map(part => part[0]).slice(0, 2).join("")}</text>
@@ -107,6 +111,7 @@ export function DistributionChart({ values, figures, quotes, selectedQuote, onSe
         <text x={left} y={plotBottom + 28} fill="#657782" fontSize="11">{descending ? "Highest" : "Lowest"} estimate</text>
         <text x={right} y={plotBottom + 28} fill="#657782" fontSize="11" textAnchor="end">{descending ? "Lowest" : "Highest"} estimate</text>
       </svg>
+      {selected && quoteContent && <QuotePopover key={selected.id} x={selected.center} y={selected.cy + radius} width={width} quoteId={selected.id} label={`${selected.figure.name}’s quote`} onClose={onCloseQuote}>{quoteContent}</QuotePopover>}
       <label className="air-inspect"><span>Inspect answers</span><input type="range" min="0" max={Math.max(0, lines.length - 1)} value={index} onChange={event => setHovered(Number(event.target.value))} onBlur={() => setHovered(null)} aria-label={`Inspect ${audience}' answers`} aria-valuetext={hovered === null ? "Select an answer" : `${formatProbability(activeValue)}, ${Math.round(activeRank?.below ?? 0)} percent gave a lower estimate`} /></label>
     </>}
   </div>;
