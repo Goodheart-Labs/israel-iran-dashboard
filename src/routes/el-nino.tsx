@@ -1,7 +1,6 @@
 import { convexQuery } from "@convex-dev/react-query";
 import { useSuspenseQuery } from "@tanstack/react-query";
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { ExternalLink } from "lucide-react";
 import { type ReactNode, useEffect, useId, useRef, useState } from "react";
 import { api } from "../../convex/_generated/api";
 import {
@@ -137,7 +136,7 @@ const SCRIPT_URL = `${REPO}/scripts/elnino_estimates.py`;
 type DataLink = { label: string; url: string };
 type Row = { label: string; value: string; detail?: string; face?: string; data: DataLink[] }; // face: short label on the tile; data: where the figure comes from
 
-type Quote = { text: string; who: string; url: string };
+type Quote = { text: string; who: string; url?: string }; // no url: a message relayed by one of the page's authors, not published anywhere
 
 type Estimate = {
   key: string;
@@ -148,7 +147,6 @@ type Estimate = {
   rows: Row[]; // base rate, analogs, forecasts, in that order
   method: string; // how the rows become the headline
   quotes: Quote[]; // verbatim, pinned to a source; YouTube quotes are lightly corrected auto-captions
-  sources: { label: string; url: string }[];
 };
 
 const ANALOGS = "the 9 strong El Niño winters since 1950 (peak RONI ≥ 1.5)";
@@ -192,11 +190,6 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
       { text: "Contrary to some newspaper headlines, that does not mean that California is, quote, heading for the wettest winter ever. That's something that we just can't know at this juncture.", who: "Daniel Swain, Weather West clip, Aug 2026", url: "https://www.youtube.com/watch?v=_hsTA3yfhEU" },
       { text: "increased significantly to above 50 percent across much of coastal California and adjacent areas of southern Arizona from DJF through FMA, peaking in coverage during JFM.", who: "NOAA CPC seasonal outlook discussion, 20 Aug 2026 (odds of above-normal precipitation)", url: "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/fxus05.html" },
     ],
-    sources: [
-      { label: "NOAA Climate at a Glance, California Dec–Feb precipitation", url: "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/statewide/time-series/4/pcp/3/2/1895-2026" },
-      { label: "Weather West September update (YouTube)", url: SW_SEP },
-      { label: "NOAA CPC seasonal outlook discussion", url: "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/fxus05.html" },
-    ],
   },
   {
     key: "coast",
@@ -206,7 +199,7 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
     definition:
       "The Los Angeles tide gauge (NOAA 9410660) records at least 3 days between Nov 2026 and Apr 2027 at or above NOAA's minor coastal flood level: 11.18 ft on the station datum, 1.9 ft above mean higher high water.",
     rows: [
-      { label: "Base rate, 72 winters since 1950", value: "10%", detail: "7 of 72. Last 11 winters: 3 of 11 (2025-26 had 6 days with no El Niño).", data: [D_HTF, D_FLOOD_LEVELS] },
+      { label: "Base rate, 72 winters since 1950", value: "10%", detail: "7 of 72. Last 11 winters: 3 of 11 (2025-26 had 6 days with no El Niño).", data: [D_HTF, D_FLOOD_LEVELS, { label: "NOAA high tide flooding overview", url: "https://tidesandcurrents.noaa.gov/high-tide-flooding/" }] },
       { label: `Rate in ${ANALOGS}`, value: "38%", detail: "3 of 8 with data: 1982-83 (6 days), 2015-16 (5), 1997-98 (3). At least 1 day: 7 of 8.", data: [D_HTF, D_RONI] },
       { label: "El Niño sea-level lift", value: "6–12 in", detail: "already observed off California in September (Swain), a third to a half of the 22-inch margin between mean higher high water and the flood level; NOAA: 6–10 in seasonal rise", data: [{ label: "Swain on observed sea level, 24:57 (secondhand: no tide-gauge series pulled)", url: SW_SEP + "&t=1497s" }, { label: "NOAA Ocean Service: El Niño and high tide flooding, May 2026", url: "https://oceanservice.noaa.gov/news/may26/el-nino-flooding.html" }, D_FLOOD_LEVELS] },
     ],
@@ -219,11 +212,6 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
       { text: "all of our progressive sea level records have been broken during strong El Niño events. 82-83 was the highest sea level we'd ever seen in the Bay Area by a wide margin at that point in time.", who: SWAIN_AUG + ", 23:02", url: SW_AUG + "&t=1382s" },
       { text: "there's no guarantee, although the coastal flooding is about as close to a guarantee as we can get. The inland flooding is a bigger wild card", who: SWAIN_AUG + ", 1:04:52", url: SW_AUG + "&t=3892s" },
     ],
-    sources: [
-      { label: "NOAA high tide flooding, Los Angeles gauge", url: "https://tidesandcurrents.noaa.gov/high-tide-flooding/" },
-      { label: "NOAA flood levels for station 9410660", url: "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/9410660/floodlevels.json" },
-      { label: "NOAA Ocean Service: El Niño and high tide flooding, May 2026", url: "https://oceanservice.noaa.gov/news/may26/el-nino-flooding.html" },
-    ],
   },
   {
     key: "megaflood",
@@ -233,7 +221,7 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
     definition:
       "A month-long megastorm on the ARkStorm scale: roughly 447 mm (17.6 in) or more of precipitation averaged over the whole state in 30 days, the ARkHist scenario of ARkStorm 2.0, which brings slightly less rain than the winter of 1861-62 did. The biggest calendar month in the 131-year record is 12.5 in (Jan 1995).",
     rows: [
-      { label: "Base rate at today's warming", value: "2.5–3% / yr", detail: "Huang & Swain 2022, Fig. 5B: about 1%/yr in the pre-industrial climate, rising ~1.2 points per °C of global warming. At 1.3–1.65°C (30-year-smoothed vs single-year 2026 estimates) that is 2.5–3%. Cross-check: a stationary 131-year record is beaten with probability 1/132 = 0.8%; warming to date has roughly doubled the 1920 rate.", data: [D_HS, D_PRECIP_MONTHLY_CSV] },
+      { label: "Base rate at today's warming", value: "2.5–3% / yr", detail: "Huang & Swain 2022, Fig. 5B: about 1%/yr in the pre-industrial climate, rising ~1.2 points per °C of global warming. At 1.3–1.65°C (30-year-smoothed vs single-year 2026 estimates) that is 2.5–3%. Cross-check: a stationary 131-year record is beaten with probability 1/132 = 0.8%; warming to date has roughly doubled the 1920 rate.", data: [D_HS, { label: "Weather West summary of the paper", url: "https://weatherwest.com/archives/16626" }, D_PRECIP_MONTHLY_CSV] },
       { label: "El Niño multiplier", value: "×1–3", detail: "Every one of the most intense simulated 30-day sequences in the paper's ensemble fell in a moderate-to-strong El Niño year, which are a quarter to a third of years. The instrumental record: 2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall (2.4×). Applying no multiplier is the cautious reading.", face: "El Niño", data: [D_HS, D_PRECIP_MONTHLY_CSV, D_RONI] },
     ],
     method:
@@ -246,11 +234,7 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
       { text: "Collectively, seven of eight historical and future potential California megastorm events occur under moderate or strong El Niño conditions as defined by the ELI (eight of eight, if rounding to the nearest degree of longitude).", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
       { text: "California-wide average cumulative precipitation during the 30-day periods encompassing both extreme storm sequence scenarios represents a considerable fraction of the total annual [October-September water year (WY)] precipitation occurring during both ARkHist (~447 mm or 46% of the WY total) and ARkFuture (~586 mm, of 40% of the WY total).", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
       { text: "California is likely to see anywhere from extra precipitation & storm surge to a megastorm and a megaflood this winter (~2.5% chance).", who: "@Just_Curius on X, 11 Sep 2026", url: "https://x.com/Just_Curius/status/2098592816028954706" },
-    ],
-    sources: [
-      { label: "Huang & Swain 2022, Science Advances (Fig. 5B)", url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
-      { label: "Weather West summary of ARkStorm 2.0", url: "https://weatherwest.com/archives/16626" },
-      { label: "USGS ARkStorm scenario", url: "https://www.usgs.gov/programs/science-application-for-risk-reduction/science/arkstorm-scenario" },
+      { text: "So I revise my risk estimate for a CA megastorm to 10-13% for this winter. If we take seriously that ballpark 7/8 CA megastorms can be expected to happen during moderate+ El Nino winters, then 2.5-3% risk from the predicted GMST anomaly alone becomes 10-12.5% because it'll be a moderate+ El Nino.", who: "Belikewater (co-author), message to Nathan Young, 18 Sep 2026" },
     ],
   },
 ];
@@ -351,13 +335,11 @@ function CaliforniaEstimates() {
 // Vote slots. These ids predate the review view; changing them orphans readers' votes.
 const rowSlot = (e: Estimate, r: Row) => `elnino:row:${e.key}:${itemId(r.label)}`;
 const oursSlot = (e: Estimate) => `elnino:ours:${e.key}`;
-const quoteSlot = (e: Estimate, q: Quote) => `elnino:quote:${e.key}:${itemId(q.url, q.text.slice(0, 60))}`;
-const sourceSlot = (e: Estimate, src: { url: string }) => `elnino:source:${e.key}:${itemId(src.url)}`;
+const quoteSlot = (e: Estimate, q: Quote) => `elnino:quote:${e.key}:${itemId(q.url ?? "", q.text.slice(0, 60))}`;
 const ALL_SLOTS = CALIFORNIA_ESTIMATES.flatMap((e) => [
   ...e.rows.map((r) => rowSlot(e, r)),
   oursSlot(e),
   ...e.quotes.map((q) => quoteSlot(e, q)),
-  ...e.sources.map((src) => sourceSlot(e, src)),
 ]);
 
 type Vote = { slot: string; rating: string; voterKey: string };
@@ -457,16 +439,9 @@ function Review() {
                 {e.quotes.map((q) => (
                   <Statement key={quoteSlot(e, q)} slot={quoteSlot(e, q)} votes={votes}>
                     “{q.text}”{" "}
-                    <a href={q.url} target="_blank" rel="noopener noreferrer" className="underline opacity-70">— {q.who}</a>
-                  </Statement>
-                ))}
-              </StatementGroup>
-              <StatementGroup title="Sources">
-                {e.sources.map((src) => (
-                  <Statement key={src.url} slot={sourceSlot(e, src)} votes={votes}>
-                    <a href={src.url} target="_blank" rel="noopener noreferrer" className="underline inline-flex items-center gap-1">
-                      {src.label} <ExternalLink className="w-3 h-3 shrink-0" />
-                    </a>
+                    {q.url
+                      ? <a href={q.url} target="_blank" rel="noopener noreferrer" className="underline opacity-70">— {q.who}</a>
+                      : <span className="opacity-70">— {q.who}</span>}
                   </Statement>
                 ))}
               </StatementGroup>
@@ -487,7 +462,7 @@ function ReviewPointer() {
         <p className="opacity-70 grow-0">
           Each number starts from a definition in physical units, then the base rate over the whole record,
           the rate in the nine strong El Niño winters since 1950, and the official forecasts where they
-          exist. {ALL_SLOTS.length} statements (data, quotes, sources and Claude F5.1's reasoning) sit behind the
+          exist. {ALL_SLOTS.length} statements (data, quotes and Claude F5.1's reasoning) sit behind the
           three numbers; {checkedCount(votes)} have been checked by a reader so far.
         </p>
         <Link to="/el-nino" search={{ mode: "review" }} className="btn btn-sm btn-neutral w-fit">Review them</Link>
