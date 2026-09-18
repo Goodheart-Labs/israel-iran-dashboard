@@ -171,6 +171,16 @@ export default defineSchema({
     .index("by_caveat", ["caveatId"])
     .index("by_caveat_voter", ["caveatId", "voterKey"]),
 
+  // The short summary at the top of a topic page, written only from statements
+  // readers have marked useful. Newest row per topic is the one shown.
+  headlines: defineTable({
+    topic: v.string(),
+    text: v.string(),
+    citedSlots: v.array(v.string()),
+    author: v.string(),
+    createdAt: v.number(),
+  }).index("by_topic", ["topic", "createdAt"]),
+
   // "Was this chart useful?" — one vote per browser per chart. slot is a
   // stable id like "ipo:central-chart" or "iran:hormuz".
   chartVotes: defineTable({

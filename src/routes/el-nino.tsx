@@ -312,6 +312,26 @@ function Byline() {
   );
 }
 
+// The big summary under the title. Text lives in Convex (`headlines`), written only
+// from statements readers have marked useful; nothing renders until one exists.
+function Headline() {
+  const headline = useQuery(api.headlines.latest, { topic: "elnino" });
+  if (!headline) return null;
+  const date = new Date(headline.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  return (
+    <section className="mb-8 not-prose max-w-4xl">
+      <p className="text-2xl md:text-3xl leading-snug tracking-tight" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
+        {headline.text}
+      </p>
+      <p className="text-xs opacity-60 mt-2">
+        Summary by {headline.author}, {date}, using only the {headline.citedSlots.length} statements it cites that
+        readers have marked useful.{" "}
+        <Link to="/el-nino" search={{ mode: "review" }} className="underline">Review them</Link>
+      </p>
+    </section>
+  );
+}
+
 function CaliforniaEstimates() {
   return (
     <section className="mb-8 not-prose">
@@ -359,9 +379,10 @@ function ModeToggle({ review }: { review: boolean }) {
   );
 }
 
-function Statement({ slot, votes, children }: { slot: string; votes: Vote[]; children: ReactNode }) {
+function Statement({ slot, votes, cited, children }: { slot: string; votes: Vote[]; cited: string[]; children: ReactNode }) {
   return (
     <li className="flex flex-col items-start gap-1.5 border-t border-base-200 py-2.5 first:border-t-0">
+      {cited.includes(slot) && <span className="badge badge-neutral badge-xs">in summary</span>}
       <div className="min-w-0 text-sm leading-snug">{children}</div>
       <ItemVote slot={slot} votes={votes} expanded />
     </li>
@@ -379,6 +400,7 @@ function StatementGroup({ title, children }: { title: string; children: ReactNod
 
 function Review() {
   const votes = useQuery(api.chartVotes.listAll) ?? [];
+  const cited = useQuery(api.headlines.latest, { topic: "elnino" })?.citedSlots ?? [];
   const me = typeof window === "undefined" ? "" : (localStorage.getItem("anon-id") ?? "");
   const mine = ALL_SLOTS.filter((slot) => votes.some((v) => v.slot === slot && v.voterKey === me)).length;
   return (
@@ -411,7 +433,7 @@ function Review() {
               <p className="text-sm grow-0"><span className="font-medium">Resolves yes if:</span> {e.definition}</p>
               <StatementGroup title="Data">
                 {e.rows.map((r) => (
-                  <Statement key={r.label} slot={rowSlot(e, r)} votes={votes}>
+                  <Statement key={r.label} slot={rowSlot(e, r)} votes={votes} cited={cited}>
                     <span className="font-medium">{r.label}: {r.value}</span>
                     {r.detail && <div className="opacity-70 mt-0.5">{r.detail}</div>}
                     <div className="mt-1 text-xs">
@@ -427,14 +449,14 @@ function Review() {
                 ))}
               </StatementGroup>
               <StatementGroup title="Claude F5.1's judgment">
-                <Statement slot={oursSlot(e)} votes={votes}>
+                <Statement slot={oursSlot(e)} votes={votes} cited={cited}>
                   <span className="font-medium">Claude F5.1's number: {e.headline}</span>
                   <div className="opacity-70 mt-0.5">{e.method}</div>
                 </Statement>
               </StatementGroup>
               <StatementGroup title="What the sources say, verbatim">
                 {e.quotes.map((q) => (
-                  <Statement key={quoteSlot(e, q)} slot={quoteSlot(e, q)} votes={votes}>
+                  <Statement key={quoteSlot(e, q)} slot={quoteSlot(e, q)} votes={votes} cited={cited}>
                     “{q.text}”{" "}
                     {q.url
                       ? <a href={q.url} target="_blank" rel="noopener noreferrer" className="underline opacity-70">— {q.who}</a>
@@ -510,7 +532,7 @@ function ElNinoPage() {
       groupDaysToShow={{ hottest_2026: 180 }}
       headerActions={<ModeToggle review={review} />}
       voteMode={review ? "expanded" : "hidden"}
-      intro={<><Byline /><CaliforniaEstimates /><EnsoContext /></>}
+      intro={<><Byline /><Headline /><CaliforniaEstimates /><EnsoContext /></>}
       footer={<>
         {review ? <Review /> : <ReviewPointer />}
         <div className="mt-6"><Caveats topic="elnino" readOnly={!review} /></div>

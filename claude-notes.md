@@ -30,6 +30,12 @@
   (`Caveats readOnly`); Nathan: "read should include caveats".
 - Voice: the estimates were written by Claude Fable 5.1 on 2026-09-11 (git trailers),
   so the page and docs say "Claude F5.1's number/judgment", never "we/our".
+- Big summary under the byline (`Headline` in el-nino.tsx) reads the newest row of the
+  new `headlines` table (`convex/headlines.ts`: public `latest`, internal `set`).
+  Statements it cites get an "in summary" tag in review. The first row was written
+  by Claude F5.1 in-session on 2026-09-18 from the 5 statements then marked useful
+  on prod, and inserted with `pnpx convex run headlines:set '<json>' --prod`.
+  It does NOT auto-update yet (see next bullet).
 - NOT built yet: the periodic LLM headline from checked statements (grow rule:
   ≥1 useful vote and positive net score). Needs an Anthropic key in the Convex env.
   Spec: `tmp/2026-09-18-elnino-review-spec.md`.
@@ -45,6 +51,7 @@ Commits: feat: read/review toggle on el nino page, /el-nino alias, repo renamed 
 feat: el-nino canonical url, one layout for read and review, dataset links, Claude F5.1 attribution
 feat: sources live on the facts, add Belikewater revised megastorm estimate
 feat: caveats in read mode, drop alpha line
+feat: big summary at the top of el nino page, stored in convex
 
 ## Word-labelled slider in both chart views (2026-09-15)
 
