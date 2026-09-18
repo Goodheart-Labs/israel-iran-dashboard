@@ -25,6 +25,9 @@
   backed no specific fact and was dropped. Statement count is 31.
 - Belikewater's 18 Sep revision (megastorm 10–13%) is a votable quote on the
   megaflood card, no link (it was a message to Nathan, added at his request).
+- Byline is just the two names (Nathan removed the "alpha first pass…" line).
+- Read mode shows the caveats box with its add form but no rating/editing
+  (`Caveats readOnly`); Nathan: "read should include caveats".
 - Voice: the estimates were written by Claude Fable 5.1 on 2026-09-11 (git trailers),
   so the page and docs say "Claude F5.1's number/judgment", never "we/our".
 - NOT built yet: the periodic LLM headline from checked statements (grow rule:
@@ -41,6 +44,7 @@ updates the chip and the counter, tile popover link lands on the right review an
 Commits: feat: read/review toggle on el nino page, /el-nino alias, repo renamed to globalriskodds
 feat: el-nino canonical url, one layout for read and review, dataset links, Claude F5.1 attribution
 feat: sources live on the facts, add Belikewater revised megastorm estimate
+feat: caveats in read mode, drop alpha line
 
 ## Word-labelled slider in both chart views (2026-09-15)
 

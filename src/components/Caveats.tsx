@@ -33,7 +33,7 @@ type Caveat = {
   voters: Array<{ voterKey: string; rating: Rating }>;
 };
 
-/** `readOnly` lists the visible caveats with no rating, editing or add form, and renders nothing when there are none. */
+/** `readOnly` keeps the list and the add form but drops rating, editing and the reader-hidden drawer. */
 export function Caveats({ topic, readOnly = false }: { topic: string; readOnly?: boolean }) {
   const caveats = useQuery(api.caveats.listForTopic, { topic });
   const addCaveat = useMutation(api.caveats.addCaveat);
@@ -71,32 +71,14 @@ export function Caveats({ topic, readOnly = false }: { topic: string; readOnly?:
     }
   };
 
-  if (readOnly) {
-    if (visible.length === 0) return null;
-    return (
-      <div className="card bg-base-100">
-        <div className="card-body">
-          <h3 className="card-title text-lg mb-1">Notes &amp; caveats</h3>
-          <ul className="space-y-4">
-            {visible.map((caveat) => (
-              <li key={caveat._id} className="border-l-2 border-base-300 pl-4">
-                <p className="text-sm opacity-80">{caveat.content}</p>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </div>
-    );
-  }
-
   return (
     <div className="card bg-base-100">
       <div className="card-body">
         <h3 className="card-title text-lg mb-1">Notes &amp; caveats</h3>
         <p className="text-xs opacity-50 mb-4">
-          Anyone can add a caveat, vote on how helpful it is, or rewrite one.
-          Edits keep a full history and can be reverted. Entries are sorted by
-          helpfulness; less helpful entries are tucked away below.
+          {readOnly
+            ? "What a reader should know before trusting these numbers. Anyone can add one."
+            : "Anyone can add a caveat, vote on how helpful it is, or rewrite one. Edits keep a full history and can be reverted. Entries are sorted by helpfulness; less helpful entries are tucked away below."}
         </p>
 
         {caveats === undefined ? (
@@ -114,23 +96,25 @@ export function Caveats({ topic, readOnly = false }: { topic: string; readOnly?:
                   className="border-l-2 border-base-300 pl-4"
                 >
                   <p className="text-sm opacity-80">{caveat.content}</p>
-                  <div className="flex justify-end mt-1">
-                    <button
-                      className="btn btn-ghost btn-xs opacity-50 hover:opacity-100"
-                      onClick={() => setOpen(caveat)}
-                    >
-                      {total > 0
-                        ? `${total} vote${total === 1 ? "" : "s"} · rate or edit`
-                        : "Rate or edit"}
-                    </button>
-                  </div>
+                  {!readOnly && (
+                    <div className="flex justify-end mt-1">
+                      <button
+                        className="btn btn-ghost btn-xs opacity-50 hover:opacity-100"
+                        onClick={() => setOpen(caveat)}
+                      >
+                        {total > 0
+                          ? `${total} vote${total === 1 ? "" : "s"} · rate or edit`
+                          : "Rate or edit"}
+                      </button>
+                    </div>
+                  )}
                 </li>
               );
             })}
           </ul>
         )}
 
-        {hidden.length > 0 && (
+        {!readOnly && hidden.length > 0 && (
           <details className="mt-6 rounded-lg border border-base-300 p-4">
             <summary className="cursor-pointer text-sm">
               Hidden by reader votes · {hidden.length} entries

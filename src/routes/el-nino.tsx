@@ -308,9 +308,6 @@ function Byline() {
       <a href="https://x.com/NathanpmYoung" target="_blank" rel="noopener noreferrer" className="underline">Nathan Young</a>
       <span className="opacity-70"> and </span>
       <a href="https://x.com/Just_Curius" target="_blank" rel="noopener noreferrer" className="underline">Belikewater</a>
-      <span className="opacity-70"> · </span>
-      <span className="badge badge-outline badge-sm align-middle">alpha</span>
-      <span className="opacity-70"> first pass, likely has errors. Switch to Review (top right) to vote on each piece.</span>
     </p>
   );
 }
