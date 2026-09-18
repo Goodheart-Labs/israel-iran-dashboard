@@ -25,9 +25,11 @@ function voterKey(): string {
   return id;
 }
 
-export function ItemVote({ slot, votes }: { slot: string; votes: Vote[] }) {
+/** `expanded` keeps the three chips showing (review mode): one click per vote, no open/close step. */
+export function ItemVote({ slot, votes, expanded = false }: { slot: string; votes: Vote[]; expanded?: boolean }) {
   const castVote = useMutation(api.chartVotes.vote);
-  const [open, setOpen] = useState(false);
+  const [opened, setOpen] = useState(false);
+  const open = opened || expanded;
   const key = voterKey();
   const forSlot = votes.filter((v) => v.slot === slot);
   const mine = forSlot.find((v) => v.voterKey === key)?.rating as Rating | undefined;
@@ -72,7 +74,7 @@ export function ItemVote({ slot, votes }: { slot: string; votes: Vote[] }) {
           {score > 0 ? `+${score}` : score}
         </span>
       )}
-      <button type="button" className={`${chip} btn-ghost`} onClick={() => setOpen(false)} aria-label="Close">×</button>
+      {!expanded && <button type="button" className={`${chip} btn-ghost`} onClick={() => setOpen(false)} aria-label="Close">×</button>}
     </span>
   );
 }

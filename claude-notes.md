@@ -1,5 +1,30 @@
 # Claude session notes
 
+## El Niño read/review toggle + repo rename (2026-09-18)
+
+- Repo renamed `israel-iran-dashboard` → `globalriskodds` (local folder and GitHub
+  `Goodheart-Labs/globalriskodds`; old GitHub URLs redirect). The Vercel project
+  keeps its old name. `Zezo-Ai/israel-iran-dashboard` links are upstream, untouched.
+- /elnino now has [Read] / [Review] (`?mode=review`). Read = tiles, NOAA context,
+  markets, and a pointer card. Review = one column of the 39 statements behind the
+  three California numbers (data rows, our judgment, quotes, sources), each with
+  always-open vote chips (`ItemVote expanded`), a progress bar, and no chart grid
+  (`TopicDashboard showCharts`). Vote slot ids are unchanged, so earlier votes carry
+  over; statements keep their written order in review (no re-sorting while voting).
+- `/el-nino` redirects to `/elnino`.
+- NOT built yet: the periodic LLM headline from checked statements (grow rule:
+  ≥1 useful vote and positive net score). Needs an Anthropic key in the Convex env.
+  Spec: `tmp/2026-09-18-elnino-review-spec.md`.
+- Megaflood multiplier check: `tmp/2026-09-18-megaflood-multiplier.md`. The doc's
+  "a quarter to a third of years are moderate+ El Niño" is wrong on NOAA ONI
+  (14 of 76 = 18%); page numbers NOT yet changed, Nathan to rule.
+
+Validation: build and full lint pass. Headless Chrome for Testing at 1280/768/375:
+read, review and alias render, no console errors, no horizontal overflow, a vote
+updates the chip and the counter, tile popover link lands on the right review anchor.
+
+Commit: feat: read/review toggle on el nino page, /el-nino alias, repo renamed to globalriskodds
+
 ## Word-labelled slider in both chart views (2026-09-15)
 
 Nathan requested a slider with words at each position, like the local dashboard.

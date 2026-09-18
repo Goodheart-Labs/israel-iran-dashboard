@@ -2,7 +2,7 @@
 
 Checked 2026-09-15. The application-ready file is `finding-consensus-quotes.json`, matching `PublicFiguresData` in the GlobalRiskOdds app. It contains 14 figures and 17 quotations: 13 numerical estimates from 11 people, plus four qualitative records. Multiple Christiano estimates concern different outcomes. All comparison labels are `related`, because these figures did not answer the AI Impacts survey question in a controlled comparison.
 
-All 14 portraits are saved at `israel-iran-dashboard/public/ai-risk/portraits/<figure-id>.jpg`. They are 300 × 300 JPEGs totaling about 269 KB, and the final JSON uses their local paths. `CREDITS.md` in that directory documents each source and license. Wikimedia crops retain their listed Creative Commons licenses. Daniel Kokotajlo, Eli Lifland, Paul Christiano and Scott Alexander have public team, personal-site or interview portraits whose pages do not state reuse licenses. Scott's image is a crop of his public Dwarkesh appearance, not a namesake or a private image.
+All 14 portraits are saved at `globalriskodds/public/ai-risk/portraits/<figure-id>.jpg`. They are 300 × 300 JPEGs totaling about 269 KB, and the final JSON uses their local paths. `CREDITS.md` in that directory documents each source and license. Wikimedia crops retain their listed Creative Commons licenses. Daniel Kokotajlo, Eli Lifland, Paul Christiano and Scott Alexander have public team, personal-site or interview portraits whose pages do not state reuse licenses. Scott's image is a crop of his public Dwarkesh appearance, not a namesake or a private image.
 
 ## Numerical statements
 

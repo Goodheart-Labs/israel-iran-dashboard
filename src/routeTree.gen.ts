@@ -18,6 +18,7 @@ import { Route as MaintenanceImport } from './routes/maintenance'
 import { Route as IpoImport } from './routes/ipo'
 import { Route as HantavirusImport } from './routes/hantavirus'
 import { Route as ElninoImport } from './routes/elnino'
+import { Route as ElNinoImport } from './routes/el-nino'
 import { Route as DebugAuthImport } from './routes/debug-auth'
 import { Route as AiRiskImport } from './routes/ai-risk'
 import { Route as AgiImport } from './routes/agi'
@@ -65,6 +66,12 @@ const HantavirusRoute = HantavirusImport.update({
 const ElninoRoute = ElninoImport.update({
   id: '/elnino',
   path: '/elnino',
+  getParentRoute: () => rootRoute,
+} as any)
+
+const ElNinoRoute = ElNinoImport.update({
+  id: '/el-nino',
+  path: '/el-nino',
   getParentRoute: () => rootRoute,
 } as any)
 
@@ -137,6 +144,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DebugAuthImport
       parentRoute: typeof rootRoute
     }
+    '/el-nino': {
+      id: '/el-nino'
+      path: '/el-nino'
+      fullPath: '/el-nino'
+      preLoaderRoute: typeof ElNinoImport
+      parentRoute: typeof rootRoute
+    }
     '/elnino': {
       id: '/elnino'
       path: '/elnino'
@@ -197,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/agi': typeof AgiRoute
   '/ai-risk': typeof AiRiskRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/el-nino': typeof ElNinoRoute
   '/elnino': typeof ElninoRoute
   '/hantavirus': typeof HantavirusRoute
   '/ipo': typeof IpoRoute
@@ -212,6 +227,7 @@ export interface FileRoutesByTo {
   '/agi': typeof AgiRoute
   '/ai-risk': typeof AiRiskRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/el-nino': typeof ElNinoRoute
   '/elnino': typeof ElninoRoute
   '/hantavirus': typeof HantavirusRoute
   '/ipo': typeof IpoRoute
@@ -228,6 +244,7 @@ export interface FileRoutesById {
   '/agi': typeof AgiRoute
   '/ai-risk': typeof AiRiskRoute
   '/debug-auth': typeof DebugAuthRoute
+  '/el-nino': typeof ElNinoRoute
   '/elnino': typeof ElninoRoute
   '/hantavirus': typeof HantavirusRoute
   '/ipo': typeof IpoRoute
@@ -245,6 +262,7 @@ export interface FileRouteTypes {
     | '/agi'
     | '/ai-risk'
     | '/debug-auth'
+    | '/el-nino'
     | '/elnino'
     | '/hantavirus'
     | '/ipo'
@@ -259,6 +277,7 @@ export interface FileRouteTypes {
     | '/agi'
     | '/ai-risk'
     | '/debug-auth'
+    | '/el-nino'
     | '/elnino'
     | '/hantavirus'
     | '/ipo'
@@ -273,6 +292,7 @@ export interface FileRouteTypes {
     | '/agi'
     | '/ai-risk'
     | '/debug-auth'
+    | '/el-nino'
     | '/elnino'
     | '/hantavirus'
     | '/ipo'
@@ -289,6 +309,7 @@ export interface RootRouteChildren {
   AgiRoute: typeof AgiRoute
   AiRiskRoute: typeof AiRiskRoute
   DebugAuthRoute: typeof DebugAuthRoute
+  ElNinoRoute: typeof ElNinoRoute
   ElninoRoute: typeof ElninoRoute
   HantavirusRoute: typeof HantavirusRoute
   IpoRoute: typeof IpoRoute
@@ -304,6 +325,7 @@ const rootRouteChildren: RootRouteChildren = {
   AgiRoute: AgiRoute,
   AiRiskRoute: AiRiskRoute,
   DebugAuthRoute: DebugAuthRoute,
+  ElNinoRoute: ElNinoRoute,
   ElninoRoute: ElninoRoute,
   HantavirusRoute: HantavirusRoute,
   IpoRoute: IpoRoute,
@@ -328,6 +350,7 @@ export const routeTree = rootRoute
         "/agi",
         "/ai-risk",
         "/debug-auth",
+        "/el-nino",
         "/elnino",
         "/hantavirus",
         "/ipo",
@@ -351,6 +374,9 @@ export const routeTree = rootRoute
     },
     "/debug-auth": {
       "filePath": "debug-auth.tsx"
+    },
+    "/el-nino": {
+      "filePath": "el-nino.tsx"
     },
     "/elnino": {
       "filePath": "elnino.tsx"

@@ -68,6 +68,7 @@ export function TopicDashboard({
   groupKeys,
   intro,
   footer,
+  showCharts = true,
 }: {
   /** Prefix for editable-text and vote slots, e.g. "iran". */
   topic: string;
@@ -82,6 +83,8 @@ export function TopicDashboard({
   /** Rendered between the title block and the chart grid. */
   intro?: ReactNode;
   footer?: ReactNode;
+  /** False drops the chart grid, leaving title, intro and footer (e.g. a review view). */
+  showCharts?: boolean;
 }) {
   const votes = useQuery(api.chartVotes.listAll);
   const [now, setNow] = useState(Date.now);
@@ -184,15 +187,17 @@ export function TopicDashboard({
 
       {intro}
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {currentGroups.map(renderGroup)}
+      {showCharts && (
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {currentGroups.map(renderGroup)}
 
-        {ungrouped.map((market) => (
-          <SingleCard key={market._id} market={market} />
-        ))}
-      </div>
+          {ungrouped.map((market) => (
+            <SingleCard key={market._id} market={market} />
+          ))}
+        </div>
+      )}
 
-      {archivedGroups.length > 0 && (
+      {showCharts && archivedGroups.length > 0 && (
         <details className="my-8 border-t border-base-300 pt-4">
           <summary className="cursor-pointer py-2 text-sm font-medium">Past closing dates · {archivedGroups.length} questions</summary>
           <p className="my-3 text-xs opacity-60">These sources’ stored closing dates have passed. Figures are last recorded forecasts, not confirmed outcomes.</p>
