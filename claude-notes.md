@@ -5,13 +5,23 @@
 - Repo renamed `israel-iran-dashboard` → `globalriskodds` (local folder and GitHub
   `Goodheart-Labs/globalriskodds`; old GitHub URLs redirect). The Vercel project
   keeps its old name. `Zezo-Ai/israel-iran-dashboard` links are upstream, untouched.
-- /elnino now has [Read] / [Review] (`?mode=review`). Read = tiles, NOAA context,
-  markets, and a pointer card. Review = one column of the 39 statements behind the
-  three California numbers (data rows, our judgment, quotes, sources), each with
-  always-open vote chips (`ItemVote expanded`), a progress bar, and no chart grid
-  (`TopicDashboard showCharts`). Vote slot ids are unchanged, so earlier votes carry
-  over; statements keep their written order in review (no re-sorting while voting).
-- `/el-nino` redirects to `/elnino`.
+- Page is canonical at `/el-nino`; `/elnino` redirects there keeping `?mode` and the
+  hash. Topic and vote slot ids still say `elnino:` on purpose (votes carry over).
+- [Read] / [Review] switch sits top right beside the theme button
+  (`TopicDashboard headerActions`). ONE layout for both modes (Nathan's ruling):
+  tiles, NOAA context, charts, then "How the California numbers are made".
+  Read hides every vote control (`voteMode="hidden"`, `Caveats readOnly`, no
+  suggestions panel) and shows a pointer card instead of the statements.
+  Review shows the 39 statements in three columns under the same heading, with all
+  three vote options always open on statements (`ItemVote expanded`) and charts
+  (`ChartVote mode="expanded"`), a progress bar, full caveats and suggestions.
+  Statements keep their written order in review (no re-sorting while voting).
+- Every data row carries `data` links to the exact series the script reads (NOAA
+  Climate at a Glance CSVs, tide-gauge flood-count JSON, CPC RONI, Huang & Swain).
+  Two rows are flagged secondhand (ECMWF ensemble and sea-level lift come from
+  Swain's video, not a pulled dataset).
+- Voice: the estimates were written by Claude Fable 5.1 on 2026-09-11 (git trailers),
+  so the page and docs say "Claude F5.1's number/judgment", never "we/our".
 - NOT built yet: the periodic LLM headline from checked statements (grow rule:
   ≥1 useful vote and positive net score). Needs an Anthropic key in the Convex env.
   Spec: `tmp/2026-09-18-elnino-review-spec.md`.
@@ -23,7 +33,8 @@ Validation: build and full lint pass. Headless Chrome for Testing at 1280/768/37
 read, review and alias render, no console errors, no horizontal overflow, a vote
 updates the chip and the counter, tile popover link lands on the right review anchor.
 
-Commit: feat: read/review toggle on el nino page, /el-nino alias, repo renamed to globalriskodds
+Commits: feat: read/review toggle on el nino page, /el-nino alias, repo renamed to globalriskodds
+feat: el-nino canonical url, one layout for read and review, dataset links, Claude F5.1 attribution
 
 ## Word-labelled slider in both chart views (2026-09-15)
 

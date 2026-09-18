@@ -1,10 +1,10 @@
-# California this winter: how the /elnino tile numbers are made
+# California this winter: how the /el-nino tile numbers are made
 
 Computed 2026-09-11. Nothing on any exchange prices these events, so the four
-tiles at the top of globalriskodds.com/elnino are our own numbers. Each one is
+tiles at the top of globalriskodds.com/el-nino are Claude F5.1's own numbers. Each one is
 built the same way: a definition in physical units, the base rate over the
 whole record, the rate in the strong El Niño winters since 1950 (the analogs),
-the official model forecasts where they exist, and then our number with the
+the official model forecasts where they exist, and then Claude F5.1's number with the
 arithmetic shown. Re-run the data section with:
 
     python3 scripts/elnino_estimates.py
@@ -14,11 +14,11 @@ climate-adjusted El Niño index) reached 1.5 or more. The 2026-27 event is
 forecast to peak near 3.0, well beyond the strongest analog (2.4 in 1982-83),
 so analogs are a floor for the El Niño effect, not a ceiling.
 
-## Our numbers (revised 2026-09-11 evening after Swain's 10 Sep update; the "major storm month" tile was dropped the same evening, its data stays below)
+## Claude F5.1's numbers (revised 2026-09-11 evening after Swain's 10 Sep update; the "major storm month" tile was dropped the same evening, its data stays below)
 
 ### 1. Very wet winter: ~65% (range 45-85%)
 
-We would resolve to yes: California's Dec-Feb 2026-27 statewide precipitation is at least
+Resolves yes if: California's Dec-Feb 2026-27 statewide precipitation is at least
 15.1 inches, the top 20% of the 131 winters on record (median 10.8 in).
 
 - Base rate: 20% by construction.
@@ -31,13 +31,13 @@ We would resolve to yes: California's Dec-Feb 2026-27 statewide precipitation is
   hindcast 2015-16 as not wet and 1982-83 / 1997-98 as very wet.
 - NOAA CPC outlook of 20 Aug 2026: above-normal precipitation odds "increased
   significantly to above 50 percent across much of coastal California".
-- Our number: between the analogs (33%) and the model (>70%), leaning to the
+- Claude F5.1's number: between the analogs (33%) and the model (>70%), leaning to the
   model for the reasons above; short of it because it is one system and an
   under-dispersed ensemble "cuts both ways" (Swain). Earlier draft said 55%.
 
 ### 2. Coastal flooding: ~75% (range 55-90%)
 
-We would resolve to yes: the Los Angeles tide gauge (NOAA station 9410660) records at least
+Resolves yes if: the Los Angeles tide gauge (NOAA station 9410660) records at least
 3 days between Nov 2026 and Apr 2027 at or above NOAA's minor coastal flood
 level, 11.18 ft on the station datum = 1.9 ft above mean higher high water.
 
@@ -50,12 +50,12 @@ level, 11.18 ft on the station datum = 1.9 ft above mean higher high water.
   in. The margin between mean higher high water and the flood level is 22 in.
 - Swain: significant coastal flooding "is almost 100% guaranteed"; he expects
   record sea levels in San Diego and much of the state.
-- Our number: the analog rate raised a long way for those reasons. Earlier
+- Claude F5.1's number: the analog rate raised a long way for those reasons. Earlier
   draft said 60%.
 
 ### 3. Megaflood, ARkStorm-scale month-long megastorm: ~3% (range 2-8%)
 
-We would resolve to yes: roughly 447 mm (17.6 in) or more of precipitation averaged over
+Resolves yes if: roughly 447 mm (17.6 in) or more of precipitation averaged over
 the whole state in 30 days, the "ARkHist" scenario of ARkStorm 2.0 (Huang &
 Swain 2022), which brings slightly less rain than the winter of 1861-62 did.
 The biggest calendar month in the 131-year record is 12.5 in (Jan 1995).
@@ -72,10 +72,10 @@ The biggest calendar month in the 131-year record is 12.5 in (Jan 1995).
   ensemble occur during moderate to strong ENSO warm phase (El Niño)
   conditions"; 7 of 8 by the ENSO Longitude Index, 8 of 8 rounding. Such
   years are a quarter to a third of all years, so a strong El Niño winter
-  should carry 2-3 times the unconditioned annual rate. Our own record: 2 of
+  should carry 2-3 times the unconditioned annual rate. The instrumental record: 2 of
   the 9 strong El Niño winters produced one of the 12 nine-inch months, vs
   12 of 131 overall (2.4x).
-- Our number: the headline is the unconditioned Fig. 5B rate, ~3%, which is
+- Claude F5.1's number: the headline is the unconditioned Fig. 5B rate, ~3%, which is
   also where the ~2.5% figure circulating online comes from (Fig. 5B read at
   2026's expected GMST). Conditioning on El Niño as above gives 5-8%. The
   range spans both readings.

@@ -10,6 +10,9 @@ const RATINGS = [
 
 type Rating = (typeof RATINGS)[number]["value"];
 
+/** hidden: no control; collapsed: a small Vote button; expanded: the three options always showing. */
+export type VoteMode = "hidden" | "collapsed" | "expanded";
+
 /** Random per-browser token; the same one the suggestions panel uses. */
 function voterKey(): string {
   if (typeof window === "undefined") return "";
@@ -24,10 +27,12 @@ function voterKey(): string {
  * "Was this chart useful?" — a small Vote button that opens the three options,
  * so the question is findable without competing with the chart.
  */
-export function ChartVote({ slot }: { slot: string }) {
+export function ChartVote({ slot, mode = "collapsed" }: { slot: string; mode?: VoteMode }) {
   const all = useQuery(api.chartVotes.listAll);
   const castVote = useMutation(api.chartVotes.vote);
-  const [open, setOpen] = useState(false);
+  const [opened, setOpen] = useState(false);
+  const expanded = mode === "expanded";
+  const open = opened || expanded;
 
   const key = voterKey();
   const forSlot = (all ?? []).filter((v) => v.slot === slot);
@@ -36,6 +41,8 @@ export function ChartVote({ slot }: { slot: string }) {
 
   const tally = (rating: Rating) =>
     forSlot.filter((v) => v.rating === rating).length;
+
+  if (mode === "hidden") return null;
 
   if (mine && !open) {
     return (
@@ -83,13 +90,15 @@ export function ChartVote({ slot }: { slot: string }) {
           )}
         </button>
       ))}
-      <button
-        className="btn btn-ghost btn-xs max-sm:min-h-10 max-sm:min-w-10"
-        onClick={() => setOpen(false)}
-        aria-label="Close"
-      >
-        ×
-      </button>
+      {!expanded && (
+        <button
+          className="btn btn-ghost btn-xs max-sm:min-h-10 max-sm:min-w-10"
+          onClick={() => setOpen(false)}
+          aria-label="Close"
+        >
+          ×
+        </button>
+      )}
     </div>
   );
 }

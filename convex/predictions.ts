@@ -275,7 +275,7 @@ const DASHBOARD_MARKETS: MarketConfig[] = [
     shortLabel: "Polymarket",
   },
   // ============================================================
-  // EL NIÑO DASHBOARD (rendered at /elnino)
+  // EL NIÑO DASHBOARD (rendered at /el-nino)
   // RONI = NOAA CPC's Relative Oceanic Niño Index (climate-trend adjusted).
   // CPC's table peaks: 1982-83 at 2.4, 1997-98 and 2015-16 at 2.3, so a
   // peak of 2.5+ is "strongest since 1950" by construction.

@@ -33,7 +33,8 @@ type Caveat = {
   voters: Array<{ voterKey: string; rating: Rating }>;
 };
 
-export function Caveats({ topic }: { topic: string }) {
+/** `readOnly` lists the visible caveats with no rating, editing or add form, and renders nothing when there are none. */
+export function Caveats({ topic, readOnly = false }: { topic: string; readOnly?: boolean }) {
   const caveats = useQuery(api.caveats.listForTopic, { topic });
   const addCaveat = useMutation(api.caveats.addCaveat);
 
@@ -69,6 +70,24 @@ export function Caveats({ topic }: { topic: string }) {
       setBusy(false);
     }
   };
+
+  if (readOnly) {
+    if (visible.length === 0) return null;
+    return (
+      <div className="card bg-base-100">
+        <div className="card-body">
+          <h3 className="card-title text-lg mb-1">Notes &amp; caveats</h3>
+          <ul className="space-y-4">
+            {visible.map((caveat) => (
+              <li key={caveat._id} className="border-l-2 border-base-300 pl-4">
+                <p className="text-sm opacity-80">{caveat.content}</p>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="card bg-base-100">

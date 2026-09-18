@@ -6,7 +6,7 @@ import { CombinedChart, type ChartSeries } from "@/components/CombinedChart";
 import { TimelineChart } from "@/components/TimelineChart";
 import { scaleToTimestamp } from "@/lib/metaculusScale";
 import { EditableInfo } from "@/components/EditableInfo";
-import { ChartVote } from "@/components/ChartVote";
+import { ChartVote, type VoteMode } from "@/components/ChartVote";
 import { VotedCard } from "@/components/VotedCard";
 import { useQuery } from "convex/react";
 import { api } from "../../convex/_generated/api";
@@ -68,7 +68,8 @@ export function TopicDashboard({
   groupKeys,
   intro,
   footer,
-  showCharts = true,
+  headerActions,
+  voteMode = "collapsed",
 }: {
   /** Prefix for editable-text and vote slots, e.g. "iran". */
   topic: string;
@@ -83,8 +84,10 @@ export function TopicDashboard({
   /** Rendered between the title block and the chart grid. */
   intro?: ReactNode;
   footer?: ReactNode;
-  /** False drops the chart grid, leaving title, intro and footer (e.g. a review view). */
-  showCharts?: boolean;
+  /** Rendered top right, beside the theme button. */
+  headerActions?: ReactNode;
+  /** How the per-chart "is this helpful?" control shows. */
+  voteMode?: VoteMode;
 }) {
   const votes = useQuery(api.chartVotes.listAll);
   const [now, setNow] = useState(Date.now);
@@ -156,6 +159,7 @@ export function TopicDashboard({
   const renderGroup = ([groupKey, groupMarkets]: [string, Market[]]) => {
     const props = {
       slot: `${topic}:${groupKey}`,
+      voteMode,
       title: groupTitles[groupKey] || groupKey,
       resolution: groupResolutions[groupKey],
     };
@@ -167,7 +171,8 @@ export function TopicDashboard({
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="flex justify-end mb-4">
+      <div className="flex items-center justify-end gap-2 mb-4">
+        {headerActions}
         <button
           onClick={toggleTheme}
           className="btn btn-ghost btn-sm btn-square"
@@ -187,17 +192,15 @@ export function TopicDashboard({
 
       {intro}
 
-      {showCharts && (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {currentGroups.map(renderGroup)}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {currentGroups.map(renderGroup)}
 
-          {ungrouped.map((market) => (
-            <SingleCard key={market._id} market={market} />
-          ))}
-        </div>
-      )}
+        {ungrouped.map((market) => (
+          <SingleCard key={market._id} market={market} />
+        ))}
+      </div>
 
-      {showCharts && archivedGroups.length > 0 && (
+      {archivedGroups.length > 0 && (
         <details className="my-8 border-t border-base-300 pt-4">
           <summary className="cursor-pointer py-2 text-sm font-medium">Past closing dates · {archivedGroups.length} questions</summary>
           <p className="my-3 text-xs opacity-60">These sources’ stored closing dates have passed. Figures are last recorded forecasts, not confirmed outcomes.</p>
@@ -307,12 +310,14 @@ function SourceFreshness({ market }: { market: Market }) {
 
 function CombinedCard({
   slot,
+  voteMode,
   title,
   markets,
   daysToShow,
   resolution,
 }: {
   slot: string;
+  voteMode: VoteMode;
   title: string;
   markets: Market[];
   daysToShow?: number;
@@ -339,7 +344,7 @@ function CombinedCard({
         )}
 
         <CombinedChart series={series} daysToShow={daysToShow} />
-        <ChartVote slot={slot} />
+        <ChartVote slot={slot} mode={voteMode} />
       </div>
     </VotedCard>
   );
@@ -347,11 +352,13 @@ function CombinedCard({
 
 function TimelineCard({
   slot,
+  voteMode,
   title,
   market,
   resolution,
 }: {
   slot: string;
+  voteMode: VoteMode;
   title: string;
   market: Market;
   resolution?: GroupResolution;
@@ -409,7 +416,7 @@ function TimelineCard({
           scalingZeroPoint={market.scalingZeroPoint}
           color={market.chartColor || "#8B5CF6"}
         />
-        <ChartVote slot={slot} />
+        <ChartVote slot={slot} mode={voteMode} />
       </div>
     </VotedCard>
   );

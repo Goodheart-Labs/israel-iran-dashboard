@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Base rates behind the "California this winter" tiles on /elnino.
+"""Base rates behind the "California this winter" tiles on /el-nino.
 
 Downloads public data and prints the numbers the page quotes, so anyone can
 re-run it:  python3 scripts/elnino_estimates.py
