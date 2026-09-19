@@ -399,13 +399,6 @@ function Headline() {
 function CaliforniaEstimates() {
   return (
     <section className="mb-8 not-prose">
-      <div className="mb-3">
-        <h2 className="text-xl font-semibold tracking-tight">California this winter</h2>
-        <p className="text-sm opacity-60">
-          No exchange prices these, so the numbers are Claude F5.1's estimates. Hover or tap a box for its
-          working; hover or tap any claim with a number in brackets to see the statement behind it and vote on it.
-        </p>
-      </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         {CALIFORNIA_ESTIMATES.map((e) => <EstimateTile key={e.key} e={e} />)}
       </div>

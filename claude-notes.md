@@ -26,6 +26,8 @@
 - Belikewater's 18 Sep revision (megastorm 10–13%) is a votable quote on the
   megaflood card, no link (it was a message to Nathan, added at his request).
 - Byline is just the two names (Nathan removed the "alpha first pass…" line).
+- Nathan also removed the "California this winter" heading and its caption above the
+  boxes; the boxes now sit directly under the summary.
 - Read mode shows the caveats box with its add form but no rating/editing
   (`Caveats readOnly`); Nathan: "read should include caveats".
 - Voice: the estimates were written by Claude Fable 5.1 on 2026-09-11 (git trailers),
@@ -101,6 +103,7 @@ feat: nested claim cards and who-is statements for Swain and Belikewater
 feat: estimate boxes open on hover again, claims inside stay live
 feat: summary states the bottom-line odds, caption says they are judgment
 feat: big summary built from the three boxes, judgment cards show checked components
+feat: drop the heading and caption above the boxes
 
 ## Word-labelled slider in both chart views (2026-09-15)
 
