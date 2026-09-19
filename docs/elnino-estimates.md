@@ -80,7 +80,8 @@ The biggest calendar month in the 131-year record is 12.5 in (Jan 1995).
   instrumental record shows x2.4: 2 of the 9 strong El Niño winters produced
   one of the 12 nine-inch months, vs 12 of 131 overall. Working range x2-5.
 - Claude F5.1's number: ~8% (range 5-15%) = the Fig. 5B rate of 2.5-3% times
-  x2-5, headline at about x3. Belikewater argues for 10-13% by taking the
+  x2-5, headline at about x3, which is also the middle of the three readings
+  (unconditioned ~3%, this one, Belikewater's 10-13%). Belikewater argues for 10-13% by taking the
   7-of-8 finding at face value. Until 2026-09-18 the headline was the
   unconditioned ~3%, which is also where the ~2.5% figure circulating online
   comes from (Fig. 5B read at 2026's expected GMST).

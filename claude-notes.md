@@ -51,8 +51,12 @@
   from the sentence that uses it. Nathan wanted the boxes to open on hover, so the
   tile face is plain text again and hovering (or tapping) a tile opens its working,
   where every row and clause is a live citation (cards open inside the box).
-- Summary length: Nathan asked for shorter; current one is 30 words, 4 citations.
-  Aim for about 30 words when rewriting it. Row/ours/quote slot ids are unchanged.
+- Summary length: Nathan asked for shorter; aim for about 30 words.
+- Summary content (Nathan, 2026-09-18): "You are allowed to take medians, surely you
+  should use the 8% not the 2-3%. That's the kind of thinking I want here." So the
+  summary states the bottom-line odds (the three headline judgments), each citing its
+  judgment statement, whose card nests the checked inputs. It does not just restate
+  checked base inputs. Caption reworded to say the odds are Claude F5.1's judgment. Row/ours/quote slot ids are unchanged.
   NOT covered yet: the market blurbs in `GROUP_RESOLUTION` (rendered by
   TopicDashboard's editable text) still state facts with no citation.
 - Cards nest, gwern-style (Nathan's ask): a Judgment card renders its method with live
@@ -88,6 +92,7 @@ feat: numbered citations everywhere a fact is used, with statement cards and vot
 feat: cited words open their claim card on hover or tap
 feat: nested claim cards and who-is statements for Swain and Belikewater
 feat: estimate boxes open on hover again, claims inside stay live
+feat: summary states the bottom-line odds, caption says they are judgment
 
 ## Word-labelled slider in both chart views (2026-09-15)
 

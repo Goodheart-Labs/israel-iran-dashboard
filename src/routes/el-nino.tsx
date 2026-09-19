@@ -369,8 +369,8 @@ function Headline() {
         }} />
       </p>
       <p className="text-xs opacity-60 mt-2">
-        Summary by {headline.author}, {date}, using only the {headline.citedSlots.length} statements it cites that
-        readers have marked useful.{" "}
+        Summary by {headline.author}, {date}. The odds are its own judgment, weighing the statements readers have
+        marked useful; hover a number to see the reasoning and vote on it.{" "}
         <Link to="/el-nino" search={{ mode: "review" }} className="underline">Review them</Link>
       </p>
     </section>
