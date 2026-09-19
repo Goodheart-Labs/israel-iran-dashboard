@@ -56,7 +56,14 @@
   should use the 8% not the 2-3%. That's the kind of thinking I want here." So the
   summary states the bottom-line odds (the three headline judgments), each citing its
   judgment statement, whose card nests the checked inputs. It does not just restate
-  checked base inputs. Caption reworded to say the odds are Claude F5.1's judgment. Row/ours/quote slot ids are unchanged.
+  checked base inputs. Then: "the big tile should be a summary of the three boxes
+  but sourced from the components", so `Headline` now BUILDS the text from
+  `CALIFORNIA_ESTIMATES` (phrase + headline %, banded into probably / possible /
+  unlikely) and can never drift from the tiles. Each number cites that box's
+  judgment; judgment cards show "Built from N components; readers have marked M
+  useful" (`componentsOf`). The Convex `headlines` table and functions are DORMANT
+  (page no longer reads them); kept for a possible LLM-written summary later. Do not
+  drop the table from the schema while it holds rows. Row/ours/quote slot ids are unchanged.
   NOT covered yet: the market blurbs in `GROUP_RESOLUTION` (rendered by
   TopicDashboard's editable text) still state facts with no citation.
 - Cards nest, gwern-style (Nathan's ask): a Judgment card renders its method with live
@@ -93,6 +100,7 @@ feat: cited words open their claim card on hover or tap
 feat: nested claim cards and who-is statements for Swain and Belikewater
 feat: estimate boxes open on hover again, claims inside stay live
 feat: summary states the bottom-line odds, caption says they are judgment
+feat: big summary built from the three boxes, judgment cards show checked components
 
 ## Word-labelled slider in both chart views (2026-09-15)
 

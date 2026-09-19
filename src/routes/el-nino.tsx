@@ -23,6 +23,7 @@ import {
   SCRIPT_URL,
   STATEMENT_BY_SLOT,
   WORKING_URL,
+  componentsOf,
   contextSlot,
   oursSlot,
   personFor,
@@ -138,6 +139,14 @@ const GROUP_RESOLUTION: Record<string, GroupResolution> = {
   },
 };
 
+type Vote = { slot: string; rating: string; voterKey: string };
+
+// Checked = at least one "useful" vote and a positive net score.
+function isChecked(votes: Vote[], slot: string) {
+  const forSlot = votes.filter((v) => v.slot === slot);
+  return forSlot.some((v) => v.rating === "useful") && chartScore(forSlot) > 0;
+}
+
 const BODY_FONT = { fontFamily: '"Inter", system-ui, -apple-system, sans-serif' };
 
 // ---------------------------------------------------------------------------
@@ -161,6 +170,7 @@ const MAX_DEPTH = 3;
 function CiteCard({ id, st, alignRight, depth }: { id: string; st: StatementRef; alignRight: boolean; depth: number }) {
   const votes = useQuery(api.chartVotes.listAll) ?? [];
   const marked = st.marked;
+  const components = marked ? componentsOf(marked.estimate) : [];
   return (
     <span id={id} role="dialog" aria-label={`Citation ${st.n}`} style={BODY_FONT}
       className={`absolute top-full z-40 mt-1 block w-[min(24rem,88vw)] cursor-auto rounded-md border border-base-300 bg-base-100 p-3 text-left text-sm font-normal leading-snug tracking-normal text-base-content opacity-100 shadow-lg max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 max-sm:top-auto max-sm:w-auto ${alignRight ? "right-0" : "left-0"}`}>
@@ -169,6 +179,11 @@ function CiteCard({ id, st, alignRight, depth }: { id: string; st: StatementRef;
       {marked && depth < MAX_DEPTH
         ? <span className="mt-1 block text-xs text-base-content/70"><Cited text={marked.text} resolve={(markerId) => slotFor(marked.estimate, markerId)} depth={depth + 1} /></span>
         : st.body && <span className="mt-1 block text-xs opacity-70">{st.body}</span>}
+      {components.length > 0 && (
+        <span className="mt-1.5 block text-xs font-medium">
+          Built from {components.length} components; readers have marked {components.filter((slot) => isChecked(votes, slot)).length} useful.
+        </span>
+      )}
       {st.links.length > 0 && (
         <span className="mt-1.5 block text-xs">
           {st.links.map((l, i) => (
@@ -353,24 +368,28 @@ function Byline() {
   );
 }
 
-// The big summary under the title. Text lives in Convex (`headlines`), written only
-// from statements readers have marked useful; {{i|words}} in the text cites citedSlots[i],
-// [[personId|Name]] says who someone is.
+// The big summary under the title is built from the three boxes, so it cannot drift from
+// them: each number is that box's judgment, and its card shows the components behind it.
+const SUMMARY_SLOTS = CALIFORNIA_ESTIMATES.map(oursSlot);
+
 function Headline() {
-  const headline = useQuery(api.headlines.latest, { topic: "elnino" });
-  if (!headline) return null;
-  const date = new Date(headline.createdAt).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+  const pct = (e: Estimate) => Number(/\d+/.exec(e.headline)?.[0] ?? NaN);
+  const band = (lo: number, hi: number) => CALIFORNIA_ESTIMATES.filter((e) => pct(e) >= lo && pct(e) < hi);
+  const odds = (e: Estimate) => <Cite slot={oursSlot(e)}>about {pct(e)}%</Cite>;
+  const list = (items: Estimate[], each: (e: Estimate) => ReactNode) =>
+    items.map((e, i) => <span key={e.key}>{i > 0 && (i === items.length - 1 ? " and " : ", ")}{each(e)}</span>);
+  const capital = (text: string) => text[0].toUpperCase() + text.slice(1);
+  const [likely, possible, unlikely] = [band(50, 101), band(20, 50), band(0, 20)];
   return (
     <section className="mb-8 not-prose max-w-4xl">
       <p className="text-2xl md:text-3xl leading-snug tracking-tight" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-        <Cited text={headline.text} resolve={(markerId) => {
-          const person = PEOPLE.find((p) => p.id === markerId);
-          return person ? personSlot(person) : headline.citedSlots[Number(markerId)];
-        }} />
+        {likely.length > 0 && <>California will probably get {list(likely, (e) => <>{e.phrase} ({odds(e)})</>)}. </>}
+        {possible.map((e) => <span key={e.key}>{capital(e.phrase)} is possible: {odds(e)}. </span>)}
+        {unlikely.map((e) => <span key={e.key}>{capital(e.phrase)} is unlikely: {odds(e)}. </span>)}
       </p>
       <p className="text-xs opacity-60 mt-2">
-        Summary by {headline.author}, {date}. The odds are its own judgment, weighing the statements readers have
-        marked useful; hover a number to see the reasoning and vote on it.{" "}
+        A summary of the three boxes below. Each number is Claude F5.1's judgment, built from the components in
+        its box; hover it to see them and vote.{" "}
         <Link to="/el-nino" search={{ mode: "review" }} className="underline">Review them</Link>
       </p>
     </section>
@@ -394,15 +413,7 @@ function CaliforniaEstimates() {
   );
 }
 
-type Vote = { slot: string; rating: string; voterKey: string };
-
-// Checked = at least one "useful" vote and a positive net score.
-function checkedCount(votes: Vote[]) {
-  return ALL_SLOTS.filter((slot) => {
-    const forSlot = votes.filter((v) => v.slot === slot);
-    return forSlot.some((v) => v.rating === "useful") && chartScore(forSlot) > 0;
-  }).length;
-}
+const checkedCount = (votes: Vote[]) => ALL_SLOTS.filter((slot) => isChecked(votes, slot)).length;
 
 function ModeToggle({ review }: { review: boolean }) {
   const tab = (active: boolean) => `btn btn-sm join-item ${active ? "btn-neutral" : "btn-outline"}`;
@@ -439,7 +450,7 @@ function StatementGroup({ title, children }: { title: string; children: ReactNod
 
 function Review() {
   const votes = useQuery(api.chartVotes.listAll) ?? [];
-  const cited = useQuery(api.headlines.latest, { topic: "elnino" })?.citedSlots ?? [];
+  const cited = SUMMARY_SLOTS;
   const me = typeof window === "undefined" ? "" : (localStorage.getItem("anon-id") ?? "");
   const mine = ALL_SLOTS.filter((slot) => votes.some((v) => v.slot === slot && v.voterKey === me)).length;
   return (

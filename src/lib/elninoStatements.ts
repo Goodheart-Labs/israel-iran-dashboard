@@ -29,6 +29,7 @@ export type Quote = { text: string; who: string; url?: string }; // no url: a me
 export type Estimate = {
   key: string;
   label: string;
+  phrase: string; // how the summary at the top of the page names this outcome
   headline: string;
   range: string;
   definition: string;
@@ -59,6 +60,7 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
   {
     key: "wet",
     label: "Very wet winter",
+    phrase: "a very wet winter",
     headline: "~65%",
     range: "45–85%",
     definition:
@@ -83,6 +85,7 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
   {
     key: "coast",
     label: "Coastal flooding",
+    phrase: "coastal flooding",
     headline: "~75%",
     range: "55–90%",
     definition:
@@ -105,6 +108,7 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
   {
     key: "megaflood",
     label: "Megaflood (ARkStorm)",
+    phrase: "a month-long megaflood",
     headline: "~8%",
     range: "5–15%",
     definition:
@@ -186,6 +190,13 @@ const refs: Omit<StatementRef, "n">[] = [
 export const STATEMENTS: StatementRef[] = refs.map((r, i) => ({ ...r, n: i + 1 }));
 export const STATEMENT_BY_SLOT = new Map(STATEMENTS.map((st) => [st.slot, st]));
 export const ALL_SLOTS = STATEMENTS.map((st) => st.slot);
+
+/** The components a judgment is built from: every statement its method cites, people aside. */
+export function componentsOf(e: Estimate): string[] {
+  const ids = [...e.method.matchAll(/\[\[([a-z0-9]+)(?:\|[^\]]*)?\]\]/g)].map((m) => m[1]);
+  const slots = ids.filter((id) => !PEOPLE.some((p) => p.id === id)).map((id) => slotFor(e, id));
+  return [...new Set(slots.filter((slot): slot is string => !!slot))];
+}
 
 /** Resolves a [[id]] marker inside one estimate's prose: a person id, a row id, "ours", or "qN" (1-based quote). */
 export function slotFor(e: Estimate, id: string): string | undefined {
