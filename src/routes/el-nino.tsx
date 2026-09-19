@@ -161,6 +161,7 @@ const CAG = "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/sta
 const D_PRECIP_DJF: DataLink = { label: "NOAA Climate at a Glance: California Dec–Feb precipitation, 1895–2026", url: `${CAG}/3/2/1895-2026` };
 const D_PRECIP_DJF_CSV: DataLink = { label: "same series, CSV", url: `${CAG}/3/2/1895-2026/data.csv` };
 const D_PRECIP_MONTHLY_CSV: DataLink = { label: "NOAA Climate at a Glance: California monthly precipitation, CSV", url: `${CAG}/1/0/1895-2026/data.csv` };
+const D_ONI: DataLink = { label: "NOAA CPC ONI series (text file)", url: "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt" };
 const D_RONI: DataLink = { label: "NOAA CPC RONI table (which winters count as strong El Niño)", url: CPC_RONI_URL };
 const D_HTF: DataLink = { label: "NOAA monthly high-tide flood counts, Los Angeles gauge 9410660 (JSON)", url: "https://api.tidesandcurrents.noaa.gov/dpapi/prod/webapi/htf/htf_monthly.json?station=9410660" };
 const D_FLOOD_LEVELS: DataLink = { label: "NOAA flood thresholds for gauge 9410660 (JSON)", url: "https://api.tidesandcurrents.noaa.gov/mdapi/prod/webapi/stations/9410660/floodlevels.json" };
@@ -216,16 +217,16 @@ const CALIFORNIA_ESTIMATES: Estimate[] = [
   {
     key: "megaflood",
     label: "Megaflood (ARkStorm)",
-    headline: "~3%",
-    range: "2–8%",
+    headline: "~8%",
+    range: "5–15%",
     definition:
       "A month-long megastorm on the ARkStorm scale: roughly 447 mm (17.6 in) or more of precipitation averaged over the whole state in 30 days, the ARkHist scenario of ARkStorm 2.0, which brings slightly less rain than the winter of 1861-62 did. The biggest calendar month in the 131-year record is 12.5 in (Jan 1995).",
     rows: [
       { label: "Base rate at today's warming", value: "2.5–3% / yr", detail: "Huang & Swain 2022, Fig. 5B: about 1%/yr in the pre-industrial climate, rising ~1.2 points per °C of global warming. At 1.3–1.65°C (30-year-smoothed vs single-year 2026 estimates) that is 2.5–3%. Cross-check: a stationary 131-year record is beaten with probability 1/132 = 0.8%; warming to date has roughly doubled the 1920 rate.", data: [D_HS, { label: "Weather West summary of the paper", url: "https://weatherwest.com/archives/16626" }, D_PRECIP_MONTHLY_CSV] },
-      { label: "El Niño multiplier", value: "×1–3", detail: "Every one of the most intense simulated 30-day sequences in the paper's ensemble fell in a moderate-to-strong El Niño year, which are a quarter to a third of years. The instrumental record: 2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall (2.4×). Applying no multiplier is the cautious reading.", face: "El Niño", data: [D_HS, D_PRECIP_MONTHLY_CSV, D_RONI] },
+      { label: "El Niño multiplier", value: "×2–5", detail: "Huang & Swain: 7 of the 8 most intense simulated 30-day sequences fell in a moderate-to-strong El Niño year (8 of 8 with rounding). Such winters are 18% of NOAA's record since 1950 on ONI (14 of 76) and 24% on RONI (18 of 76), so taken at face value the lift is ×3.7–4.8. Two things pull it down: half the paper's events come from a simulated 2071–80 and the paper does not say how common El Niño years are inside the model (if 35–50%, the lift is only ×2–2.5), and the instrumental record shows ×2.4 (2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall).", face: "El Niño", data: [D_HS, D_ONI, D_RONI, D_PRECIP_MONTHLY_CSV] },
     ],
     method:
-      "The headline is the unconditioned Fig. 5B rate, ~3%, which is where the ~2.5% figure circulating online comes from. Conditioning on this being a strong El Niño winter, as the paper's own results suggest, would give 5–8%; the range covers both readings.",
+      "Base rate 2.5–3% a year (Fig. 5B) times an El Niño multiplier of ×2–5 gives 5–15%; the headline takes about ×3. Belikewater argues for 10–13% by taking the 7-of-8 finding at face value against how rare such winters are. Claude F5.1 sits lower because the model's own El Niño frequency is unknown and the instrumental record suggests ×2.4. Until 18 Sep this tile showed the unconditioned ~3%.",
     quotes: [
       { text: "Recent estimates suggest that floods equal to or greater in magnitude to those in 1862 occur five to seven times per millennium [i.e., a 1.0 to 0.5% annual likelihood or 100- to 200-year recurrence interval (RI)]", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
       { text: "We find that the annual likelihood of an ARkHist level event increases rapidly for each 1°C of global warming [by ~0.012/year per degree C from a baseline of ~0.01/year]", who: HS + ", Fig. 5B", url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },

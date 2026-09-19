@@ -19,6 +19,7 @@ UA = {"User-Agent": "Mozilla/5.0 (globalriskodds.com estimates script)"}
 CAG = "https://www.ncei.noaa.gov/access/monitoring/climate-at-a-glance/statewide/time-series/4/pcp/{months}/{end}/1895-2026/data.csv"
 HTF = "https://api.tidesandcurrents.noaa.gov/dpapi/prod/webapi/htf/htf_monthly.json?station={station}"
 RONI = "https://www.cpc.ncep.noaa.gov/products/analysis_monitoring/enso/roni/"
+ONI = "https://www.cpc.ncep.noaa.gov/data/indices/oni.ascii.txt"
 LA = "9410660"
 
 
@@ -48,6 +49,17 @@ def roni_winters():
         if y + 1 in table and len(table[y]) >= 12 and len(table[y + 1]) >= 2:
             peaks[y] = max(table[y][6:12] + table[y + 1][0:2])  # JJA..NDJ, DJF, JFM
     return peaks
+
+
+def oni_winters():
+    """Winter -> peak 3-month ONI over OND, NDJ, DJF, JFM (winters with all four seasons)."""
+    seasons = {"OND": 0, "NDJ": 0, "DJF": -1, "JFM": -1}  # year offset to the winter's start year
+    by = {}
+    for line in get(ONI).splitlines()[1:]:
+        seas, yr, _total, anom = line.split()
+        if seas in seasons:
+            by.setdefault(int(yr) + seasons[seas], []).append(float(anom))
+    return {y: max(v) for y, v in by.items() if len(v) == 4}
 
 
 def main():
@@ -97,6 +109,13 @@ def main():
     print(f"Given a top-20% Dec-Feb: {len(top_hits)}/{len(top)} = {100*len(top_hits)/len(top):.0f}%; otherwise {len(rest_hits)}/{len(rest)} = {100*len(rest_hits)/len(rest):.1f}%")
     s_hits = [y for y in strong if y in W and W[y][1] >= THR]
     print(f"Strong El Niño analogs: {len(s_hits)}/{len([y for y in strong if y in W])} = " + ", ".join(f"{y}-{str(y+1)[2:]}" for y in s_hits) + "\n")
+    oni = oni_winters()
+    for name, series in (("ONI", oni), ("RONI", peaks)):
+        mod = sorted(y for y, p in series.items() if p >= 1.0)
+        share = len(mod) / len(series)
+        print(f"Moderate-or-stronger El Niño winters (peak {name} >= 1.0): {len(mod)}/{len(series)} = {100*share:.0f}% -> "
+              f"if 7 of 8 megastorms fall in such winters, multiplier = {7/8/share:.1f}x")
+    print()
     print(f"Record calendar month: {max(monthly.values()):.2f} in (" + str(max(monthly, key=monthly.get)) + f"); chance a stationary {len(W)}-year record is beaten next year ≈ 1/{len(W)+1} = {100/(len(W)+1):.2f}%\n")
 
     # --- Tile 2: coastal flooding (LA gauge, days at/above NOS minor level, Nov-Apr) ---

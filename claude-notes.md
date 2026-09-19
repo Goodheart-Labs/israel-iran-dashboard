@@ -39,9 +39,12 @@
 - NOT built yet: the periodic LLM headline from checked statements (grow rule:
   ≥1 useful vote and positive net score). Needs an Anthropic key in the Convex env.
   Spec: `tmp/2026-09-18-elnino-review-spec.md`.
-- Megaflood multiplier check: `tmp/2026-09-18-megaflood-multiplier.md`. The doc's
-  "a quarter to a third of years are moderate+ El Niño" is wrong on NOAA ONI
-  (14 of 76 = 18%); page numbers NOT yet changed, Nathan to rule.
+- Megaflood revised 2026-09-18 on Nathan's OK: tile ~3% → ~8% (range 5–15%), row
+  "El Niño multiplier" ×1–3 → ×2–5 (label unchanged so its vote slot survives).
+  `scripts/elnino_estimates.py` now prints the moderate+ El Niño share: ONI 14/76
+  = 18% (×4.8), RONI 18/76 = 24% (×3.7). The old doc line "a quarter to a third of
+  years" was roughly right on RONI at the low end and wrong at the high end.
+  Working: `tmp/2026-09-18-megaflood-multiplier.md`.
 
 Validation: build and full lint pass. Headless Chrome for Testing at 1280/768/375:
 read, review and alias render, no console errors, no horizontal overflow, a vote
@@ -52,6 +55,7 @@ feat: el-nino canonical url, one layout for read and review, dataset links, Clau
 feat: sources live on the facts, add Belikewater revised megastorm estimate
 feat: caveats in read mode, drop alpha line
 feat: big summary at the top of el nino page, stored in convex
+feat: megaflood revised to ~8% with El Niño multiplier x2-5, ONI/RONI share added to script
 
 ## Word-labelled slider in both chart views (2026-09-15)
 

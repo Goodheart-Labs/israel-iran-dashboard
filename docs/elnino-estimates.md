@@ -71,14 +71,19 @@ The biggest calendar month in the 131-year record is 12.5 in (Jan 1995).
 - El Niño: "all of the most intense 30-day megastorm events in the CESM1-LENS
   ensemble occur during moderate to strong ENSO warm phase (El Niño)
   conditions"; 7 of 8 by the ENSO Longitude Index, 8 of 8 rounding. Such
-  years are a quarter to a third of all years, so a strong El Niño winter
-  should carry 2-3 times the unconditioned annual rate. The instrumental record: 2 of
-  the 9 strong El Niño winters produced one of the 12 nine-inch months, vs
-  12 of 131 overall (2.4x).
-- Claude F5.1's number: the headline is the unconditioned Fig. 5B rate, ~3%, which is
-  also where the ~2.5% figure circulating online comes from (Fig. 5B read at
-  2026's expected GMST). Conditioning on El Niño as above gives 5-8%. The
-  range spans both readings.
+  winters are 18% of NOAA's record since 1950 on ONI (14 of 76) and 24% on
+  RONI (18 of 76), both computed by the script, so at face value the lift is
+  x3.7-4.8. (An earlier version of this doc said "a quarter to a third of all
+  years" and x2-3; corrected 2026-09-18.) Two things pull it down: half the
+  paper's events come from a simulated 2071-80 and the paper does not give the
+  model's own El Niño frequency (if 35-50%, the lift is only x2-2.5), and the
+  instrumental record shows x2.4: 2 of the 9 strong El Niño winters produced
+  one of the 12 nine-inch months, vs 12 of 131 overall. Working range x2-5.
+- Claude F5.1's number: ~8% (range 5-15%) = the Fig. 5B rate of 2.5-3% times
+  x2-5, headline at about x3. Belikewater argues for 10-13% by taking the
+  7-of-8 finding at face value. Until 2026-09-18 the headline was the
+  unconditioned ~3%, which is also where the ~2.5% figure circulating online
+  comes from (Fig. 5B read at 2026's expected GMST).
 
 ## Quotes (verbatim; YouTube lines are lightly corrected auto-captions)
 
