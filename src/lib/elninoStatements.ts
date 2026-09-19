@@ -142,11 +142,11 @@ export const ENSO_CONTEXT: Context[] = [
 ];
 
 // Who the people quoted on this page are. Swain's lines are verbatim from his own site;
-// Belikewater's says only what the page and their public X account already show.
-export type Person = { id: string; name: string; text: string; who: string; url: string };
+// Belikewater's affiliations come from co-author Nathan Young (neither group's site names its forecasters).
+export type Person = { id: string; name: string; text: string; links: DataLink[] };
 export const PEOPLE: Person[] = [
-  { id: "swain", name: "Daniel Swain", text: "His primary appointment is as a climate scientist (Associate Researcher) in the California Institute for Water Resources within University of California Agriculture and Natural Resources (UC ANR) […] he has also been a longtime research partner at the NSF National Center for Atmospheric Research […] Weather West has provided unique perspectives on California weather and climate since 2006.", who: "Weather West, About", url: "https://weatherwest.com/about" },
-  { id: "belikewater", name: "Belikewater", text: "Belikewater posts on X as @Just_Curius and is a co-author of this page (see the byline). Their 11 Sep 2026 post putting a California megaflood at about 2.5% this winter, and their 18 Sep revision to 10–13%, are both quoted under the megaflood estimate.", who: "@Just_Curius on X", url: "https://x.com/Just_Curius" },
+  { id: "swain", name: "Daniel Swain", text: "His primary appointment is as a climate scientist (Associate Researcher) in the California Institute for Water Resources within University of California Agriculture and Natural Resources (UC ANR) […] he has also been a longtime research partner at the NSF National Center for Atmospheric Research […] Weather West has provided unique perspectives on California weather and climate since 2006.", links: [{ label: "Weather West, About", url: "https://weatherwest.com/about" }] },
+  { id: "belikewater", name: "Belikewater", text: "Belikewater is a professional forecaster at Samotsvety and the Swift Centre (per co-author Nathan Young). They post on X as @Just_Curius and are a co-author of this page. Their 11 Sep 2026 post putting a California megaflood at about 2.5% this winter, and their 18 Sep revision to 10–13%, are both quoted under the megaflood estimate.", links: [{ label: "@Just_Curius on X", url: "https://x.com/Just_Curius" }, { label: "Samotsvety", url: "https://samotsvety.org/" }, { label: "Swift Centre", url: "https://www.swiftcentre.org/" }] },
 ];
 export const personSlot = (p: Person) => `elnino:person:${p.id}`;
 /** The person a quote's attribution names, if the page has a statement about them. */
@@ -176,7 +176,7 @@ export type StatementRef = {
 export const plain = (text: string) => text.replace(/\[\[[a-z0-9?]+(?:\|([^\]]*))?\]\]/g, "$1");
 
 const refs: Omit<StatementRef, "n">[] = [
-  ...PEOPLE.map((p) => ({ slot: personSlot(p), kind: "Person" as const, title: `Who is ${p.name}?`, body: p.text, links: [{ label: p.who, url: p.url }] })),
+  ...PEOPLE.map((p) => ({ slot: personSlot(p), kind: "Person" as const, title: `Who is ${p.name}?`, body: p.text, links: p.links })),
   ...ENSO_CONTEXT.map((c) => ({ slot: contextSlot(c), kind: "Context" as const, title: `“${c.text}”`, links: [{ label: c.who, url: c.url }] })),
   ...CALIFORNIA_ESTIMATES.flatMap((e) => [
     ...e.rows.map((r) => ({ slot: rowSlot(e, r), kind: "Data" as const, title: `${e.label}. ${r.label}: ${r.value}`, body: r.detail, links: r.data })),

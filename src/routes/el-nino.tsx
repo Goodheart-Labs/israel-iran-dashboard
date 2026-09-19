@@ -475,8 +475,15 @@ function Review() {
           <StatementGroup title="People">
             {PEOPLE.map((p) => (
               <Statement key={p.id} slot={personSlot(p)} votes={votes} cited={cited}>
-                <span className="font-medium">{p.name}.</span> {p.text}{" "}
-                <a href={p.url} target="_blank" rel="noopener noreferrer" className="underline opacity-70">— {p.who}</a>
+                <span className="font-medium">{p.name}.</span> {p.text}
+                <div className="mt-1 text-xs">
+                  {p.links.map((l, i) => (
+                    <span key={l.url}>
+                      {i > 0 && <span className="opacity-40"> · </span>}
+                      <a href={l.url} target="_blank" rel="noopener noreferrer" className="underline opacity-80">{l.label}</a>
+                    </span>
+                  ))}
+                </div>
               </Statement>
             ))}
           </StatementGroup>

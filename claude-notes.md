@@ -73,8 +73,9 @@
   (`speaker`), and those open further cards inside the first, each with its own
   votes. `MAX_DEPTH = 3` guards against loops.
 - People statements (`PEOPLE`, slots `elnino:person:<id>`): Daniel Swain (verbatim from
-  weatherwest.com/about) and Belikewater (only what the page and their public X handle
-  already show; do not dig further into a pseudonymous person). Cited from the byline,
+  weatherwest.com/about) and Belikewater ("professional forecaster at Samotsvety and the
+  Swift Centre", supplied by Nathan 2026-09-18 and attributed to him on the page, since
+  neither group's site names its forecasters; do not dig further into a pseudonymous person). Cited from the byline,
   the summary (`[[swain|Daniel Swain]]` resolves via PEOPLE, not citedSlots), quote
   attributions in review, and quote cards.
 - NOT built yet: the periodic LLM headline from checked statements (grow rule:
@@ -104,6 +105,7 @@ feat: estimate boxes open on hover again, claims inside stay live
 feat: summary states the bottom-line odds, caption says they are judgment
 feat: big summary built from the three boxes, judgment cards show checked components
 feat: drop the heading and caption above the boxes
+feat: Belikewater described as a Samotsvety and Swift Centre forecaster, per Nathan
 
 ## Word-labelled slider in both chart views (2026-09-15)
 
