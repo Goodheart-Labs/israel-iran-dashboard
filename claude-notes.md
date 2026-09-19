@@ -48,8 +48,11 @@
   statement backs a claim (three today). Markers carry the words they back,
   `[[id|words]]` / `{{i|words}}`: hovering (150 ms in, 250 ms out) or tapping those
   words highlights them and opens the same card, so a reader can vote on the claim
-  from the sentence that uses it. The tile's definition popover is click-only now,
-  so it does not fight the citation cards on the tile face. Row/ours/quote slot ids are unchanged.
+  from the sentence that uses it. Nathan wanted the boxes to open on hover, so the
+  tile face is plain text again and hovering (or tapping) a tile opens its working,
+  where every row and clause is a live citation (cards open inside the box).
+- Summary length: Nathan asked for shorter; current one is 30 words, 4 citations.
+  Aim for about 30 words when rewriting it. Row/ours/quote slot ids are unchanged.
   NOT covered yet: the market blurbs in `GROUP_RESOLUTION` (rendered by
   TopicDashboard's editable text) still state facts with no citation.
 - Cards nest, gwern-style (Nathan's ask): a Judgment card renders its method with live
@@ -84,6 +87,7 @@ feat: megaflood revised to ~8% with El Niño multiplier x2-5, ONI/RONI share add
 feat: numbered citations everywhere a fact is used, with statement cards and votes
 feat: cited words open their claim card on hover or tap
 feat: nested claim cards and who-is statements for Swain and Belikewater
+feat: estimate boxes open on hover again, claims inside stay live
 
 ## Word-labelled slider in both chart views (2026-09-15)
 

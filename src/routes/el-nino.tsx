@@ -269,15 +269,24 @@ function Cited({ text, resolve, depth = 0 }: { text: string; resolve: (id: strin
   );
 }
 
-// The definition popover opens on click only; hover belongs to the citations on the tile face.
+// Hovering (or tapping) a tile opens its working; every line in there is a live citation,
+// so cards open inside it. The tile face stays plain so the two layers do not fight.
 function EstimateTile({ e }: { e: Estimate }) {
-  const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const timer = useRef<number | undefined>(undefined);
   const id = useId();
+  const open = hovered || pinned;
+  const hover = (next: boolean) => {
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setHovered(next), next ? 150 : 250);
+  };
+  useEffect(() => () => window.clearTimeout(timer.current), []);
   useEffect(() => {
     if (!open) return;
     const dismiss = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) setOpen(false);
+      if (!ref.current?.contains(event.target as Node)) { setPinned(false); setHovered(false); }
     };
     document.addEventListener("pointerdown", dismiss);
     return () => document.removeEventListener("pointerdown", dismiss);
@@ -286,23 +295,23 @@ function EstimateTile({ e }: { e: Estimate }) {
   const resolve = (markerId: string) => slotFor(e, markerId);
   return (
     <div ref={ref} className="relative"
-      onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}>
-      <div className="card bg-base-100 hover:shadow-md transition-shadow">
-        <button type="button" aria-expanded={open} aria-controls={id}
-          onClick={() => setOpen(!open)}
-          className="w-full cursor-pointer px-4 pt-4 text-left">
+      onMouseEnter={() => { if (window.matchMedia("(hover: hover)").matches) hover(true); }}
+      onMouseLeave={() => hover(false)}
+      onKeyDown={(event) => { if (event.key === "Escape") { setPinned(false); setHovered(false); } }}>
+      <button type="button" aria-expanded={open} aria-controls={id}
+        onClick={() => { window.clearTimeout(timer.current); setPinned(!open); setHovered(false); }}
+        className="card bg-base-100 w-full text-left cursor-pointer hover:shadow-md transition-shadow">
+        <div className="card-body p-4">
           <div className="text-sm font-medium opacity-70">{e.label}</div>
           <div className="text-3xl font-bold leading-tight">{e.headline}</div>
           <div className="text-xs opacity-50">range {e.range}</div>
-        </button>
-        <div className="px-4 pb-4 pt-2 text-xs leading-snug">
-          <Cite slot={rowSlot(e, base)}><span className="opacity-60">{base.face ?? "base rate"}</span> <span className="font-medium">{base.value}</span></Cite>
-          <span className="opacity-40"> · </span>
-          <Cite slot={rowSlot(e, analogs)}><span className="opacity-60">{analogs.face ?? "El Niño winters"}</span> <span className="font-medium">{analogs.value}</span></Cite>
-          <span className="opacity-40"> · </span>
-          <Cite slot={oursSlot(e)}><span className="opacity-60">reasoning</span></Cite>
+          <div className="text-xs mt-2 leading-snug">
+            <span className="opacity-60">{base.face ?? "base rate"}</span> <span className="font-medium">{base.value}</span>
+            <span className="opacity-40"> · </span>
+            <span className="opacity-60">{analogs.face ?? "El Niño winters"}</span> <span className="font-medium">{analogs.value}</span>
+          </div>
         </div>
-      </div>
+      </button>
       <div id={id} hidden={!open}
         className="absolute left-0 z-30 mt-1 w-[min(28rem,90vw)] rounded-md border border-base-300 bg-base-100 p-4 shadow-lg text-sm space-y-2">
         <p className="grow-0"><span className="font-medium">Resolves yes if:</span> <Cited text={e.definition} resolve={resolve} /></p>
@@ -374,8 +383,8 @@ function CaliforniaEstimates() {
       <div className="mb-3">
         <h2 className="text-xl font-semibold tracking-tight">California this winter</h2>
         <p className="text-sm opacity-60">
-          No exchange prices these, so the numbers are Claude F5.1's estimates. Hover or tap any claim with a
-          number in brackets to see the statement behind it and vote on it; click a tile for its definition.
+          No exchange prices these, so the numbers are Claude F5.1's estimates. Hover or tap a box for its
+          working; hover or tap any claim with a number in brackets to see the statement behind it and vote on it.
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
