@@ -21,7 +21,7 @@ export const WORKING_URL = `${REPO}/docs/elnino-estimates.md`;
 export const SCRIPT_URL = `${REPO}/scripts/elnino_estimates.py`;
 
 export type DataLink = { label: string; url: string };
-// id: short handle for [[id]] citation markers; face: short label on the tile; data: where the figure comes from
+// id: short handle for [[id|cited words]] citation markers; face: short label on the tile; data: where the figure comes from
 export type Row = { id: string; label: string; value: string; detail?: string; face?: string; data: DataLink[] };
 
 export type Quote = { text: string; who: string; url?: string }; // no url: a message relayed by one of the page's authors, not published anywhere
@@ -62,7 +62,7 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
     headline: "~65%",
     range: "45–85%",
     definition:
-      "California's statewide Dec–Feb 2026-27 precipitation is at least 15.1 inches: the wettest 20% of the 131 winters on record (median 10.8 in).[[base]]",
+      "California's statewide Dec–Feb 2026-27 precipitation is at least 15.1 inches: [[base|the wettest 20% of the 131 winters on record (median 10.8 in)]].",
     rows: [
       { id: "base", label: "Base rate, all 131 winters", value: "20%", detail: "by construction", data: [D_PRECIP_DJF, D_PRECIP_DJF_CSV] },
       { id: "analogs", label: `Rate in ${ANALOGS}`, value: "33%", detail: "3 of 9: 1957-58, 1982-83, 1997-98. Above the median: 6 of 9.", data: [D_PRECIP_DJF_CSV, D_RONI] },
@@ -70,7 +70,7 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
       { id: "cpc", label: "NOAA CPC outlook, 20 Aug", value: ">50%", detail: "odds of above-normal (top-third) precipitation for coastal California", data: [{ label: "NOAA CPC seasonal outlook discussion", url: "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/fxus05.html" }] },
     ],
     method:
-      "Between the analog rate (33%)[[analogs]] and the ECMWF ensemble (>70%)[[ecmwf]], leaning to the model. It correctly hindcast 2015-16 as a dry strong-El Niño winter and 1982-83 and 1997-98 as wet ones[[q3]], and this event is forecast to peak near RONI 3.0[[?]], beyond every analog (max 2.4)[[analogs]]. Claude F5.1 stops short of the model because it is one system and, as Swain notes, an under-dispersed ensemble can be too wet or too dry[[?]].",
+      "Between [[analogs|the analog rate (33%)]] and [[ecmwf|the ECMWF ensemble (>70%)]], leaning to the model. [[q3|It correctly hindcast 2015-16 as a dry strong-El Niño winter and 1982-83 and 1997-98 as wet ones]], and this event is [[?|forecast to peak near RONI 3.0]], [[analogs|beyond every analog (max 2.4)]]. Claude F5.1 stops short of the model because it is one system and, [[?|as Swain notes, an under-dispersed ensemble can be too wet or too dry]].",
     quotes: [
       { text: "a greater than 70% chance of precipitation this December through February being among the wettest 20%.", who: SWAIN_SEP + ", 41:46", url: SW_SEP + "&t=2506s" },
       { text: "It is more likely than not, probably about two in three odds of a winter among the wettest 10% we've seen. That's a more defensible headline.", who: SWAIN_SEP + ", 1:01:07", url: SW_SEP + "&t=3667s" },
@@ -86,14 +86,14 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
     headline: "~75%",
     range: "55–90%",
     definition:
-      "The Los Angeles tide gauge (NOAA 9410660) records at least 3 days between Nov 2026 and Apr 2027 at or above NOAA's minor coastal flood level: 11.18 ft on the station datum, 1.9 ft above mean higher high water.[[base]]",
+      "The Los Angeles tide gauge (NOAA 9410660) records at least 3 days between Nov 2026 and Apr 2027 at or above [[base|NOAA's minor coastal flood level: 11.18 ft on the station datum, 1.9 ft above mean higher high water]].",
     rows: [
       { id: "base", label: "Base rate, 72 winters since 1950", value: "10%", detail: "7 of 72. Last 11 winters: 3 of 11 (2025-26 had 6 days with no El Niño).", data: [D_HTF, D_FLOOD_LEVELS, { label: "NOAA high tide flooding overview", url: "https://tidesandcurrents.noaa.gov/high-tide-flooding/" }] },
       { id: "analogs", label: `Rate in ${ANALOGS}`, value: "38%", detail: "3 of 8 with data: 1982-83 (6 days), 2015-16 (5), 1997-98 (3). At least 1 day: 7 of 8.", data: [D_HTF, D_RONI] },
       { id: "lift", label: "El Niño sea-level lift", value: "6–12 in", detail: "already observed off California in September (Swain), a third to a half of the 22-inch margin between mean higher high water and the flood level; NOAA: 6–10 in seasonal rise", data: [{ label: "Swain on observed sea level, 24:57 (secondhand: no tide-gauge series pulled)", url: SW_SEP + "&t=1497s" }, { label: "NOAA Ocean Service: El Niño and high tide flooding, May 2026", url: "https://oceanservice.noaa.gov/news/may26/el-nino-flooding.html" }, D_FLOOD_LEVELS] },
     ],
     method:
-      "The analog rate[[analogs]], raised a long way: the two most recent analogs both cleared 3 days easily[[analogs]], last winter cleared it with no El Niño at all[[base]], the lift is already 6–12 inches in September[[lift]], and Swain expects record sea levels in San Diego and much of the state this winter[[q2]].",
+      "[[analogs|The analog rate]], raised a long way: [[analogs|the two most recent analogs both cleared 3 days easily]], [[base|last winter cleared it with no El Niño at all]], [[lift|the lift is already 6–12 inches in September]], and [[q2|Swain expects record sea levels in San Diego and much of the state this winter]].",
     quotes: [
       { text: "There will be significant coastal flooding that will get worse from here. That is almost 100% guaranteed. How bad it gets will depend.", who: SWAIN_SEP + ", 1:06:15", url: SW_SEP + "&t=3975s" },
       { text: "I expect us to break the records in San Diego. So I think we'll probably see record sea levels in many parts of California except possibly San Francisco proper", who: SWAIN_SEP + ", 32:53", url: SW_SEP + "&t=1973s" },
@@ -108,13 +108,13 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
     headline: "~8%",
     range: "5–15%",
     definition:
-      "A month-long megastorm on the ARkStorm scale: roughly 447 mm (17.6 in) or more of precipitation averaged over the whole state in 30 days, the ARkHist scenario of ARkStorm 2.0[[q6]], which brings slightly less rain than the winter of 1861-62 did[[?]]. The biggest calendar month in the 131-year record is 12.5 in (Jan 1995)[[base]].",
+      "A month-long megastorm on the ARkStorm scale: [[q6|roughly 447 mm (17.6 in) or more of precipitation averaged over the whole state in 30 days, the ARkHist scenario of ARkStorm 2.0]], [[?|which brings slightly less rain than the winter of 1861-62 did]]. [[base|The biggest calendar month in the 131-year record is 12.5 in (Jan 1995)]].",
     rows: [
       { id: "base", label: "Base rate at today's warming", value: "2.5–3% / yr", detail: "Huang & Swain 2022, Fig. 5B: about 1%/yr in the pre-industrial climate, rising ~1.2 points per °C of global warming. At 1.3–1.65°C (30-year-smoothed vs single-year 2026 estimates) that is 2.5–3%. Cross-check: a stationary 131-year record is beaten with probability 1/132 = 0.8%; warming to date has roughly doubled the 1920 rate.", data: [D_HS, { label: "Weather West summary of the paper", url: "https://weatherwest.com/archives/16626" }, D_PRECIP_MONTHLY_CSV] },
       { id: "mult", label: "El Niño multiplier", value: "×2–5", detail: "Huang & Swain: 7 of the 8 most intense simulated 30-day sequences fell in a moderate-to-strong El Niño year (8 of 8 with rounding). Such winters are 18% of NOAA's record since 1950 on ONI (14 of 76) and 24% on RONI (18 of 76), so taken at face value the lift is ×3.7–4.8. Two things pull it down: half the paper's events come from a simulated 2071–80 and the paper does not say how common El Niño years are inside the model (if 35–50%, the lift is only ×2–2.5), and the instrumental record shows ×2.4 (2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall).", face: "El Niño", data: [D_HS, D_ONI, D_RONI, D_PRECIP_MONTHLY_CSV] },
     ],
     method:
-      "Base rate 2.5–3% a year (Fig. 5B)[[base]] times an El Niño multiplier of ×2–5[[mult]] gives 5–15%; the headline takes about ×3. Belikewater argues for 10–13%[[q8]] by taking the 7-of-8 finding[[q5]] at face value against how rare such winters are[[mult]]. Claude F5.1 sits lower because the model's own El Niño frequency is unknown and the instrumental record suggests ×2.4[[mult]]. Until 18 Sep this tile showed the unconditioned ~3%.",
+      "[[base|Base rate 2.5–3% a year (Fig. 5B)]] times [[mult|an El Niño multiplier of ×2–5]] gives 5–15%; the headline takes about ×3. [[q8|Belikewater argues for 10–13%]] by taking [[q5|the 7-of-8 finding]] at face value against [[mult|how rare such winters are]]. Claude F5.1 sits lower because the model's own El Niño frequency is unknown and [[mult|the instrumental record suggests ×2.4]]. Until 18 Sep this tile showed the unconditioned ~3%.",
     quotes: [
       { text: "Recent estimates suggest that floods equal to or greater in magnitude to those in 1862 occur five to seven times per millennium [i.e., a 1.0 to 0.5% annual likelihood or 100- to 200-year recurrence interval (RI)]", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
       { text: "We find that the annual likelihood of an ARkHist level event increases rapidly for each 1°C of global warming [by ~0.012/year per degree C from a baseline of ~0.01/year]", who: HS + ", Fig. 5B", url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
@@ -152,8 +152,8 @@ export type StatementRef = {
   links: DataLink[];
 };
 
-/** Strips [[id]] citation markers, for places that show prose without citations. */
-export const plain = (text: string) => text.replace(/\[\[[a-z0-9?]+\]\]/g, "");
+/** Drops citation markers and keeps their words, for places that show prose without citations. */
+export const plain = (text: string) => text.replace(/\[\[[a-z0-9?]+(?:\|([^\]]*))?\]\]/g, "$1");
 
 const refs: Omit<StatementRef, "n">[] = [
   ...ENSO_CONTEXT.map((c) => ({ slot: contextSlot(c), kind: "Context" as const, title: `“${c.text}”`, links: [{ label: c.who, url: c.url }] })),

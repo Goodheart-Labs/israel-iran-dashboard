@@ -142,15 +142,20 @@ const BODY_FONT = { fontFamily: '"Inter", system-ui, -apple-system, sans-serif' 
 // number; clicking it pulls up the statement, its sources and the vote chips.
 // ---------------------------------------------------------------------------
 
-function CitationNeeded() {
-  return <span className="badge badge-outline badge-xs align-middle opacity-70 mx-0.5 whitespace-nowrap" style={BODY_FONT}>citation needed</span>;
+function CitationNeeded({ children }: { children?: ReactNode }) {
+  return (
+    <>
+      {children && <span className="underline decoration-dotted decoration-base-content/40 underline-offset-4">{children}</span>}
+      <span className="badge badge-outline badge-xs align-middle opacity-70 mx-0.5 whitespace-nowrap" style={BODY_FONT}>citation needed</span>
+    </>
+  );
 }
 
 function CiteCard({ id, st, alignRight }: { id: string; st: StatementRef; alignRight: boolean }) {
   const votes = useQuery(api.chartVotes.listAll) ?? [];
   return (
     <span id={id} role="dialog" aria-label={`Citation ${st.n}`} style={BODY_FONT}
-      className={`absolute top-full z-40 mt-1 block w-[min(24rem,88vw)] rounded-md border border-base-300 bg-base-100 p-3 text-left text-sm font-normal leading-snug tracking-normal text-base-content shadow-lg max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 max-sm:top-auto max-sm:w-auto ${alignRight ? "right-0" : "left-0"}`}>
+      className={`absolute top-full z-40 mt-1 block w-[min(24rem,88vw)] cursor-auto rounded-md border border-base-300 bg-base-100 p-3 text-left text-sm font-normal leading-snug tracking-normal text-base-content opacity-100 shadow-lg max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 max-sm:top-auto max-sm:w-auto ${alignRight ? "right-0" : "left-0"}`}>
       <span className="block text-[10px] font-semibold uppercase tracking-wide opacity-50">[{st.n}] {st.kind}</span>
       <span className="mt-1 block font-medium">{st.title}</span>
       {st.body && <span className="mt-1 block text-xs opacity-70">{st.body}</span>}
@@ -172,11 +177,87 @@ function CiteCard({ id, st, alignRight }: { id: string; st: StatementRef; alignR
   );
 }
 
-function Cite({ slot }: { slot: string | undefined }) {
+// `children` = the words this statement backs. Hovering or tapping them (or the
+// number) pulls up the statement; a click pins it so the votes can be reached.
+function Cite({ slot, children }: { slot: string | undefined; children?: ReactNode }) {
   const st = slot ? STATEMENT_BY_SLOT.get(slot) : undefined;
-  const [open, setOpen] = useState(false);
+  const [hovered, setHovered] = useState(false);
+  const [pinned, setPinned] = useState(false);
   const [alignRight, setAlignRight] = useState(false);
-  const ref = useRef<HTMLSpanElement>(null);
+  const wrap = useRef<HTMLSpanElement>(null);
+  const anchor = useRef<HTMLSpanElement>(null);
+  const timer = useRef<number | undefined>(undefined);
+  const id = useId();
+  const open = hovered || pinned;
+  useEffect(() => {
+    if (!open) return;
+    const dismiss = (event: PointerEvent) => {
+      if (!wrap.current?.contains(event.target as Node)) { setPinned(false); setHovered(false); }
+    };
+    document.addEventListener("pointerdown", dismiss);
+    return () => document.removeEventListener("pointerdown", dismiss);
+  }, [open]);
+  useEffect(() => () => window.clearTimeout(timer.current), []);
+  if (!st) return <CitationNeeded>{children}</CitationNeeded>;
+  const place = () => {
+    const box = anchor.current?.getBoundingClientRect();
+    setAlignRight(!!box && box.left > window.innerWidth / 2);
+  };
+  // Short delays: a pointer sweeping across the paragraph opens nothing, and one
+  // crossing the gap into the card does not lose it.
+  const hover = (next: boolean) => {
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => { if (next) place(); setHovered(next); }, next ? 150 : 250);
+  };
+  const toggle = () => { place(); setPinned(!open); setHovered(false); window.clearTimeout(timer.current); };
+  return (
+    <span ref={wrap}
+      onMouseEnter={() => { if (window.matchMedia("(hover: hover)").matches) hover(true); }}
+      onMouseLeave={() => hover(false)}
+      onKeyDown={(event) => { if (event.key === "Escape") { setPinned(false); setHovered(false); } }}>
+      {children && (
+        <span onClick={toggle}
+          className={`cursor-pointer rounded-sm transition-colors hover:bg-primary/10 ${open ? "bg-primary/15" : ""}`}>
+          {children}
+        </span>
+      )}
+      <span ref={anchor} className="relative inline-block">
+        <button type="button" aria-expanded={open} aria-controls={id} aria-label={`Citation ${st.n}, ${st.kind.toLowerCase()}`}
+          onClick={toggle} style={BODY_FONT}
+          className="cursor-pointer align-super text-[max(0.55em,10px)] font-medium leading-none text-primary hover:underline px-px">
+          [{st.n}]
+        </button>
+        {open && <CiteCard id={id} st={st} alignRight={alignRight} />}
+      </span>
+    </span>
+  );
+}
+
+/**
+ * Prose with citation markers. [[id|words]] and {{i|words}} cite a statement for those
+ * words (the caller resolves id or i to a slot); [[?|words]] marks words nothing backs.
+ * The bare forms [[id]] and {{i}} still work, with no words attached.
+ */
+function Cited({ text, resolve }: { text: string; resolve: (id: string) => string | undefined }) {
+  return (
+    <>
+      {text.split(/(\[\[[a-z0-9?]+(?:\|[^\]]*)?\]\]|\{\{\d+(?:\|[^}]*)?\}\})/).map((part, i) => {
+        const marker = /^\[\[([a-z0-9?]+)(?:\|([^\]]*))?\]\]$|^\{\{(\d+)(?:\|([^}]*))?\}\}$/.exec(part);
+        if (!marker) return part;
+        const markerId = marker[1] ?? marker[3];
+        const words = marker[2] ?? marker[4];
+        return markerId === "?"
+          ? <CitationNeeded key={i}>{words}</CitationNeeded>
+          : <Cite key={i} slot={resolve(markerId)}>{words}</Cite>;
+      })}
+    </>
+  );
+}
+
+// The definition popover opens on click only; hover belongs to the citations on the tile face.
+function EstimateTile({ e }: { e: Estimate }) {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
   const id = useId();
   useEffect(() => {
     if (!open) return;
@@ -186,73 +267,25 @@ function Cite({ slot }: { slot: string | undefined }) {
     document.addEventListener("pointerdown", dismiss);
     return () => document.removeEventListener("pointerdown", dismiss);
   }, [open]);
-  if (!st) return <CitationNeeded />;
-  return (
-    <span ref={ref} className="relative inline-block"
-      onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}>
-      <button type="button" aria-expanded={open} aria-controls={id} aria-label={`Citation ${st.n}, ${st.kind.toLowerCase()}`}
-        onClick={() => {
-          const box = ref.current?.getBoundingClientRect();
-          setAlignRight(!!box && box.left > window.innerWidth / 2);
-          setOpen(!open);
-        }}
-        style={BODY_FONT}
-        className="cursor-pointer align-super text-[max(0.55em,10px)] font-medium leading-none text-primary hover:underline px-px">
-        [{st.n}]
-      </button>
-      {open && <CiteCard id={id} st={st} alignRight={alignRight} />}
-    </span>
-  );
-}
-
-/** Prose with citation markers: [[id]] resolved by the caller, {{i}} likewise, [[?]] = no statement backs it. */
-function Cited({ text, resolve }: { text: string; resolve: (id: string) => string | undefined }) {
-  return (
-    <>
-      {text.split(/(\[\[[a-z0-9?]+\]\]|\{\{\d+\}\})/).map((part, i) => {
-        const marker = /^\[\[(.+)\]\]$|^\{\{(\d+)\}\}$/.exec(part);
-        if (!marker) return part;
-        const markerId = marker[1] ?? marker[2];
-        return markerId === "?" ? <CitationNeeded key={i} /> : <Cite key={i} slot={resolve(markerId)} />;
-      })}
-    </>
-  );
-}
-
-function EstimateTile({ e }: { e: Estimate }) {
-  const [hovered, setHovered] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-  const id = useId();
-  const open = hovered || pinned;
-  useEffect(() => {
-    if (!open) return;
-    const dismiss = (event: PointerEvent) => {
-      if (!ref.current?.contains(event.target as Node)) { setPinned(false); setHovered(false); }
-    };
-    document.addEventListener("pointerdown", dismiss);
-    return () => document.removeEventListener("pointerdown", dismiss);
-  }, [open]);
   const [base, analogs] = e.rows;
   const resolve = (markerId: string) => slotFor(e, markerId);
   return (
     <div ref={ref} className="relative"
-      onMouseEnter={() => setHovered(true)} onMouseLeave={() => setHovered(false)}
-      onKeyDown={(event) => { if (event.key === "Escape") { setPinned(false); setHovered(false); } }}>
+      onKeyDown={(event) => { if (event.key === "Escape") setOpen(false); }}>
       <div className="card bg-base-100 hover:shadow-md transition-shadow">
         <button type="button" aria-expanded={open} aria-controls={id}
-          onClick={() => { setPinned(!pinned); setHovered(false); }}
+          onClick={() => setOpen(!open)}
           className="w-full cursor-pointer px-4 pt-4 text-left">
           <div className="text-sm font-medium opacity-70">{e.label}</div>
           <div className="text-3xl font-bold leading-tight">{e.headline}</div>
           <div className="text-xs opacity-50">range {e.range}</div>
         </button>
         <div className="px-4 pb-4 pt-2 text-xs leading-snug">
-          <span className="opacity-60">{base.face ?? "base rate"}</span> <span className="font-medium">{base.value}</span><Cite slot={rowSlot(e, base)} />
+          <Cite slot={rowSlot(e, base)}><span className="opacity-60">{base.face ?? "base rate"}</span> <span className="font-medium">{base.value}</span></Cite>
           <span className="opacity-40"> · </span>
-          <span className="opacity-60">{analogs.face ?? "El Niño winters"}</span> <span className="font-medium">{analogs.value}</span><Cite slot={rowSlot(e, analogs)} />
+          <Cite slot={rowSlot(e, analogs)}><span className="opacity-60">{analogs.face ?? "El Niño winters"}</span> <span className="font-medium">{analogs.value}</span></Cite>
           <span className="opacity-40"> · </span>
-          <span className="opacity-60">reasoning</span><Cite slot={oursSlot(e)} />
+          <Cite slot={oursSlot(e)}><span className="opacity-60">reasoning</span></Cite>
         </div>
       </div>
       <div id={id} hidden={!open}
@@ -263,18 +296,18 @@ function EstimateTile({ e }: { e: Estimate }) {
             {e.rows.map((r) => (
               <tr key={r.label} className="align-top">
                 <td className="pr-2 py-0.5 opacity-70">{r.label}</td>
-                <td className="py-0.5 font-medium whitespace-nowrap">{r.value}<Cite slot={rowSlot(e, r)} /></td>
+                <td className="py-0.5 font-medium whitespace-nowrap"><Cite slot={rowSlot(e, r)}>{r.value}</Cite></td>
               </tr>
             ))}
             <tr className="align-top border-t border-base-300">
               <td className="pr-2 py-0.5 opacity-70">Claude F5.1's number</td>
-              <td className="py-0.5 font-bold whitespace-nowrap">{e.headline}<Cite slot={oursSlot(e)} /></td>
+              <td className="py-0.5 font-bold whitespace-nowrap"><Cite slot={oursSlot(e)}>{e.headline}</Cite></td>
             </tr>
           </tbody>
         </table>
         <p className="text-xs opacity-80"><Cited text={e.method} resolve={resolve} /></p>
         <blockquote className="text-xs border-l-2 border-base-300 pl-2 opacity-80">
-          “{e.quotes[0].text}”<Cite slot={quoteSlot(e, e.quotes[0])} /> <span className="opacity-60">— {e.quotes[0].who}</span>
+          <Cite slot={quoteSlot(e, e.quotes[0])}>“{e.quotes[0].text}”</Cite> <span className="opacity-60">— {e.quotes[0].who}</span>
         </blockquote>
         <Link to="/el-nino" search={{ mode: "review" }} hash={`working-${e.key}`} className="text-xs underline">
           Check the working, quotes and sources
@@ -296,7 +329,7 @@ function Byline() {
 }
 
 // The big summary under the title. Text lives in Convex (`headlines`), written only
-// from statements readers have marked useful; {{i}} in the text cites citedSlots[i].
+// from statements readers have marked useful; {{i|words}} in the text cites citedSlots[i].
 function Headline() {
   const headline = useQuery(api.headlines.latest, { topic: "elnino" });
   if (!headline) return null;
@@ -321,8 +354,8 @@ function CaliforniaEstimates() {
       <div className="mb-3">
         <h2 className="text-xl font-semibold tracking-tight">California this winter</h2>
         <p className="text-sm opacity-60">
-          No exchange prices these, so the numbers are Claude F5.1's estimates. Click a number in brackets for
-          the statement behind it; hover a tile for the definition and the base rates.
+          No exchange prices these, so the numbers are Claude F5.1's estimates. Hover or tap any claim with a
+          number in brackets to see the statement behind it and vote on it; click a tile for its definition.
         </p>
       </div>
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
@@ -487,9 +520,9 @@ function EnsoContext() {
   const [nino34, veryStrong, historic] = ENSO_CONTEXT;
   return (
     <p className="text-sm opacity-70 mb-6 not-prose">
-      NOAA's 10 September discussion has Niño-3.4 at +1.8°C<Cite slot={contextSlot(nino34)} />, a greater than 90%
-      chance of a very strong El Niño this fall and winter<Cite slot={contextSlot(veryStrong)} />, and a 75% chance of
-      a historic event stronger than any since 1950<Cite slot={contextSlot(historic)} />. The markets below price the
+      NOAA's 10 September discussion has <Cite slot={contextSlot(nino34)}>Niño-3.4 at +1.8°C</Cite>,{" "}
+      <Cite slot={contextSlot(veryStrong)}>a greater than 90% chance of a very strong El Niño this fall and winter</Cite>, and{" "}
+      <Cite slot={contextSlot(historic)}>a 75% chance of a historic event stronger than any since 1950</Cite>. The markets below price the
       strength of the event and its knock-on for global temperature; the tiles above are what that means for
       California.{" "}
       <a href={CPC_DISCUSSION_URL} target="_blank" rel="noopener noreferrer" className="underline">CPC discussion</a>

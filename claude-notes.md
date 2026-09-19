@@ -45,7 +45,11 @@
   request) and a jump to `#s-n` in review. Prose carries markers: `[[rowId]]`,
   `[[qN]]`, `[[ours]]` inside an estimate, `{{i}}` in the Convex summary text
   (index into citedSlots), and `[[?]]` renders "citation needed" where no
-  statement backs a claim (three today). Row/ours/quote slot ids are unchanged.
+  statement backs a claim (three today). Markers carry the words they back,
+  `[[id|words]]` / `{{i|words}}`: hovering (150 ms in, 250 ms out) or tapping those
+  words highlights them and opens the same card, so a reader can vote on the claim
+  from the sentence that uses it. The tile's definition popover is click-only now,
+  so it does not fight the citation cards on the tile face. Row/ours/quote slot ids are unchanged.
   NOT covered yet: the market blurbs in `GROUP_RESOLUTION` (rendered by
   TopicDashboard's editable text) still state facts with no citation.
 - NOT built yet: the periodic LLM headline from checked statements (grow rule:
@@ -69,6 +73,7 @@ feat: caveats in read mode, drop alpha line
 feat: big summary at the top of el nino page, stored in convex
 feat: megaflood revised to ~8% with El Niño multiplier x2-5, ONI/RONI share added to script
 feat: numbered citations everywhere a fact is used, with statement cards and votes
+feat: cited words open their claim card on hover or tap
 
 ## Word-labelled slider in both chart views (2026-09-15)
 
