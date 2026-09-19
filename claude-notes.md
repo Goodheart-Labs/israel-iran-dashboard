@@ -36,6 +36,18 @@
   by Claude F5.1 in-session on 2026-09-18 from the 5 statements then marked useful
   on prod, and inserted with `pnpx convex run headlines:set '<json>' --prod`.
   It does NOT auto-update yet (see next bullet).
+- Citations (Nathan: "wherever a fact is referenced it should have a citation that
+  pulls up the relevant thing, with a voting surface"). All page facts now live in
+  `src/lib/elninoStatements.ts`: estimates, verbatim NOAA context (`ENSO_CONTEXT`,
+  new votable slots `elnino:context:<id>`), and `STATEMENTS`, a registry giving each
+  statement a stable number. `Cite` in el-nino.tsx renders `[n]`; clicking opens a
+  card with the statement, its links, the three vote chips (in read mode too, by his
+  request) and a jump to `#s-n` in review. Prose carries markers: `[[rowId]]`,
+  `[[qN]]`, `[[ours]]` inside an estimate, `{{i}}` in the Convex summary text
+  (index into citedSlots), and `[[?]]` renders "citation needed" where no
+  statement backs a claim (three today). Row/ours/quote slot ids are unchanged.
+  NOT covered yet: the market blurbs in `GROUP_RESOLUTION` (rendered by
+  TopicDashboard's editable text) still state facts with no citation.
 - NOT built yet: the periodic LLM headline from checked statements (grow rule:
   ≥1 useful vote and positive net score). Needs an Anthropic key in the Convex env.
   Spec: `tmp/2026-09-18-elnino-review-spec.md`.
@@ -56,6 +68,7 @@ feat: sources live on the facts, add Belikewater revised megastorm estimate
 feat: caveats in read mode, drop alpha line
 feat: big summary at the top of el nino page, stored in convex
 feat: megaflood revised to ~8% with El Niño multiplier x2-5, ONI/RONI share added to script
+feat: numbered citations everywhere a fact is used, with statement cards and votes
 
 ## Word-labelled slider in both chart views (2026-09-15)
 
