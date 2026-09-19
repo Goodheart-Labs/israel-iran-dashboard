@@ -52,6 +52,15 @@
   so it does not fight the citation cards on the tile face. Row/ours/quote slot ids are unchanged.
   NOT covered yet: the market blurbs in `GROUP_RESOLUTION` (rendered by
   TopicDashboard's editable text) still state facts with no citation.
+- Cards nest, gwern-style (Nathan's ask): a Judgment card renders its method with live
+  citations (`StatementRef.marked`), a Quote card offers "Who is <speaker>?"
+  (`speaker`), and those open further cards inside the first, each with its own
+  votes. `MAX_DEPTH = 3` guards against loops.
+- People statements (`PEOPLE`, slots `elnino:person:<id>`): Daniel Swain (verbatim from
+  weatherwest.com/about) and Belikewater (only what the page and their public X handle
+  already show; do not dig further into a pseudonymous person). Cited from the byline,
+  the summary (`[[swain|Daniel Swain]]` resolves via PEOPLE, not citedSlots), quote
+  attributions in review, and quote cards.
 - NOT built yet: the periodic LLM headline from checked statements (grow rule:
   ≥1 useful vote and positive net score). Needs an Anthropic key in the Convex env.
   Spec: `tmp/2026-09-18-elnino-review-spec.md`.
@@ -74,6 +83,7 @@ feat: big summary at the top of el nino page, stored in convex
 feat: megaflood revised to ~8% with El Niño multiplier x2-5, ONI/RONI share added to script
 feat: numbered citations everywhere a fact is used, with statement cards and votes
 feat: cited words open their claim card on hover or tap
+feat: nested claim cards and who-is statements for Swain and Belikewater
 
 ## Word-labelled slider in both chart views (2026-09-15)
 

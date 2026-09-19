@@ -19,11 +19,14 @@ import {
   CPC_DISCUSSION_URL,
   CPC_RONI_URL,
   ENSO_CONTEXT,
+  PEOPLE,
   SCRIPT_URL,
   STATEMENT_BY_SLOT,
   WORKING_URL,
   contextSlot,
   oursSlot,
+  personFor,
+  personSlot,
   quoteSlot,
   rowSlot,
   slotFor,
@@ -151,14 +154,21 @@ function CitationNeeded({ children }: { children?: ReactNode }) {
   );
 }
 
-function CiteCard({ id, st, alignRight }: { id: string; st: StatementRef; alignRight: boolean }) {
+// Cards nest: a judgment's card cites the data and quotes it leans on, and those words
+// open their own cards in turn. MAX_DEPTH stops a citation loop from recursing forever.
+const MAX_DEPTH = 3;
+
+function CiteCard({ id, st, alignRight, depth }: { id: string; st: StatementRef; alignRight: boolean; depth: number }) {
   const votes = useQuery(api.chartVotes.listAll) ?? [];
+  const marked = st.marked;
   return (
     <span id={id} role="dialog" aria-label={`Citation ${st.n}`} style={BODY_FONT}
       className={`absolute top-full z-40 mt-1 block w-[min(24rem,88vw)] cursor-auto rounded-md border border-base-300 bg-base-100 p-3 text-left text-sm font-normal leading-snug tracking-normal text-base-content opacity-100 shadow-lg max-sm:fixed max-sm:inset-x-3 max-sm:bottom-3 max-sm:top-auto max-sm:w-auto ${alignRight ? "right-0" : "left-0"}`}>
       <span className="block text-[10px] font-semibold uppercase tracking-wide opacity-50">[{st.n}] {st.kind}</span>
       <span className="mt-1 block font-medium">{st.title}</span>
-      {st.body && <span className="mt-1 block text-xs opacity-70">{st.body}</span>}
+      {marked && depth < MAX_DEPTH
+        ? <span className="mt-1 block text-xs text-base-content/70"><Cited text={marked.text} resolve={(markerId) => slotFor(marked.estimate, markerId)} depth={depth + 1} /></span>
+        : st.body && <span className="mt-1 block text-xs opacity-70">{st.body}</span>}
       {st.links.length > 0 && (
         <span className="mt-1.5 block text-xs">
           {st.links.map((l, i) => (
@@ -167,6 +177,11 @@ function CiteCard({ id, st, alignRight }: { id: string; st: StatementRef; alignR
               <a href={l.url} target="_blank" rel="noopener noreferrer" className="underline opacity-80">{l.label}</a>
             </span>
           ))}
+        </span>
+      )}
+      {st.speaker && depth < MAX_DEPTH && (
+        <span className="mt-1.5 block text-xs text-base-content/70">
+          <Cite slot={st.speaker.slot} depth={depth + 1}>Who is {st.speaker.name}?</Cite>
         </span>
       )}
       <span className="mt-2 flex flex-wrap items-center justify-between gap-2">
@@ -179,7 +194,7 @@ function CiteCard({ id, st, alignRight }: { id: string; st: StatementRef; alignR
 
 // `children` = the words this statement backs. Hovering or tapping them (or the
 // number) pulls up the statement; a click pins it so the votes can be reached.
-function Cite({ slot, children }: { slot: string | undefined; children?: ReactNode }) {
+function Cite({ slot, children, depth = 0 }: { slot: string | undefined; children?: ReactNode; depth?: number }) {
   const st = slot ? STATEMENT_BY_SLOT.get(slot) : undefined;
   const [hovered, setHovered] = useState(false);
   const [pinned, setPinned] = useState(false);
@@ -227,7 +242,7 @@ function Cite({ slot, children }: { slot: string | undefined; children?: ReactNo
           className="cursor-pointer align-super text-[max(0.55em,10px)] font-medium leading-none text-primary hover:underline px-px">
           [{st.n}]
         </button>
-        {open && <CiteCard id={id} st={st} alignRight={alignRight} />}
+        {open && <CiteCard id={id} st={st} alignRight={alignRight} depth={depth} />}
       </span>
     </span>
   );
@@ -238,7 +253,7 @@ function Cite({ slot, children }: { slot: string | undefined; children?: ReactNo
  * words (the caller resolves id or i to a slot); [[?|words]] marks words nothing backs.
  * The bare forms [[id]] and {{i}} still work, with no words attached.
  */
-function Cited({ text, resolve }: { text: string; resolve: (id: string) => string | undefined }) {
+function Cited({ text, resolve, depth = 0 }: { text: string; resolve: (id: string) => string | undefined; depth?: number }) {
   return (
     <>
       {text.split(/(\[\[[a-z0-9?]+(?:\|[^\]]*)?\]\]|\{\{\d+(?:\|[^}]*)?\}\})/).map((part, i) => {
@@ -248,7 +263,7 @@ function Cited({ text, resolve }: { text: string; resolve: (id: string) => strin
         const words = marker[2] ?? marker[4];
         return markerId === "?"
           ? <CitationNeeded key={i}>{words}</CitationNeeded>
-          : <Cite key={i} slot={resolve(markerId)}>{words}</Cite>;
+          : <Cite key={i} slot={resolve(markerId)} depth={depth}>{words}</Cite>;
       })}
     </>
   );
@@ -324,12 +339,14 @@ function Byline() {
       <a href="https://x.com/NathanpmYoung" target="_blank" rel="noopener noreferrer" className="underline">Nathan Young</a>
       <span className="opacity-70"> and </span>
       <a href="https://x.com/Just_Curius" target="_blank" rel="noopener noreferrer" className="underline">Belikewater</a>
+      <Cite slot={personSlot(PEOPLE[1])} />
     </p>
   );
 }
 
 // The big summary under the title. Text lives in Convex (`headlines`), written only
-// from statements readers have marked useful; {{i|words}} in the text cites citedSlots[i].
+// from statements readers have marked useful; {{i|words}} in the text cites citedSlots[i],
+// [[personId|Name]] says who someone is.
 function Headline() {
   const headline = useQuery(api.headlines.latest, { topic: "elnino" });
   if (!headline) return null;
@@ -337,7 +354,10 @@ function Headline() {
   return (
     <section className="mb-8 not-prose max-w-4xl">
       <p className="text-2xl md:text-3xl leading-snug tracking-tight" style={{ fontFamily: 'Georgia, "Times New Roman", serif' }}>
-        <Cited text={headline.text} resolve={(i) => headline.citedSlots[Number(i)]} />
+        <Cited text={headline.text} resolve={(markerId) => {
+          const person = PEOPLE.find((p) => p.id === markerId);
+          return person ? personSlot(person) : headline.citedSlots[Number(markerId)];
+        }} />
       </p>
       <p className="text-xs opacity-60 mt-2">
         Summary by {headline.author}, {date}, using only the {headline.citedSlots.length} statements it cites that
@@ -435,7 +455,21 @@ function Review() {
           found it useful)
         </div>
       </div>
-      <div id="working-context" className="card bg-base-100 scroll-mt-4 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 items-start mb-6">
+      <div id="working-people" className="card bg-base-100 scroll-mt-4">
+        <div className="card-body p-5">
+          <h3 className="card-title text-base">Who is quoted</h3>
+          <StatementGroup title="People">
+            {PEOPLE.map((p) => (
+              <Statement key={p.id} slot={personSlot(p)} votes={votes} cited={cited}>
+                <span className="font-medium">{p.name}.</span> {p.text}{" "}
+                <a href={p.url} target="_blank" rel="noopener noreferrer" className="underline opacity-70">— {p.who}</a>
+              </Statement>
+            ))}
+          </StatementGroup>
+        </div>
+      </div>
+      <div id="working-context" className="card bg-base-100 scroll-mt-4">
         <div className="card-body p-5">
           <h3 className="card-title text-base">The El Niño itself</h3>
           <StatementGroup title="What NOAA says, verbatim">
@@ -447,6 +481,7 @@ function Review() {
             ))}
           </StatementGroup>
         </div>
+      </div>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 items-start">
         {CALIFORNIA_ESTIMATES.map((e) => {
@@ -486,6 +521,7 @@ function Review() {
                       {q.url
                         ? <a href={q.url} target="_blank" rel="noopener noreferrer" className="underline opacity-70">— {q.who}</a>
                         : <span className="opacity-70">— {q.who}</span>}
+                      {personFor(q.who) && <Cite slot={personSlot(personFor(q.who)!)} />}
                     </Statement>
                   ))}
                 </StatementGroup>

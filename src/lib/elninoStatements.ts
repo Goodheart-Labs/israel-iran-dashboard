@@ -70,7 +70,7 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
       { id: "cpc", label: "NOAA CPC outlook, 20 Aug", value: ">50%", detail: "odds of above-normal (top-third) precipitation for coastal California", data: [{ label: "NOAA CPC seasonal outlook discussion", url: "https://www.cpc.ncep.noaa.gov/products/predictions/long_range/fxus05.html" }] },
     ],
     method:
-      "Between [[analogs|the analog rate (33%)]] and [[ecmwf|the ECMWF ensemble (>70%)]], leaning to the model. [[q3|It correctly hindcast 2015-16 as a dry strong-El Niño winter and 1982-83 and 1997-98 as wet ones]], and this event is [[?|forecast to peak near RONI 3.0]], [[analogs|beyond every analog (max 2.4)]]. Claude F5.1 stops short of the model because it is one system and, [[?|as Swain notes, an under-dispersed ensemble can be too wet or too dry]].",
+      "Between [[analogs|the analog rate (33%)]] and [[ecmwf|the ECMWF ensemble (>70%)]], leaning to the model. [[q3|It correctly hindcast 2015-16 as a dry strong-El Niño winter and 1982-83 and 1997-98 as wet ones]], and this event is [[?|forecast to peak near RONI 3.0]], [[analogs|beyond every analog (max 2.4)]]. Claude F5.1 stops short of the model because it is one system and, as [[swain|Swain]] notes, [[?|an under-dispersed ensemble can be too wet or too dry]].",
     quotes: [
       { text: "a greater than 70% chance of precipitation this December through February being among the wettest 20%.", who: SWAIN_SEP + ", 41:46", url: SW_SEP + "&t=2506s" },
       { text: "It is more likely than not, probably about two in three odds of a winter among the wettest 10% we've seen. That's a more defensible headline.", who: SWAIN_SEP + ", 1:01:07", url: SW_SEP + "&t=3667s" },
@@ -93,7 +93,7 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
       { id: "lift", label: "El Niño sea-level lift", value: "6–12 in", detail: "already observed off California in September (Swain), a third to a half of the 22-inch margin between mean higher high water and the flood level; NOAA: 6–10 in seasonal rise", data: [{ label: "Swain on observed sea level, 24:57 (secondhand: no tide-gauge series pulled)", url: SW_SEP + "&t=1497s" }, { label: "NOAA Ocean Service: El Niño and high tide flooding, May 2026", url: "https://oceanservice.noaa.gov/news/may26/el-nino-flooding.html" }, D_FLOOD_LEVELS] },
     ],
     method:
-      "[[analogs|The analog rate]], raised a long way: [[analogs|the two most recent analogs both cleared 3 days easily]], [[base|last winter cleared it with no El Niño at all]], [[lift|the lift is already 6–12 inches in September]], and [[q2|Swain expects record sea levels in San Diego and much of the state this winter]].",
+      "[[analogs|The analog rate]], raised a long way: [[analogs|the two most recent analogs both cleared 3 days easily]], [[base|last winter cleared it with no El Niño at all]], [[lift|the lift is already 6–12 inches in September]], and [[swain|Swain]] [[q2|expects record sea levels in San Diego and much of the state this winter]].",
     quotes: [
       { text: "There will be significant coastal flooding that will get worse from here. That is almost 100% guaranteed. How bad it gets will depend.", who: SWAIN_SEP + ", 1:06:15", url: SW_SEP + "&t=3975s" },
       { text: "I expect us to break the records in San Diego. So I think we'll probably see record sea levels in many parts of California except possibly San Francisco proper", who: SWAIN_SEP + ", 32:53", url: SW_SEP + "&t=1973s" },
@@ -114,7 +114,7 @@ export const CALIFORNIA_ESTIMATES: Estimate[] = [
       { id: "mult", label: "El Niño multiplier", value: "×2–5", detail: "Huang & Swain: 7 of the 8 most intense simulated 30-day sequences fell in a moderate-to-strong El Niño year (8 of 8 with rounding). Such winters are 18% of NOAA's record since 1950 on ONI (14 of 76) and 24% on RONI (18 of 76), so taken at face value the lift is ×3.7–4.8. Two things pull it down: half the paper's events come from a simulated 2071–80 and the paper does not say how common El Niño years are inside the model (if 35–50%, the lift is only ×2–2.5), and the instrumental record shows ×2.4 (2 of 9 strong El Niño winters had a 9-inch month vs 12 of 131 overall).", face: "El Niño", data: [D_HS, D_ONI, D_RONI, D_PRECIP_MONTHLY_CSV] },
     ],
     method:
-      "[[base|Base rate 2.5–3% a year (Fig. 5B)]] times [[mult|an El Niño multiplier of ×2–5]] gives 5–15%; the headline takes about ×3. [[q8|Belikewater argues for 10–13%]] by taking [[q5|the 7-of-8 finding]] at face value against [[mult|how rare such winters are]]. Claude F5.1 sits lower because the model's own El Niño frequency is unknown and [[mult|the instrumental record suggests ×2.4]]. Until 18 Sep this tile showed the unconditioned ~3%.",
+      "[[base|Base rate 2.5–3% a year (Fig. 5B)]] times [[mult|an El Niño multiplier of ×2–5]] gives 5–15%; the headline takes about ×3. [[belikewater|Belikewater]] [[q8|argues for 10–13%]] by taking [[q5|the 7-of-8 finding]] at face value against [[mult|how rare such winters are]]. Claude F5.1 sits lower because the model's own El Niño frequency is unknown and [[mult|the instrumental record suggests ×2.4]]. Until 18 Sep this tile showed the unconditioned ~3%.",
     quotes: [
       { text: "Recent estimates suggest that floods equal to or greater in magnitude to those in 1862 occur five to seven times per millennium [i.e., a 1.0 to 0.5% annual likelihood or 100- to 200-year recurrence interval (RI)]", who: HS, url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
       { text: "We find that the annual likelihood of an ARkHist level event increases rapidly for each 1°C of global warming [by ~0.012/year per degree C from a baseline of ~0.01/year]", who: HS + ", Fig. 5B", url: "https://www.science.org/doi/10.1126/sciadv.abq0995" },
@@ -137,6 +137,18 @@ export const ENSO_CONTEXT: Context[] = [
   { id: "historic", text: "there is a 75% chance of a historic event that would exceed the strength of previous El Niño events dating back to 1950 (+2.5°C or more for a 3-month RONI value)", who: CPC_DISC, url: CPC_DISCUSSION_URL },
 ];
 
+// Who the people quoted on this page are. Swain's lines are verbatim from his own site;
+// Belikewater's says only what the page and their public X account already show.
+export type Person = { id: string; name: string; text: string; who: string; url: string };
+export const PEOPLE: Person[] = [
+  { id: "swain", name: "Daniel Swain", text: "His primary appointment is as a climate scientist (Associate Researcher) in the California Institute for Water Resources within University of California Agriculture and Natural Resources (UC ANR) […] he has also been a longtime research partner at the NSF National Center for Atmospheric Research […] Weather West has provided unique perspectives on California weather and climate since 2006.", who: "Weather West, About", url: "https://weatherwest.com/about" },
+  { id: "belikewater", name: "Belikewater", text: "Belikewater posts on X as @Just_Curius and is a co-author of this page (see the byline). Their 11 Sep 2026 post putting a California megaflood at about 2.5% this winter, and their 18 Sep revision to 10–13%, are both quoted under the megaflood estimate.", who: "@Just_Curius on X", url: "https://x.com/Just_Curius" },
+];
+export const personSlot = (p: Person) => `elnino:person:${p.id}`;
+/** The person a quote's attribution names, if the page has a statement about them. */
+export const personFor = (who: string) =>
+  PEOPLE.find((p) => who.includes(p.name) || (p.id === "belikewater" && who.includes("@Just_Curius")));
+
 // Vote slots. The row/ours/quote ids predate the review view; changing them orphans readers' votes.
 export const rowSlot = (e: Estimate, r: Row) => `elnino:row:${e.key}:${itemId(r.label)}`;
 export const oursSlot = (e: Estimate) => `elnino:ours:${e.key}`;
@@ -146,9 +158,13 @@ export const contextSlot = (c: Context) => `elnino:context:${c.id}`;
 export type StatementRef = {
   slot: string;
   n: number; // the number shown in citations, stable while the lists above keep their order
-  kind: "Data" | "Judgment" | "Quote" | "Context";
+  kind: "Data" | "Judgment" | "Quote" | "Context" | "Person";
   title: string;
   body?: string;
+  /** Body with its citation markers kept, plus the estimate that resolves them, so a card can cite onward. */
+  marked?: { text: string; estimate: Estimate };
+  /** For a quote: the statement saying who the speaker is. */
+  speaker?: { name: string; slot: string };
   links: DataLink[];
 };
 
@@ -156,19 +172,25 @@ export type StatementRef = {
 export const plain = (text: string) => text.replace(/\[\[[a-z0-9?]+(?:\|([^\]]*))?\]\]/g, "$1");
 
 const refs: Omit<StatementRef, "n">[] = [
+  ...PEOPLE.map((p) => ({ slot: personSlot(p), kind: "Person" as const, title: `Who is ${p.name}?`, body: p.text, links: [{ label: p.who, url: p.url }] })),
   ...ENSO_CONTEXT.map((c) => ({ slot: contextSlot(c), kind: "Context" as const, title: `“${c.text}”`, links: [{ label: c.who, url: c.url }] })),
   ...CALIFORNIA_ESTIMATES.flatMap((e) => [
     ...e.rows.map((r) => ({ slot: rowSlot(e, r), kind: "Data" as const, title: `${e.label}. ${r.label}: ${r.value}`, body: r.detail, links: r.data })),
-    { slot: oursSlot(e), kind: "Judgment" as const, title: `${e.label}. Claude F5.1's number: ${e.headline} (range ${e.range})`, body: plain(e.method), links: [] },
-    ...e.quotes.map((q) => ({ slot: quoteSlot(e, q), kind: "Quote" as const, title: `“${q.text}”`, body: q.url ? undefined : q.who, links: q.url ? [{ label: q.who, url: q.url }] : [] })),
+    { slot: oursSlot(e), kind: "Judgment" as const, title: `${e.label}. Claude F5.1's number: ${e.headline} (range ${e.range})`, body: plain(e.method), marked: { text: e.method, estimate: e }, links: [] },
+    ...e.quotes.map((q) => {
+      const person = personFor(q.who);
+      return { slot: quoteSlot(e, q), kind: "Quote" as const, title: `“${q.text}”`, body: q.url ? undefined : q.who, speaker: person && { name: person.name, slot: personSlot(person) }, links: q.url ? [{ label: q.who, url: q.url }] : [] };
+    }),
   ]),
 ];
 export const STATEMENTS: StatementRef[] = refs.map((r, i) => ({ ...r, n: i + 1 }));
 export const STATEMENT_BY_SLOT = new Map(STATEMENTS.map((st) => [st.slot, st]));
 export const ALL_SLOTS = STATEMENTS.map((st) => st.slot);
 
-/** Resolves a [[id]] marker inside one estimate's prose: a row id, "ours", or "qN" (1-based quote). */
+/** Resolves a [[id]] marker inside one estimate's prose: a person id, a row id, "ours", or "qN" (1-based quote). */
 export function slotFor(e: Estimate, id: string): string | undefined {
+  const person = PEOPLE.find((p) => p.id === id);
+  if (person) return personSlot(person);
   const row = e.rows.find((r) => r.id === id);
   if (row) return rowSlot(e, row);
   if (id === "ours") return oursSlot(e);
