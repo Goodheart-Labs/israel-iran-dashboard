@@ -53,7 +53,7 @@ level, 11.18 ft on the station datum = 1.9 ft above mean higher high water.
 - Claude F5.1's number: the analog rate raised a long way for those reasons. Earlier
   draft said 60%.
 
-### 3. Megaflood, ARkStorm-scale month-long megastorm: ~3% (range 2-8%)
+### 3. Megaflood, ARkStorm-scale month-long megastorm: ~8% (range 5-15%)
 
 Resolves yes if: roughly 447 mm (17.6 in) or more of precipitation averaged over
 the whole state in 30 days, the "ARkHist" scenario of ARkStorm 2.0 (Huang &
